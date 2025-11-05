@@ -109,8 +109,8 @@ import { buildWaitCandidateUrls, normalizeUrlForMatch, trimTrailingSlash } from 
 import { buildScreenshotHooks } from './screenshot-hooks';
 import { fetchCliToken } from './token';
 import type { CliConfig, ServerConfig } from './types';
-import { extractEventMessage, isErrnoException, logDebugError } from './util/errors';
 import { describeAppForPrompt, formatAppLabel } from './util/app-label';
+import { extractEventMessage, isErrnoException, logDebugError } from './util/errors';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1017,19 +1017,19 @@ program
         }
 
         const fallbackError = fallbackOutcome.fallbackResult.ok ? null : fallbackOutcome.fallbackResult.error;
-      const recovered = await tryDevToolsRecovery({
-        sessionUrl: sessionSummary?.url,
-        devtoolsUrl,
-        selector: options.selector,
-        quality,
-        mode,
-        outputPath,
-        prompt,
-        suppressOutput,
-        logInfo,
-        appLabel: config.appLabel,
-        failureReason: fallbackError ?? result.error,
-      });
+        const recovered = await tryDevToolsRecovery({
+          sessionUrl: sessionSummary?.url,
+          devtoolsUrl,
+          selector: options.selector,
+          quality,
+          mode,
+          outputPath,
+          prompt,
+          suppressOutput,
+          logInfo,
+          appLabel: config.appLabel,
+          failureReason: fallbackError ?? result.error,
+        });
         if (recovered) {
           return;
         }

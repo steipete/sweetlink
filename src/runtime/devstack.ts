@@ -1,11 +1,12 @@
-import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { compact } from 'es-toolkit';
 import { Agent, setGlobalDispatcher } from 'undici';
-import type { ServerConfig } from '../types';
 import { cliEnv, sweetLinkDebug } from '../env';
+import type { ServerConfig } from '../types';
 import { extractEventMessage } from '../util/errors';
 import { formatPathForDisplay } from '../util/path';
 import { delay } from '../util/time';
@@ -90,23 +91,26 @@ export async function ensureDevStackRunning(targetUrl: URL, options: EnsureDevSt
 
 /** Performs lightweight HEAD requests to confirm the web app responds. */
 export async function isAppReachable(appBaseUrl: string, healthPaths?: readonly string[]): Promise<boolean> {
-  const targets = new Set<string>([appBaseUrl]);
-  if (Array.isArray(healthPaths)) {
-    for (const pathCandidate of healthPaths) {
-      if (typeof pathCandidate !== 'string' || pathCandidate.trim().length === 0) {
-        continue;
+  const additionalTargets = compact(
+    (healthPaths ?? []).map((pathCandidate) => {
+      if (typeof pathCandidate !== 'string') {
+        return null;
       }
       const trimmed = pathCandidate.trim();
+      if (trimmed.length === 0) {
+        return null;
+      }
       try {
         const target = trimmed.startsWith('http')
           ? new URL(trimmed)
           : new URL(trimmed.startsWith('/') ? trimmed : `/${trimmed}`, appBaseUrl);
-        targets.add(target.toString());
+        return target.toString();
       } catch {
-        /* ignore invalid URLs */
+        return null;
       }
-    }
-  }
+    })
+  );
+  const targets = new Set<string>([appBaseUrl, ...additionalTargets]);
 
   for (const target of targets) {
     try {

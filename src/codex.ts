@@ -1,7 +1,7 @@
 import { type SpawnOptions, spawn } from 'node:child_process';
 import type { SweetLinkConsoleDump } from './runtime/session';
-import { extractEventMessage, isErrnoException } from './util/errors';
 import { describeAppForPrompt } from './util/app-label';
+import { extractEventMessage, isErrnoException } from './util/errors';
 
 const CODEX_ARGS = ['exec', '--yolo', '--skip-git-repo-check'];
 

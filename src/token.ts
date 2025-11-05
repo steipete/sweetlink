@@ -2,8 +2,8 @@ import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from '@sweetlink/shared
 import { resolveSweetLinkSecret, type SweetLinkSecretResolution } from '@sweetlink/shared/node';
 import { fetchJson } from './http';
 import type { CachedCliTokenSource, CliConfig } from './types';
-import { describeUnknown } from './util/errors';
 import { describeAppForPrompt } from './util/app-label';
+import { describeUnknown } from './util/errors';
 
 interface CachedCliToken {
   readonly token: string;

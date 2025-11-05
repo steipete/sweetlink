@@ -3,21 +3,14 @@ import { pathToFileURL } from 'node:url';
 import { logDebugError } from '../../util/errors';
 import { delay } from '../../util/time';
 import {
-  evaluateInDevToolsTab,
-  fetchDevToolsTabsWithRetry,
-} from './cdp';
-import type {
-  SweetLinkOauthAutomation,
-  SweetLinkOauthAuthorizeContext,
-  TwitterOauthAutoAcceptResult,
-} from './types';
-import {
   connectPuppeteerBrowser,
   navigatePuppeteerPage,
   resolvePuppeteerPage,
   waitForPageReady,
 } from '../chrome/puppeteer';
 import { urlsRoughlyMatch } from '../url';
+import { evaluateInDevToolsTab, fetchDevToolsTabsWithRetry } from './cdp';
+import type { SweetLinkOauthAuthorizeContext, SweetLinkOauthAutomation, TwitterOauthAutoAcceptResult } from './types';
 
 interface AttemptOauthAutomationParameters {
   devtoolsUrl: string;

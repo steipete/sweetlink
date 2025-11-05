@@ -1,8 +1,8 @@
-import type { Command } from 'commander';
 import path from 'node:path';
+import type { Command } from 'commander';
 import { sweetLinkEnv } from '../env';
-import { formatAppLabel, normalizeAppLabel } from '../util/app-label';
 import type { CliConfig } from '../types';
+import { formatAppLabel, normalizeAppLabel } from '../util/app-label';
 import { loadSweetLinkFileConfig } from './config-file';
 import { readCommandOptions } from './env';
 

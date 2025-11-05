@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { compact } from 'es-toolkit';
 
 export interface SweetLinkCookieMapping {
   hosts: string[];
@@ -170,43 +171,44 @@ function normalizeStringArray(value: unknown): string[] {
     const trimmed = value.trim();
     return trimmed.length > 0 ? [trimmed] : [];
   }
-  if (Array.isArray(value)) {
-    const results: string[] = [];
-    for (const item of value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return compact(
+    value.map((item) => {
       if (typeof item !== 'string') {
-        continue;
+        return null;
       }
       const trimmed = item.trim();
-      if (trimmed.length > 0) {
-        results.push(trimmed);
-      }
-    }
-    return results;
-  }
-  return [];
+      return trimmed.length > 0 ? trimmed : null;
+    })
+  );
 }
 
 function normalizeCookieMappingsSection(value: unknown): SweetLinkCookieMapping[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  const mappings: SweetLinkCookieMapping[] = [];
-  for (const entry of value) {
-    if (!entry || typeof entry !== 'object') {
-      continue;
-    }
-    const hostsRaw = normalizeStringArray(
-      (entry as { hosts?: unknown; match?: unknown }).hosts ?? (entry as { match?: unknown }).match
-    );
-    const originsRaw = normalizeStringArray(
-      (entry as { origins?: unknown; include?: unknown }).origins ?? (entry as { include?: unknown }).include
-    );
-    if (hostsRaw.length === 0 || originsRaw.length === 0) {
-      continue;
-    }
-    mappings.push({ hosts: hostsRaw.map((host) => host.toLowerCase()), origins: originsRaw });
-  }
-  return mappings;
+  return compact(
+    value.map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const hostsRaw = normalizeStringArray(
+        (entry as { hosts?: unknown; match?: unknown }).hosts ?? (entry as { match?: unknown }).match
+      );
+      const originsRaw = normalizeStringArray(
+        (entry as { origins?: unknown; include?: unknown }).origins ?? (entry as { include?: unknown }).include
+      );
+      if (hostsRaw.length === 0 || originsRaw.length === 0) {
+        return null;
+      }
+      return {
+        hosts: hostsRaw.map((host) => host.toLowerCase()),
+        origins: originsRaw,
+      };
+    })
+  );
 }
 
 function normalizeHealthChecksSection(value: unknown): SweetLinkHealthChecksConfig | null {
@@ -225,15 +227,17 @@ function normalizeSmokeRoutesSection(value: unknown): SweetLinkSmokeRoutesConfig
   }
   const defaults = normalizeStringArray((value as { defaults?: unknown }).defaults);
   const rawPresets = (value as { presets?: unknown }).presets;
-  const normalizedPresets: Record<string, string[]> = {};
-  if (rawPresets && typeof rawPresets === 'object') {
-    for (const [key, routeList] of Object.entries(rawPresets as Record<string, unknown>)) {
-      const routes = normalizeStringArray(routeList);
-      if (routes.length > 0) {
-        normalizedPresets[key] = routes;
-      }
-    }
-  }
+  const normalizedPresets =
+    rawPresets && typeof rawPresets === 'object'
+      ? Object.fromEntries(
+          compact(
+            Object.entries(rawPresets as Record<string, unknown>).map(([key, routeList]) => {
+              const routes = normalizeStringArray(routeList);
+              return routes.length > 0 ? ([key, routes] as [string, string[]]) : null;
+            })
+          )
+        )
+      : {};
   const hasDefaults = defaults.length > 0;
   const hasPresets = Object.keys(normalizedPresets).length > 0;
   if (!hasDefaults && !hasPresets) {
@@ -245,61 +249,41 @@ function normalizeSmokeRoutesSection(value: unknown): SweetLinkSmokeRoutesConfig
   };
   return config;
 }
-function normalizeServersSection(
-  value: unknown,
-  baseDirectory: string | null
-): SweetLinkServerConfig[] {
+function normalizeServersSection(value: unknown, baseDirectory: string | null): SweetLinkServerConfig[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  const servers: SweetLinkServerConfig[] = [];
-  for (const entry of value) {
-    if (!entry || typeof entry !== 'object') {
-      continue;
-    }
-    const record = entry as Record<string, unknown>;
-    const envRaw = record.env;
-    if (typeof envRaw !== 'string') {
-      continue;
-    }
-    const env = envRaw.trim();
-    if (env.length === 0) {
-      continue;
-    }
+  return compact(
+    value.map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const envCandidate = typeof record.env === 'string' ? record.env.trim() : '';
+      if (!envCandidate) {
+        return null;
+      }
+      const startCommand = normalizeCommandArray(record.start);
+      const checkCommand = normalizeCommandArray(record.check);
+      const timeoutMs = normalizeTimeout(record.timeoutMs);
+      const cwdRaw = typeof record.cwd === 'string' ? record.cwd.trim() : '';
+      const cwdResolved =
+        cwdRaw.length > 0 ? resolveConfigPath(cwdRaw, baseDirectory) : (baseDirectory ?? process.cwd());
 
-    const startCommand = normalizeCommandArray(record.start);
-    const checkCommand = normalizeCommandArray(record.check);
-    const timeoutMs = normalizeTimeout(record.timeoutMs);
-    const cwdRaw = typeof record.cwd === 'string' ? record.cwd.trim() : '';
-    const cwdResolved =
-      cwdRaw.length > 0 ? resolveConfigPath(cwdRaw, baseDirectory) : baseDirectory ?? process.cwd();
-
-    servers.push({
-      env,
-      ...(startCommand ? { start: startCommand } : {}),
-      ...(checkCommand ? { check: checkCommand } : {}),
-      ...(cwdResolved ? { cwd: cwdResolved } : {}),
-      ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
-    });
-  }
-  return servers;
+      return {
+        env: envCandidate,
+        ...(startCommand ? { start: startCommand } : {}),
+        ...(checkCommand ? { check: checkCommand } : {}),
+        ...(cwdResolved ? { cwd: cwdResolved } : {}),
+        ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
+      };
+    })
+  );
 }
 
 function normalizeCommandArray(value: unknown): string[] | null {
   if (!value) {
     return null;
-  }
-  if (Array.isArray(value)) {
-    const command = value
-      .flatMap((item) => {
-        if (typeof item !== 'string') {
-          return [];
-        }
-        const trimmed = item.trim();
-        return trimmed.length > 0 ? [trimmed] : [];
-      })
-      .filter((segment) => segment.length > 0);
-    return command.length > 0 ? command : null;
   }
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -308,7 +292,19 @@ function normalizeCommandArray(value: unknown): string[] | null {
     }
     return ['sh', '-c', trimmed];
   }
-  return null;
+  if (!Array.isArray(value)) {
+    return null;
+  }
+  const command = compact(
+    value.map((item) => {
+      if (typeof item !== 'string') {
+        return null;
+      }
+      const trimmed = item.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    })
+  );
+  return command.length > 0 ? command : null;
 }
 
 function normalizeTimeout(value: unknown): number | null {

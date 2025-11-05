@@ -3,8 +3,8 @@ import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '@sweet
 import { runCodexImagePrompt, runCodexTextPrompt } from '../codex';
 import { fetchJson } from '../http';
 import type { CliConfig } from '../types';
-import { extractEventMessage, isErrnoException } from '../util/errors';
 import { describeAppForPrompt } from '../util/app-label';
+import { extractEventMessage, isErrnoException } from '../util/errors';
 import { formatConsoleArg } from './devtools';
 import type { SweetLinkConsoleDump } from './session';
 

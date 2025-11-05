@@ -1,7 +1,7 @@
 import type { Page as PuppeteerPage } from 'puppeteer';
 import type {
-  SweetLinkOauthAutomation,
   SweetLinkOauthAuthorizeContext,
+  SweetLinkOauthAutomation,
   TwitterOauthAutoAcceptResult,
 } from '../../src/runtime/devtools/types';
 
@@ -17,7 +17,11 @@ const BUTTON_TEST_IDS = [
   'approve',
   'oauth_consent_button',
 ];
-const USERNAME_SELECTORS = ['input[name="text"]', 'input[autocomplete="username"]', 'input[data-testid="LoginForm_User_Field"]'];
+const USERNAME_SELECTORS = [
+  'input[name="text"]',
+  'input[autocomplete="username"]',
+  'input[data-testid="LoginForm_User_Field"]',
+];
 const PASSWORD_SELECTORS = ['input[type="password"]', 'input[data-testid="LoginForm_Password_Field"]'];
 const FORM_SELECTORS = ['form[action*="oauth" i]', 'form[action*="authorize" i]', 'form[action*="oauth/authorize" i]'];
 
@@ -188,7 +192,11 @@ async function collectCandidateUrls(context: SweetLinkOauthAuthorizeContext): Pr
         continue;
       }
       const lowerUrl = tab.url.toLowerCase();
-      if (context.urlsRoughlyMatch(tab.url, context.sessionUrl) || lowerUrl.includes('oauth') || lowerUrl.includes('authorize')) {
+      if (
+        context.urlsRoughlyMatch(tab.url, context.sessionUrl) ||
+        lowerUrl.includes('oauth') ||
+        lowerUrl.includes('authorize')
+      ) {
         urls.add(tab.url);
       }
     }
@@ -232,9 +240,11 @@ async function authorizeWithPuppeteer(
         return false;
       }
       const lowerUrl = url.toLowerCase();
-      return candidateUrls.some((candidate) => context.urlsRoughlyMatch(url, candidate)) ||
+      return (
+        candidateUrls.some((candidate) => context.urlsRoughlyMatch(url, candidate)) ||
         lowerUrl.includes('oauth') ||
-        lowerUrl.includes('authorize');
+        lowerUrl.includes('authorize')
+      );
     });
 
     const pagesToInspect = candidatePages.length > 0 ? candidatePages : pages;
@@ -327,8 +337,7 @@ function normalizeEvaluationResult(value: unknown): TwitterOauthAutoAcceptResult
     handled: record.handled,
     action: typeof record.action === 'string' ? record.action : undefined,
     reason: typeof record.reason === 'string' ? record.reason : undefined,
-    clickedText:
-      typeof record.clickedText === 'string' || record.clickedText === null ? record.clickedText : undefined,
+    clickedText: typeof record.clickedText === 'string' || record.clickedText === null ? record.clickedText : undefined,
     hasUsernameInput: record.hasUsernameInput === true,
     hasPasswordInput: record.hasPasswordInput === true,
   };

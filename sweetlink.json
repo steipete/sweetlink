@@ -1,4 +1,5 @@
 {
+  "appLabel": "SweetLink Example",
   "appUrl": "http://localhost:3000",
   "prodUrl": "https://sweetistics.com",
   "daemonUrl": "https://localhost:4455",

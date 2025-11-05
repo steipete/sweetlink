@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { compact } from 'es-toolkit';
+import { compact, uniq } from 'es-toolkit';
 import { loadSweetLinkFileConfig } from '../core/config-file';
 import { sweetLinkDebug } from '../env';
 import type { CliConfig } from '../types';
@@ -18,27 +18,22 @@ import { executeRunScriptCommand, fetchSessionSummaries, getSessionSummaryById }
 import { buildWaitCandidateUrls, urlsRoughlyMatch } from './url';
 
 const normalizeRouteList = (input: unknown): string[] => {
-  if (!input) {
-    return [];
-  }
   if (typeof input === 'string') {
     const trimmed = input.trim();
     return trimmed.length > 0 ? [trimmed] : [];
   }
-  if (Array.isArray(input)) {
-    const result: string[] = [];
-    for (const route of input) {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  return compact(
+    input.map((route) => {
       if (typeof route !== 'string') {
-        continue;
+        return null;
       }
       const trimmed = route.trim();
-      if (trimmed.length > 0) {
-        result.push(trimmed);
-      }
-    }
-    return result;
-  }
-  return [];
+      return trimmed.length > 0 ? trimmed : null;
+    })
+  );
 };
 
 const normalizeSmokePresets = (presets: Record<string, unknown> | undefined): Record<string, string[]> => {
@@ -113,25 +108,12 @@ export const deriveSmokeRoutes = (raw: string | undefined, defaults: readonly st
   if (segments.length === 0) {
     return [...defaults];
   }
-  const expanded: string[] = [];
-  for (const segment of segments) {
+  const expanded = segments.flatMap((segment) => {
     const candidatePreset = SMOKE_ROUTE_PRESETS[segment.toLowerCase() as keyof typeof SMOKE_ROUTE_PRESETS];
-    if (Array.isArray(candidatePreset)) {
-      expanded.push(...candidatePreset);
-      continue;
-    }
-    expanded.push(segment);
-  }
-  const seen = new Set<string>();
-  const unique: string[] = [];
-  for (const route of expanded) {
-    if (seen.has(route)) {
-      continue;
-    }
-    seen.add(route);
-    unique.push(route);
-  }
-  return unique.length > 0 ? unique : [...defaults];
+    return Array.isArray(candidatePreset) ? candidatePreset : [segment];
+  });
+  const uniqueRoutes = uniq(expanded);
+  return uniqueRoutes.length > 0 ? uniqueRoutes : [...defaults];
 };
 
 const normalizeRoutePath = (route: string): string => {

@@ -1,3 +1,4 @@
+import { compact } from 'es-toolkit';
 import {
   type Browser,
   type BrowserContext,
@@ -142,22 +143,24 @@ export async function fetchDevToolsTabs(devtoolsUrl: string): Promise<DevToolsTa
   if (!Array.isArray(payload)) {
     throw new TypeError('DevTools endpoint returned unexpected payload');
   }
-  return payload.flatMap((entry): DevToolsTabEntry[] => {
-    if (!entry || typeof entry !== 'object') {
-      return [];
-    }
-    const record = entry as Record<string, unknown>;
-    const id = typeof record.id === 'string' ? record.id : null;
-    const title = typeof record.title === 'string' ? record.title : '';
-    const url = typeof record.url === 'string' ? record.url : '';
-    const type = typeof record.type === 'string' ? record.type : undefined;
-    const webSocketDebuggerUrl =
-      typeof record.webSocketDebuggerUrl === 'string' ? record.webSocketDebuggerUrl : undefined;
-    if (!id || !url) {
-      return [];
-    }
-    return [{ id, title, url, type, webSocketDebuggerUrl }];
-  });
+  return compact(
+    payload.map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const record = entry as Record<string, unknown>;
+      const id = typeof record.id === 'string' ? record.id : null;
+      const title = typeof record.title === 'string' ? record.title : '';
+      const url = typeof record.url === 'string' ? record.url : '';
+      const type = typeof record.type === 'string' ? record.type : undefined;
+      const webSocketDebuggerUrl =
+        typeof record.webSocketDebuggerUrl === 'string' ? record.webSocketDebuggerUrl : undefined;
+      if (!id || !url) {
+        return null;
+      }
+      return { id, title, url, type, webSocketDebuggerUrl };
+    })
+  );
 }
 
 export async function fetchDevToolsTabsWithRetry(devtoolsUrl: string, attempts = 5): Promise<DevToolsTabEntry[]> {
