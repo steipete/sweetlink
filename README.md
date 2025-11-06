@@ -112,9 +112,6 @@ Start by copying `sweetlink.example.json` from the repo root. It ships with a ne
 
 Place the config file in your project root (or any parent directory). With the file in place, `pnpm sweetlink open --controlled --foreground` will automatically point at `http://localhost:4100` unless an explicit `--url`/`--app-url` is provided. The CLI also exposes `--port` to temporarily rewrite the local host port without editing the JSON file. `healthChecks.paths` lets you point the readiness probe at specific endpoints (for example `/api/health`). `cookieMappings` declares extra origins to harvest cookies from (such as OAuth provider cookies when you reuse a signed-in Chrome profile). `smokeRoutes.defaults` overrides the built-in route sweep, and `smokeRoutes.presets` lets you register new comma-delimited shortcuts (the built-ins `main`, `settings`, `billing-only`, and `pulse-only` remain available). Hosts accept plain domains or wildcard-prefixed entries (`*.example.dev`), and origins must be fully-qualified URLs. Omit `daemonUrl`, `prodUrl`, `healthChecks`, `smokeRoutes`, or `cookieMappings` to keep SweetLink’s defaults for those targets.
 
-### Migrating from the `@sweetistics/*` scope
-
-- Replace package imports (`@sweetistics/sweetlink`, etc.) with `sweetlink`. The daemon and shared helpers bundle with the CLI, so you no longer need the extra packages.
 - Update any `pnpm --filter` commands, tmux helpers, or scripts that referenced the old scope (for example `pnpm --filter sweetlink run build`).
 - Prefer the new environment variables for admin keys: `SWEETLINK_LOCAL_ADMIN_API_KEY` (dev shells) and `SWEETLINK_ADMIN_API_KEY` (prod shells). Legacy `SWEETISTICS_*` vars continue to work, but plan to remove them once every integration is updated.
 - Copy the neutral `sweetlink.example.json` from the repo root when onboarding SweetLink into another project so you start from generic hostnames/domains instead of the monorepo’s internal defaults.
