@@ -1,6 +1,7 @@
 node_modules
 .tmp
 .DS_Store
+**/.DS_Store
 *.log
 tmp
 pnpm-debug.log
