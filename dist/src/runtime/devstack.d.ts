@@ -1,4 +1,4 @@
-import type { ServerConfig } from '../types';
+import type { ServerConfig } from '../types.js';
 /** Registers the mkcert CA with undici so HTTPS requests succeed without NODE_TLS_REJECT_UNAUTHORIZED hacks. */
 export declare function maybeInstallMkcertDispatcher(): void;
 interface EnsureDevStackOptions {

@@ -1,5 +1,5 @@
 import type { SweetLinkScreenshotCommand } from '@sweetlink/shared';
-import type { ScreenshotTargetInfo } from '../types';
+import type { ScreenshotTargetInfo } from '../types.js';
 type HookRunner = (clientWindow: Window, document_: Document, target: HTMLElement) => Promise<void> | void;
 export type ScreenshotHook = {
     readonly type: 'scrollIntoView';

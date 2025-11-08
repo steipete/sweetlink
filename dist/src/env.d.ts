@@ -1,4 +1,4 @@
-import type { SweetLinkSharedEnv } from '../shared/src/env';
+import type { SweetLinkSharedEnv } from '../shared/src/env.js';
 export declare const sweetLinkEnv: SweetLinkSharedEnv;
 export declare const sweetLinkDebug: boolean;
 export declare const sweetLinkCliTestMode: boolean;

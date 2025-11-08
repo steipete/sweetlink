@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdir, readFile, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -146,8 +147,15 @@ function formatDuration(ms: number): string {
   return `${days.toFixed(precision)} d`;
 }
 
+const require = createRequire(import.meta.url);
+const packageJson = require('../../package.json') as { version?: string };
+const packageVersion = typeof packageJson.version === 'string' ? packageJson.version : '0.0.0';
+
 const program = new Command();
-program.name('sweetlink').description('Interact with SweetLink daemon sessions');
+program
+  .name('sweetlink')
+  .description('Interact with SweetLink daemon sessions')
+  .version(packageVersion, '-v, --version', 'Show SweetLink CLI version');
 
 maybeInstallMkcertDispatcher();
 

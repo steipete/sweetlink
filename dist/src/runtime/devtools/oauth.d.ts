@@ -1,4 +1,4 @@
-import type { TwitterOauthAutoAcceptResult } from './types';
+import type { TwitterOauthAutoAcceptResult } from './types.js';
 interface AttemptOauthAutomationParameters {
     devtoolsUrl: string;
     sessionUrl: string;

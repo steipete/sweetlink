@@ -1,5 +1,5 @@
 import { type Browser, type ConsoleMessage, type Page } from 'playwright-core';
-import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsState, DevToolsTabEntry, SweetLinkBootstrapDiagnostics } from './types';
+import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsState, DevToolsTabEntry, SweetLinkBootstrapDiagnostics } from './types.js';
 export declare function collectBootstrapDiagnostics(devtoolsUrl: string, candidates: readonly string[]): Promise<SweetLinkBootstrapDiagnostics | null>;
 export declare function discoverDevToolsEndpoints(): Promise<string[]>;
 export declare function fetchDevToolsTabs(devtoolsUrl: string): Promise<DevToolsTabEntry[]>;

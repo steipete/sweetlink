@@ -82,5 +82,14 @@
     "undici": "^7.16.0",
     "ws": "^8.18.3",
     "zod": "^3.25.76"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "keytar",
+      "puppeteer",
+      "sqlite3",
+      "tldjs"
+    ]
   }
 }

@@ -1,6 +1,6 @@
-import { delay } from '../../util/time';
-import { buildCookieOrigins, collectChromeCookies } from '../cookies';
-import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer';
+import { delay } from '../../util/time.js';
+import { buildCookieOrigins, collectChromeCookies } from '../cookies.js';
+import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer.js';
 type PrimeChromeCookiesDeps = {
     collectChromeCookies: typeof collectChromeCookies;
     resolvePuppeteerPage: typeof resolvePuppeteerPage;

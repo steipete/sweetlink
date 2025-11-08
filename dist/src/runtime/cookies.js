@@ -546,7 +546,6 @@ function resolveTldModule(value) {
     return null;
 }
 async function attemptSqliteRebuild() {
-    // biome-ignore lint/nursery/noUnnecessaryConditions: ensure we only rebuild once per process
     if (attemptedSqliteRebuild) {
         return false;
     }

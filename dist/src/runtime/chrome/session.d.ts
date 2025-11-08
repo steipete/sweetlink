@@ -1,4 +1,4 @@
-import type { CliConfig } from '../../types';
+import type { CliConfig } from '../../types.js';
 export declare function signalSweetLinkBootstrap(devtoolsUrl: string, targetUrl: string): Promise<void>;
 export declare function waitForSweetLinkSession(params: {
     config: CliConfig;

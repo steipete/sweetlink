@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import type { CliConfig } from '../types';
+import type { CliConfig } from '../types.js';
 interface ResolvedServerConfig {
     readonly env: string;
     readonly start: string[] | null;

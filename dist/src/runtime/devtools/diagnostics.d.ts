@@ -1,5 +1,5 @@
 import type { Request } from 'playwright-core';
-import type { DevToolsConsoleEntry, DevToolsNetworkEntry, SweetLinkBootstrapDiagnostics } from './types';
+import type { DevToolsConsoleEntry, DevToolsNetworkEntry, SweetLinkBootstrapDiagnostics } from './types.js';
 export declare function logBootstrapDiagnostics(label: string, diagnostics: SweetLinkBootstrapDiagnostics): void;
 export declare function logDevtoolsConsoleSummary(label: string, entries: readonly DevToolsConsoleEntry[], limit?: number): void;
 export declare function diagnosticsContainBlockingIssues(diagnostics: SweetLinkBootstrapDiagnostics): boolean;

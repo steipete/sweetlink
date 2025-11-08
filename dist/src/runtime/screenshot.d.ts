@@ -1,6 +1,6 @@
-import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '../../shared/src';
-import type { CliConfig } from '../types';
-import type { SweetLinkConsoleDump } from './session';
+import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '../../shared/src/index.js';
+import type { CliConfig } from '../types.js';
+import type { SweetLinkConsoleDump } from './session.js';
 export interface DevToolsCaptureOptions {
     readonly devtoolsUrl: string;
     readonly sessionUrl: string;

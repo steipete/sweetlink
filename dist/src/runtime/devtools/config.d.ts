@@ -1,4 +1,4 @@
-import type { DevToolsConfig, DevToolsState } from './types';
+import type { DevToolsConfig, DevToolsState } from './types.js';
 export declare function loadDevToolsConfig(): Promise<DevToolsConfig | null>;
 export declare function saveDevToolsConfig(patch: Partial<DevToolsConfig> & {
     devtoolsUrl: string;

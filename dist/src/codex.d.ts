@@ -1,4 +1,4 @@
-import type { SweetLinkConsoleDump } from './runtime/session';
+import type { SweetLinkConsoleDump } from './runtime/session.js';
 /** Asks Codex about a screenshot file. */
 export declare function runCodexImagePrompt(imagePath: string, prompt: string): Promise<number>;
 /** Asks Codex about a text payload. */

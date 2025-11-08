@@ -1,4 +1,4 @@
-import type { SweetLinkStorageAdapter, SweetLinkStoredSession } from '../types';
+import type { SweetLinkStorageAdapter, SweetLinkStoredSession } from '../types.js';
 export declare const isStoredSessionFresh: (session: SweetLinkStoredSession, now?: number) => boolean;
 export interface SessionStorageAdapterOptions {
     readonly windowRef?: Window | null;

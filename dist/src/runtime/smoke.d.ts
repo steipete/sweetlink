@@ -1,6 +1,6 @@
-import type { CliConfig } from '../types';
-import { type SweetLinkBootstrapDiagnostics } from './devtools';
-import type { SweetLinkConsoleDump } from './session';
+import type { CliConfig } from '../types.js';
+import { type SweetLinkBootstrapDiagnostics } from './devtools.js';
+import type { SweetLinkConsoleDump } from './session.js';
 export declare const SMOKE_ROUTE_PRESETS: Record<string, string[]>;
 export declare const DEFAULT_SMOKE_ROUTES: string[];
 export declare const deriveSmokeRoutes: (raw: string | undefined, defaults: readonly string[]) => string[];

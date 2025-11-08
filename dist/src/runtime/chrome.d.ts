@@ -1,9 +1,9 @@
-export * from './chrome/constants';
-export * from './chrome/cookies';
-export * from './chrome/diagnostics';
-export * from './chrome/focus';
-export * from './chrome/launch';
-export * from './chrome/puppeteer';
-export * from './chrome/reuse';
-export * from './chrome/session';
+export * from './chrome/constants.js';
+export * from './chrome/cookies.js';
+export * from './chrome/diagnostics.js';
+export * from './chrome/focus.js';
+export * from './chrome/launch.js';
+export * from './chrome/puppeteer.js';
+export * from './chrome/reuse.js';
+export * from './chrome/session.js';
 //# sourceMappingURL=chrome.d.ts.map
