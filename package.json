@@ -34,7 +34,7 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json && tsx scripts/fix-shared-imports.ts",
     "test": "vitest run --config vitest.config.ts",
     "lint": "biome lint ./src ./shared/src ./daemon/src ./tests",
     "standalone:post-sync": "tsx scripts/post-sync.ts",

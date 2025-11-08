@@ -9,6 +9,7 @@ export interface SweetLinkSmokeRoutesConfig {
     defaults?: string[];
     presets?: Record<string, string[]>;
 }
+export type SweetLinkRedirectsConfig = Record<string, string>;
 export interface SweetLinkServerConfig {
     env: string;
     start?: string[];
@@ -26,6 +27,7 @@ export interface SweetLinkFileConfig {
     cookieMappings?: SweetLinkCookieMapping[];
     healthChecks?: SweetLinkHealthChecksConfig;
     smokeRoutes?: SweetLinkSmokeRoutesConfig;
+    redirects?: SweetLinkRedirectsConfig;
     servers?: SweetLinkServerConfig[];
     oauthScript?: string;
 }

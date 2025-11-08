@@ -93,6 +93,10 @@ function normalizeConfig(raw, baseDirectory) {
     if (smokeRoutes) {
         config.smokeRoutes = smokeRoutes;
     }
+    const redirects = normalizeRedirectsSection(raw.redirects);
+    if (redirects) {
+        config.redirects = redirects;
+    }
     const servers = normalizeServersSection(raw.servers, baseDirectory);
     if (servers.length > 0) {
         config.servers = servers;
@@ -239,5 +243,41 @@ function normalizeTimeout(value) {
         }
     }
     return null;
+}
+function canonicalizeRedirectPath(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+    let normalized = value.trim();
+    if (!normalized.startsWith('/')) {
+        normalized = `/${normalized}`;
+    }
+    normalized = normalized.replace(/\/+$/, '');
+    if (!normalized) {
+        return '/';
+    }
+    return normalized || '/';
+}
+function normalizeRedirectsSection(value) {
+    if (!value || typeof value !== 'object') {
+        return undefined;
+    }
+    const entries = Object.entries(value);
+    if (entries.length === 0) {
+        return undefined;
+    }
+    const redirects = {};
+    for (const [rawSource, rawTarget] of entries) {
+        if (typeof rawSource !== 'string' || typeof rawTarget !== 'string') {
+            continue;
+        }
+        const sourcePath = canonicalizeRedirectPath(rawSource);
+        const targetPath = canonicalizeRedirectPath(rawTarget);
+        if (!sourcePath || !targetPath) {
+            continue;
+        }
+        redirects[sourcePath] = targetPath;
+    }
+    return Object.keys(redirects).length > 0 ? redirects : undefined;
 }
 //# sourceMappingURL=config-file.js.map

@@ -85,6 +85,9 @@ export type TwitterOauthAutoAcceptResult = {
     clickedText?: string | null;
     hasUsernameInput?: boolean;
     hasPasswordInput?: boolean;
+    url?: string;
+    title?: string;
+    host?: string;
 };
 export interface SweetLinkOauthAuthorizeContext {
     readonly devtoolsUrl: string;

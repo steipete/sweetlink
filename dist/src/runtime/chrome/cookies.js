@@ -4,8 +4,9 @@ import { delay } from '../../util/time';
 import { buildCookieOrigins, collectChromeCookies } from '../cookies';
 import { PUPPETEER_PROTOCOL_TIMEOUT_MS } from './constants';
 import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer';
-export async function primeControlledChromeCookies(options) {
-    const cookies = await collectChromeCookies(options.targetUrl);
+export async function primeControlledChromeCookies(options, deps = {}) {
+    const { collectChromeCookies: collectCookies = collectChromeCookies, resolvePuppeteerPage: resolvePage = resolvePuppeteerPage, navigatePuppeteerPage: navigatePage = navigatePuppeteerPage, waitForPageReady: waitForPage = waitForPageReady, attemptPuppeteerReload: reloadPage = attemptPuppeteerReload, delay: delayFn = delay, buildCookieOrigins: buildOrigins = buildCookieOrigins, } = deps;
+    const cookies = await collectCookies(options.targetUrl);
     if (cookies.length === 0) {
         console.log('No Chrome cookies found for this origin; continuing without priming the controlled window.');
         return;
@@ -36,7 +37,7 @@ export async function primeControlledChromeCookies(options) {
                 console.warn('Unable to attach to controlled Chrome for cookie priming:', error);
                 return;
             }
-            await delay(200);
+            await delayFn(200);
         }
     }
     if (!browser) {
@@ -44,10 +45,10 @@ export async function primeControlledChromeCookies(options) {
         return;
     }
     try {
-        let page = await resolvePuppeteerPage(browser, options.targetUrl);
+        let page = await resolvePage(browser, options.targetUrl);
         if (!page) {
             const fallbackPage = await browser.newPage();
-            const navigated = await navigatePuppeteerPage(fallbackPage, options.targetUrl, 3);
+            const navigated = await navigatePage(fallbackPage, options.targetUrl, 3);
             if (!navigated) {
                 console.warn('Unable to locate or recreate the controlled tab while priming cookies.');
                 await fallbackPage.close().catch(() => {
@@ -57,11 +58,11 @@ export async function primeControlledChromeCookies(options) {
             }
             page = fallbackPage;
         }
-        await waitForPageReady(page);
+        await waitForPage(page);
         await page.setCookie(...cookies);
-        await verifyCookieSync(page, options.targetUrl, cookies);
+        await verifyCookieSync(page, options.targetUrl, cookies, buildOrigins);
         if (options.reload) {
-            await attemptPuppeteerReload(page);
+            await reloadPage(page);
         }
         let contextLabel = 'controlled window';
         if (options.context === 'existing-tab') {
@@ -103,13 +104,13 @@ export async function primeControlledChromeCookies(options) {
         }
     }
 }
-async function verifyCookieSync(page, targetUrl, attempted) {
+async function verifyCookieSync(page, targetUrl, attempted, buildOrigins = buildCookieOrigins) {
     if (attempted.length === 0) {
         return;
     }
     try {
         const appliedNames = new Set();
-        const origins = buildCookieOrigins(targetUrl);
+        const origins = buildOrigins(targetUrl);
         for (const origin of origins) {
             try {
                 const cookies = await page.cookies(origin);

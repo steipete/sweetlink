@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createSweetLinkCommandId } from '../../shared/src';
+import { createSweetLinkCommandId } from '../../shared/src/index.js';
 import { fetchJson } from '../http';
 import { fetchCliToken } from '../token';
 const VALID_SELECTOR_HOOKS = new Set(['data-target', 'id', 'aria', 'role', 'structure', 'testid']);

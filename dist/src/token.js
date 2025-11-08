@@ -1,5 +1,5 @@
-import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from '../shared/src';
-import { resolveSweetLinkSecret } from '../shared/src/node';
+import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from '../shared/src/index.js';
+import { resolveSweetLinkSecret } from '../shared/src/node.js';
 import { fetchJson } from './http';
 import { describeAppForPrompt } from './util/app-label';
 import { describeUnknown } from './util/errors';

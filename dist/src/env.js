@@ -1,4 +1,4 @@
-import { sweetLinkEnv as sharedSweetLinkEnv } from '../shared/src/env';
+import { sweetLinkEnv as sharedSweetLinkEnv } from '../shared/src/env.js';
 export const sweetLinkEnv = sharedSweetLinkEnv;
 export const sweetLinkDebug = sweetLinkEnv.debug;
 export const sweetLinkCliTestMode = sweetLinkEnv.cliTestMode;

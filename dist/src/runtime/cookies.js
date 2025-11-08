@@ -1,7 +1,10 @@
+import { spawn } from 'node:child_process';
 import { loadSweetLinkFileConfig } from '../core/config-file';
+import { cloneProcessEnv } from '../core/env';
 import { cliEnv } from '../env';
 import { describeUnknown } from '../util/errors';
 let tldPatchedForLocalhost = false;
+let attemptedSqliteRebuild = false;
 /** Collects cookies from the main Chrome profile matching the provided URL. */
 export async function collectChromeCookies(targetUrl) {
     await ensureTldPatchedForLocalhost();
@@ -470,6 +473,20 @@ async function ensureTldPatchedForLocalhost() {
         console.warn('Failed to patch tldjs for localhost support:', error);
     }
 }
+const SQLITE_BINDING_HINT = [
+    'SweetLink needs chrome-cookies-secure to read your Chrome cookie DB.',
+    'Rebuild the native modules once per workspace so Node 25 picks up the sqlite3 binding:',
+    '  PYTHON=/usr/bin/python3 npm_config_build_from_source=1 pnpm rebuild chrome-cookies-secure sqlite3 keytar --workspace-root',
+].join('\n');
+const isSqliteBindingError = (error) => {
+    if (!(error instanceof Error)) {
+        return false;
+    }
+    const message = error.message ?? '';
+    return (/node_sqlite3\.node/i.test(message) ||
+        /bindings file/i.test(message) ||
+        /Module did not self-register/i.test(message));
+};
 async function loadChromeCookiesModule() {
     let imported;
     try {
@@ -477,7 +494,16 @@ async function loadChromeCookiesModule() {
     }
     catch (error) {
         console.warn('Failed to load chrome-cookies-secure to copy cookies:', error);
-        console.warn('If this persists, run `pnpm rebuild chrome-cookies-secure sqlite3 keytar --workspace-root`.');
+        if (isSqliteBindingError(error)) {
+            const rebuilt = await attemptSqliteRebuild();
+            if (rebuilt) {
+                return loadChromeCookiesModule();
+            }
+            console.warn(SQLITE_BINDING_HINT);
+        }
+        else {
+            console.warn('If this persists, run `pnpm rebuild chrome-cookies-secure sqlite3 keytar --workspace-root`.');
+        }
         return null;
     }
     const secureModule = resolveChromeCookieModule(imported);
@@ -518,5 +544,41 @@ function resolveTldModule(value) {
         }
     }
     return null;
+}
+async function attemptSqliteRebuild() {
+    // biome-ignore lint/nursery/noUnnecessaryConditions: ensure we only rebuild once per process
+    if (attemptedSqliteRebuild) {
+        return false;
+    }
+    attemptedSqliteRebuild = true;
+    const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+    const args = ['rebuild', 'chrome-cookies-secure', 'sqlite3', 'keytar', '--workspace-root'];
+    const childEnv = cloneProcessEnv();
+    const pythonBinary = childEnv.PYTHON ?? '/usr/bin/python3';
+    const rebuildCommand = `${pnpmCommand} ${args.join(' ')}`;
+    console.warn('[SweetLink] Attempting to rebuild sqlite3 bindings automatically…');
+    console.warn(`[SweetLink] Running: npm_config_build_from_source=1 PYTHON=${pythonBinary} ${rebuildCommand}`);
+    return new Promise((resolve) => {
+        childEnv.npm_config_build_from_source = '1';
+        childEnv.PYTHON = childEnv.PYTHON ?? '/usr/bin/python3';
+        const child = spawn(pnpmCommand, args, {
+            stdio: 'inherit',
+            env: childEnv,
+        });
+        child.on('exit', (code) => {
+            if (code === 0) {
+                console.warn('[SweetLink] sqlite3 rebuild completed successfully.');
+                resolve(true);
+            }
+            else {
+                console.warn('[SweetLink] sqlite3 rebuild failed with exit code', code ?? 0);
+                resolve(false);
+            }
+        });
+        child.on('error', (spawnError) => {
+            console.warn('[SweetLink] Unable to spawn pnpm to rebuild sqlite3:', spawnError);
+            resolve(false);
+        });
+    });
 }
 //# sourceMappingURL=cookies.js.map

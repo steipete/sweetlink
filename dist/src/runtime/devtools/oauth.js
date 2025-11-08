@@ -119,6 +119,9 @@ function normalizeAutomationResult(value) {
                 clickedText: typeof record.clickedText === 'string' || record.clickedText === null ? record.clickedText : undefined,
                 hasUsernameInput: record.hasUsernameInput === true,
                 hasPasswordInput: record.hasPasswordInput === true,
+                url: typeof record.url === 'string' ? record.url : undefined,
+                host: typeof record.host === 'string' ? record.host : undefined,
+                title: typeof record.title === 'string' ? record.title : undefined,
             };
         }
     }

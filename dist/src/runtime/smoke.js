@@ -8,7 +8,7 @@ import { describeUnknown, isErrnoException } from '../util/errors';
 import { delay } from '../util/time';
 import { collectBootstrapDiagnostics, diagnosticsContainBlockingIssues, evaluateInDevToolsTab, } from './devtools';
 import { executeRunScriptCommand, fetchSessionSummaries, getSessionSummaryById } from './session';
-import { buildWaitCandidateUrls, urlsRoughlyMatch } from './url';
+import { buildWaitCandidateUrls, configurePathRedirects, urlsRoughlyMatch } from './url';
 const normalizeRouteList = (input) => {
     if (typeof input === 'string') {
         const trimmed = input.trim();
@@ -40,7 +40,7 @@ const normalizeSmokePresets = (presets) => {
 };
 const SMOKE_PROGRESS_PATH = path.join(os.homedir(), '.sweetlink', 'smoke-progress.json');
 const builtinSmokePresets = {
-    main: ['timeline/home', 'insights', 'search', '', 'pulse'],
+    main: ['timeline/home', 'insights', 'search', 'pulse'],
     settings: [
         'settings/account',
         'settings/activity',
@@ -56,6 +56,7 @@ const builtinSmokePresets = {
     'pulse-only': ['pulse'],
 };
 const { config: fileConfig } = loadSweetLinkFileConfig();
+configurePathRedirects(fileConfig.redirects);
 const configuredPresets = normalizeSmokePresets(fileConfig.smokeRoutes?.presets);
 export const SMOKE_ROUTE_PRESETS = {
     ...builtinSmokePresets,
