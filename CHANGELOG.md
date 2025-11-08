@@ -6,7 +6,7 @@
 - _Nothing yet._
 
 ### Changed
-- _Nothing yet._
+- Documented the post-connect quick actions, clipboard feedback, and automation prompt library in the README so the example app mirrors the new workflow.
 
 ## 0.1.0-beta.1 — 2025-11-05
 

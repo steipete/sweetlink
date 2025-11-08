@@ -22,19 +22,12 @@ SweetLink is the agent-ready way to "connect your agent to your web app. Like Pl
 
 ## Installation
 
-From the monorepo:
-
 ```bash
 pnpm install
-pnpm --filter sweetlink run build
+pnpm run build
 ```
 
-Standalone checkout:
-
-```bash
-cd ~/Projects/sweetlink
-pnpm install
-```
+> Working from the Sweetistics monorepo? Follow the workspace-specific guide in `docs/cli/sweetlink.md` instead of this README.
 
 ## Usage
 
@@ -168,27 +161,26 @@ See the Twitter example for a complete script that works with X’s current cons
 Looking for a minimal integration? Launch the demo web app under `apps/sweetlink/examples/basic-web`:
 
 ```bash
-pnpm --filter @sweetlink/example-basic-web dev
+cd examples/basic-web
+pnpm dev
 ```
 
 The Vite dev server auto-reloads whenever you tweak the example UI. The site exposes a single page with an “Enable SweetLink” button. Clicking it calls the included `/api/sweetlink/handshake` route, registers with your locally running daemon, and keeps the socket alive so you can attach via `pnpm sweetlink console demo`. The example bundles a small browser client that handles the `register`, `heartbeat`, and `runScript` command flow so you can verify end-to-end behaviour without touching your production app. A status chip at the top of the page shows the active SweetLink codename so developers can confirm which CLI session is currently linked.
 
 Once attached, experiment with commands such as:
 
-- `pnpm sweetlink run-js demo --code "demo.updateKpi(87)"` – change the KPI badge value.
-- `pnpm sweetlink run-js demo --code "demo.toggleBadge()"` – flip the feature badge between `beta` and `stable`.
-- `pnpm sweetlink screenshot demo --selector "#screenshot-card"` – capture the pre-styled analytics card.
+1. `pnpm sweetlink run-js demo --code "demo.updateKpi(87)"` – change the KPI badge value.
+2. `pnpm sweetlink run-js demo --code "demo.toggleBadge()"` – flip the feature badge between `beta` and `stable`.
+3. `pnpm sweetlink screenshot demo --selector "#screenshot-card"` – capture the pre-styled analytics card.
 
-The demo exposes a handful of helpers on `window.demo` so you can script UI tweaks before grabbing screenshots.
+*Tip:* Every time you use a copy icon, the demo logs a “Copied … command” entry in the status panel. Tail them from the CLI via `pnpm sweetlink devtools console --tail 50` to confirm clipboard-driven workflows are firing.
+
+Scroll further down to the **Automation prompt library** for ready-to-paste prompts you can drop into Codex, Claude, or Cursor once a session is live.
+
+
+Keep watching the status log (and DevTools tail) while you automate—the demo surfaces every clipboard copy, handshake, and CLI action there so you know exactly what ran.
 
 ## Local Checks
-
-```bash
-pnpm --filter sweetlink run lint
-pnpm --filter sweetlink run test
-```
-
-Standalone repo:
 
 ```bash
 pnpm lint
@@ -201,6 +193,6 @@ SweetLink (CLI, daemon, and shared packages) is licensed under the MIT License. 
 
 ## TLS Onboarding
 
-SweetLink’s daemon defaults to `https://localhost:4455`. Run `pnpm sweetlink trust-ca` once per machine to install the mkcert certificate authority, then visit `https://localhost:4455` in the browser profile you plan to automate and accept the prompt. The example app (`pnpm --filter @sweetlink/example-basic-web dev`) now performs a preflight check via `/api/sweetlink/status`: it blocks the “Enable SweetLink” button until the daemon is reachable and the certificate is trusted, with quick actions to open the daemon URL or retry the check.
+SweetLink’s daemon defaults to `https://localhost:4455`. Run `pnpm sweetlink trust-ca` once per machine to install the mkcert certificate authority, then visit `https://localhost:4455` in the browser profile you plan to automate and accept the prompt. The example app (run `pnpm dev` inside `examples/basic-web`) now performs a preflight check via `/api/sweetlink/status`: it blocks the “Enable SweetLink” button until the daemon is reachable and the certificate is trusted, with quick actions to open the daemon URL or retry the check.
 
 When automating, you can poll `/api/sweetlink/status` the same way—only proceed when `reachable` and `tlsTrusted` are both true.
