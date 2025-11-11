@@ -1,4 +1,3 @@
-import { regex } from 'arkregex';
 import { writeFile } from 'node:fs/promises';
 import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '../../shared/src/index.js';
 import { runCodexImagePrompt, runCodexTextPrompt } from '../codex.js';
@@ -6,10 +5,10 @@ import { fetchJson } from '../http.js';
 import type { CliConfig } from '../types.js';
 import { describeAppForPrompt } from '../util/app-label.js';
 import { extractEventMessage, isErrnoException } from '../util/errors.js';
+import { TRAILING_SLASH_PATTERN } from '../util/regex.js';
 import { formatConsoleArg } from './devtools.js';
 import type { SweetLinkConsoleDump } from './session.js';
 
-const TRAILING_SLASH_PATTERN = regex.as('/$');
 
 export interface DevToolsCaptureOptions {
   readonly devtoolsUrl: string;

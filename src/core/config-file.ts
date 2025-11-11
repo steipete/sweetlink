@@ -1,9 +1,8 @@
-import { regex } from 'arkregex';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { compact } from 'es-toolkit';
+import { TRAILING_SLASH_PATTERN } from '../util/regex.js';
 
-const TRAILING_SLASHES_PATTERN = regex.as('\/+$');
 
 export interface SweetLinkCookieMapping {
   hosts: string[];
@@ -338,7 +337,7 @@ function canonicalizeRedirectPath(value: string): string | null {
   if (!normalized.startsWith('/')) {
     normalized = `/${normalized}`;
   }
-  normalized = normalized.replace(TRAILING_SLASHES_PATTERN, '');
+  normalized = normalized.replace(TRAILING_SLASH_PATTERN, '');
   if (!normalized) {
     return '/';
   }

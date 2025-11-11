@@ -1,11 +1,9 @@
-import { regex } from 'arkregex';
 import { URL } from 'node:url';
+import { LEADING_SLASH_PATTERN, TRAILING_SLASH_PATTERN } from '../util/regex.js';
 
 export const LOOSE_PATH_SUFFIXES = ['home', 'index', 'overview'] as const;
 
 let pathRedirects: Record<string, string> = {};
-const TRAILING_SLASHES_PATTERN = regex.as('\/+$');
-const LEADING_SLASHES_PATTERN = regex.as('^\/+');
 
 export function configurePathRedirects(map: Record<string, string> | undefined): void {
   pathRedirects = {};
@@ -34,7 +32,7 @@ export function trimTrailingSlash(path: string): string {
   if (!path) {
     return '/';
   }
-  const trimmed = path.replace(TRAILING_SLASHES_PATTERN, '');
+  const trimmed = path.replace(TRAILING_SLASH_PATTERN, '');
   if (!trimmed) {
     return '/';
   }
@@ -46,7 +44,7 @@ export function extractPathSegments(path: string): string[] {
   if (normalized === '/' || normalized.length === 0) {
     return [];
   }
-  return normalized.replace(LEADING_SLASHES_PATTERN, '').split('/');
+  return normalized.replace(LEADING_SLASH_PATTERN, '').split('/');
 }
 
 export function suffixSegmentsAllowed(segments: string[]): boolean {

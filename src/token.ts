@@ -1,12 +1,11 @@
-import { regex } from 'arkregex';
 import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from '../shared/src/index.js';
 import { resolveSweetLinkSecret, type SweetLinkSecretResolution } from '../shared/src/node.js';
 import { fetchJson } from './http.js';
 import type { CachedCliTokenSource, CliConfig } from './types.js';
 import { describeAppForPrompt } from './util/app-label.js';
 import { describeUnknown } from './util/errors.js';
+import { TRAILING_SLASH_PATTERN } from './util/regex.js';
 
-const TRAILING_SLASH_PATTERN = regex.as('/$');
 
 interface CachedCliToken {
   readonly token: string;

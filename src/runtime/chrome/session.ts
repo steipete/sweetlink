@@ -1,12 +1,11 @@
-import { regex } from 'arkregex';
 import { fetchJson } from '../../http.js';
 import type { CliConfig } from '../../types.js';
 import { logDebugError } from '../../util/errors.js';
 import { delay } from '../../util/time.js';
 import { saveDevToolsConfig } from '../devtools.js';
 import { urlsRoughlyMatch } from '../url.js';
+import { OPTIONAL_TRAILING_SLASH_PATTERN } from '../util/regex.js';
 
-const OPTIONAL_TRAILING_SLASH_PATTERN = regex.as('/?$');
 
 export async function signalSweetLinkBootstrap(devtoolsUrl: string, targetUrl: string): Promise<void> {
   try {
