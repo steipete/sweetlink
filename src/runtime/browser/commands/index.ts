@@ -131,10 +131,10 @@ async function runScriptCommand(
   }
 }
 
-function runGetDomCommand(
+async function runGetDomCommand(
   command: Extract<SweetLinkCommand, { type: 'getDom' }>,
   started: number
-): SweetLinkCommandResult {
+): Promise<SweetLinkCommandResult> {
   let data: unknown;
   if (command.selector) {
     const element = document.querySelector(command.selector);
@@ -151,10 +151,10 @@ function runGetDomCommand(
   } satisfies SweetLinkCommandResultSuccess;
 }
 
-function runNavigateCommand(
+async function runNavigateCommand(
   command: Extract<SweetLinkCommand, { type: 'navigate' }>,
   started: number
-): SweetLinkCommandResult {
+): Promise<SweetLinkCommandResult> {
   (getBrowserWindow() ?? window).location.assign(command.url);
   const durationMs = performance.now() - started;
   return {
@@ -165,7 +165,10 @@ function runNavigateCommand(
   } satisfies SweetLinkCommandResultSuccess;
 }
 
-function runPingCommand(command: Extract<SweetLinkCommand, { type: 'ping' }>, started: number): SweetLinkCommandResult {
+async function runPingCommand(
+  command: Extract<SweetLinkCommand, { type: 'ping' }>,
+  started: number
+): Promise<SweetLinkCommandResult> {
   const durationMs = performance.now() - started;
   return {
     ok: true,
@@ -175,10 +178,10 @@ function runPingCommand(command: Extract<SweetLinkCommand, { type: 'ping' }>, st
   } satisfies SweetLinkCommandResultSuccess;
 }
 
-function runSelectorDiscoveryCommand(
+async function runSelectorDiscoveryCommand(
   command: SweetLinkSelectorDiscoveryCommand,
   started: number
-): SweetLinkCommandResult {
+): Promise<SweetLinkCommandResult> {
   const limit = Number.isFinite(command.limit) && command.limit ? Math.max(1, Math.floor(command.limit)) : 20;
   const includeHidden = command.includeHidden === true;
   const candidates = discoverSelectorCandidates({

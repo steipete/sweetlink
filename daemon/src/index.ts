@@ -14,6 +14,8 @@ import {
   SWEETLINK_HEARTBEAT_INTERVAL_MS,
   SWEETLINK_HEARTBEAT_TOLERANCE_MS,
   SWEETLINK_WS_PATH,
+  type SweetLinkCommandResult,
+  type SweetLinkConsoleEvent,
   type SweetLinkSessionSummary,
   verifySweetLinkToken,
 } from '@sweetlink/shared';
@@ -227,13 +229,37 @@ const commandSchema = z.discriminatedUnion('type', [
 
 const timeoutOverrideSchema = z.number().finite().positive().optional();
 
-type ConsoleEvent = z.infer<typeof consoleEventSchema>;
-type CommandResult = z.infer<typeof commandResultSchema>;
+type ConsoleEvent = SweetLinkConsoleEvent;
+type CommandResult = SweetLinkCommandResult;
 type CommandWithoutId = z.infer<typeof commandSchema>;
 type CommandWithId = CommandWithoutId & { id: string };
-type ClientMessage = z.infer<typeof clientMessageSchema>;
-type RegisterClientMessage = Extract<ClientMessage, { kind: 'register' }>;
+type RegisterClientMessage = {
+  readonly kind: 'register';
+  readonly token: string;
+  readonly sessionId: string;
+  readonly url: string;
+  readonly title: string;
+  readonly userAgent: string;
+  readonly topOrigin: string;
+};
+type HeartbeatClientMessage = { readonly kind: 'heartbeat'; readonly sessionId: string };
+type CommandResultClientMessage = {
+  readonly kind: 'commandResult';
+  readonly sessionId: string;
+  readonly result: CommandResult;
+};
+type ConsoleClientMessage = {
+  readonly kind: 'console';
+  readonly sessionId: string;
+  readonly events: readonly ConsoleEvent[];
+};
+type ClientMessage =
+  | RegisterClientMessage
+  | HeartbeatClientMessage
+  | CommandResultClientMessage
+  | ConsoleClientMessage;
 type CommandRequest = { command: CommandWithoutId; timeoutMs?: number };
+
 
 type ServerMessage =
   | { kind: 'command'; sessionId: string; command: CommandWithId }
@@ -378,7 +404,8 @@ class SweetLinkState {
     socket.on('message', (data) => {
       try {
         const raw = decodeSocketPayload(data);
-        const message = parseClientMessage(JSON.parse(raw));
+        const parsedMessage = parseClientMessage(JSON.parse(raw));
+        const message = parsedMessage as ClientMessage;
         switch (message.kind) {
           case 'register': {
             sessionId = this.#handleRegister(socket, message);
@@ -397,7 +424,8 @@ class SweetLinkState {
             break;
           }
           default: {
-            console.warn(`SweetLink socket received unsupported message: ${message.kind as string}`);
+            const exhaustiveCheck: never = message;
+            void exhaustiveCheck;
             break;
           }
         }
@@ -748,12 +776,8 @@ function decodeSocketPayload(data: WebSocket.RawData): string {
   return Buffer.from([]).toString('utf8');
 }
 
-function parseClientMessage(raw: unknown): ClientMessage {
-  const parsed = clientMessageSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new Error('Invalid client message');
-  }
-  return parsed.data;
+function parseClientMessage(raw: unknown): unknown {
+  return clientMessageSchema.parse(raw);
 }
 
 function parseCommandRequest(raw: unknown): CommandRequest {

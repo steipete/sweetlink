@@ -52,8 +52,13 @@ type KnownCssProperty =
 
 type CssPropertyName = KnownCssProperty | `--${string}`;
 
-const isSafeCssProperty = (property: CssPropertyName): boolean =>
-  SAFE_CSS_PROPERTY_PATTERN.test(property) || property.startsWith('--');
+const isSafeCssProperty = (property: CssPropertyName): boolean => {
+  const normalizedProperty: string = typeof property === 'string' ? property : String(property);
+  return (
+    SAFE_CSS_PROPERTY_PATTERN.test(normalizedProperty) ||
+    String.prototype.startsWith.call(normalizedProperty, '--')
+  );
+};
 
 export function loadDomToImage(): Promise<DomToImageModule> {
   if (domToImagePromise) {

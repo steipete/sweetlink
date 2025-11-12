@@ -4,7 +4,7 @@ import { logDebugError } from '../../util/errors.js';
 import { delay } from '../../util/time.js';
 import { saveDevToolsConfig } from '../devtools.js';
 import { urlsRoughlyMatch } from '../url.js';
-import { OPTIONAL_TRAILING_SLASH_PATTERN } from '../util/regex.js';
+import { OPTIONAL_TRAILING_SLASH_PATTERN } from '../../util/regex.js';
 
 
 export async function signalSweetLinkBootstrap(devtoolsUrl: string, targetUrl: string): Promise<void> {

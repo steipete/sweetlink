@@ -1,4 +1,5 @@
 import type { SweetLinkScreenshotCommand } from '@sweetlink/shared';
+import { z } from 'zod';
 import { loadDefaultExportFromUrl } from '../module-loader.js';
 import type { ScreenshotTargetInfo } from '../types.js';
 import { getBrowserWindow } from '../utils/environment.js';
@@ -7,63 +8,55 @@ import { isRecord, toTrimmedNonEmptyString } from '../utils/object.js';
 
 type HookRunner = (clientWindow: Window, document_: Document, target: HTMLElement) => Promise<void> | void;
 
-export type ScreenshotHook =
-  | {
-      readonly type: 'scrollIntoView';
-      readonly selector?: string | null;
-      readonly behavior?: ScrollBehavior;
-      readonly block?: ScrollLogicalPosition;
-    }
-  | {
-      readonly type: 'waitForSelector';
-      readonly selector: string;
-      readonly visibility?: 'any' | 'visible';
-      readonly timeoutMs?: number;
-    }
-  | {
-      readonly type: 'waitForIdle';
-      readonly timeoutMs?: number;
-      readonly frameCount?: number;
-    }
-  | {
-      readonly type: 'wait';
-      readonly ms: number;
-    }
-  | {
-      readonly type: 'script';
-      readonly code: string;
-    };
+const scrollIntoViewHookSchema = z
+  .object({
+    type: z.literal('scrollIntoView'),
+    selector: z.union([z.string(), z.null()]).optional(),
+    behavior: z.enum(['auto', 'smooth', 'instant']).optional(),
+    block: z.enum(['start', 'center', 'end', 'nearest']).optional(),
+  })
+  .passthrough();
 
-export const isScreenshotHook = (candidate: unknown): candidate is ScreenshotHook => {
-  const record = isRecord<{ type?: unknown; selector?: unknown; ms?: unknown; code?: unknown }>(candidate)
-    ? candidate
-    : null;
-  if (!record || typeof record.type !== 'string') {
-    return false;
-  }
-  switch (record.type) {
-    case 'scrollIntoView': {
-      const selectorValid =
-        record.selector === undefined || record.selector === null || typeof record.selector === 'string';
-      return selectorValid;
-    }
-    case 'waitForSelector': {
-      return typeof record.selector === 'string';
-    }
-    case 'waitForIdle': {
-      return true;
-    }
-    case 'wait': {
-      return typeof record.ms === 'number' && Number.isFinite(record.ms);
-    }
-    case 'script': {
-      return typeof record.code === 'string';
-    }
-    default: {
-      return false;
-    }
-  }
-};
+const waitForSelectorHookSchema = z
+  .object({
+    type: z.literal('waitForSelector'),
+    selector: z.string().min(1),
+    visibility: z.enum(['any', 'visible']).optional(),
+    timeoutMs: z.number().finite().optional(),
+  })
+  .passthrough();
+
+const waitForIdleHookSchema = z
+  .object({
+    type: z.literal('waitForIdle'),
+    timeoutMs: z.number().finite().optional(),
+    frameCount: z.number().finite().optional(),
+  })
+  .passthrough();
+
+const waitHookSchema = z
+  .object({
+    type: z.literal('wait'),
+    ms: z.number().finite(),
+  })
+  .passthrough();
+
+const scriptHookSchema = z
+  .object({
+    type: z.literal('script'),
+    code: z.string().min(1),
+  })
+  .passthrough();
+
+export const screenshotHookSchema = z.discriminatedUnion('type', [
+  scrollIntoViewHookSchema,
+  waitForSelectorHookSchema,
+  waitForIdleHookSchema,
+  waitHookSchema,
+  scriptHookSchema,
+]);
+
+export type ScreenshotHook = z.infer<typeof screenshotHookSchema>;
 
 export const createHookRunner = (source: string): HookRunner => {
   const blob = new Blob(['"use strict"; export default async (window, document, target) => {\n', source, '\n};'], {
@@ -103,9 +96,7 @@ export async function applyScreenshotPreHooks(
   command: SweetLinkScreenshotCommand,
   initialTarget: ScreenshotTargetInfo
 ): Promise<void> {
-  const hooks: readonly ScreenshotHook[] = Array.isArray(command.hooks)
-    ? command.hooks.filter((hook): hook is ScreenshotHook => isScreenshotHook(hook))
-    : [];
+  const hooks = parseScreenshotHooks(command.hooks);
   if (hooks.length === 0) {
     return;
   }
@@ -156,6 +147,20 @@ export async function applyScreenshotPreHooks(
   }
 
   await hookChain;
+}
+
+function parseScreenshotHooks(candidate: unknown): ScreenshotHook[] {
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+  const parsed: ScreenshotHook[] = [];
+  for (const hook of candidate) {
+    const result = screenshotHookSchema.safeParse(hook);
+    if (result.success) {
+      parsed.push(result.data);
+    }
+  }
+  return parsed;
 }
 
 function resolveHookTarget(

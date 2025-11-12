@@ -130,22 +130,23 @@ export const deriveSmokeRoutes = (raw: string | undefined, defaults: readonly st
 };
 
 const normalizeRoutePath = (route: string): string => {
-  if (!route) {
+  const routeValue: string = typeof route === 'string' ? route : String(route ?? '');
+  if (!routeValue) {
     return '/';
   }
-  if (ABSOLUTE_URL_PATTERN.test(route)) {
+  if (ABSOLUTE_URL_PATTERN.test(routeValue)) {
     try {
-      const parsed = new URL(route);
+      const parsed = new URL(routeValue);
       return parsed.pathname || '/';
     } catch {
       return '/';
     }
   }
-  const trimmed = route.trim();
+  const trimmed = String.prototype.trim.call(routeValue) as string;
   if (!trimmed) {
     return '/';
   }
-  const withSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const withSlash = String.prototype.startsWith.call(trimmed, '/') ? trimmed : `/${trimmed}`;
   return withSlash.replaceAll(/\/{2,}/g, '/');
 };
 
