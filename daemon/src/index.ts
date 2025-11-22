@@ -425,8 +425,9 @@ class SweetLinkState {
           }
           default: {
             const exhaustiveCheck: never = message;
-            void exhaustiveCheck;
-            break;
+            // biome-ignore lint/suspicious/noExplicitAny: exhaustiveness guard for impossible state
+            const kind = (exhaustiveCheck as any)?.kind ?? String(exhaustiveCheck);
+            throw new Error(`Unhandled client message: ${kind}`);
           }
         }
       } catch (error) {

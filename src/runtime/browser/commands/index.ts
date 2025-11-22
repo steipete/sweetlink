@@ -131,7 +131,7 @@ async function runScriptCommand(
   }
 }
 
-async function runGetDomCommand(
+function runGetDomCommand(
   command: Extract<SweetLinkCommand, { type: 'getDom' }>,
   started: number
 ): Promise<SweetLinkCommandResult> {
@@ -143,42 +143,42 @@ async function runGetDomCommand(
     data = document.documentElement.outerHTML;
   }
   const durationMs = performance.now() - started;
-  return {
+  return Promise.resolve({
     ok: true,
     commandId: command.id,
     durationMs,
     data,
-  } satisfies SweetLinkCommandResultSuccess;
+  } satisfies SweetLinkCommandResultSuccess);
 }
 
-async function runNavigateCommand(
+function runNavigateCommand(
   command: Extract<SweetLinkCommand, { type: 'navigate' }>,
   started: number
 ): Promise<SweetLinkCommandResult> {
   (getBrowserWindow() ?? window).location.assign(command.url);
   const durationMs = performance.now() - started;
-  return {
+  return Promise.resolve({
     ok: true,
     commandId: command.id,
     durationMs,
     data: { redirectedTo: command.url },
-  } satisfies SweetLinkCommandResultSuccess;
+  } satisfies SweetLinkCommandResultSuccess);
 }
 
-async function runPingCommand(
+function runPingCommand(
   command: Extract<SweetLinkCommand, { type: 'ping' }>,
   started: number
 ): Promise<SweetLinkCommandResult> {
   const durationMs = performance.now() - started;
-  return {
+  return Promise.resolve({
     ok: true,
     commandId: command.id,
     durationMs,
     data: { now: Date.now() },
-  } satisfies SweetLinkCommandResultSuccess;
+  } satisfies SweetLinkCommandResultSuccess);
 }
 
-async function runSelectorDiscoveryCommand(
+function runSelectorDiscoveryCommand(
   command: SweetLinkSelectorDiscoveryCommand,
   started: number
 ): Promise<SweetLinkCommandResult> {
@@ -193,12 +193,12 @@ async function runSelectorDiscoveryCommand(
   const payload = {
     candidates,
   };
-  return {
+  return Promise.resolve({
     ok: true,
     commandId: command.id,
     durationMs,
     data: payload,
-  } satisfies SweetLinkCommandResultSuccess;
+  } satisfies SweetLinkCommandResultSuccess);
 }
 
 async function runScreenshotCommand(

@@ -28,6 +28,10 @@ out/
 coverage/
 .nyc_output/
 *.tsbuildinfo
+*.tgz
+*.tar.gz
+*.zip
+*.delta
 
 # Testing & tooling
 .jest-cache/
@@ -37,6 +41,7 @@ coverage/
 # Editors & OS cruft
 .DS_Store
 **/.DS_Store
+.DS_Store
 Thumbs.db
 .idea/
 .vscode/
