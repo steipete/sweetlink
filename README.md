@@ -1,4 +1,4 @@
-# SweetLink 🍭
+# SweetLink 🍭 - Playwright vibes in your current tab; close the agent loop
 
 <p align="center">
   <img src="docs/assets/sweetlink-header.png" alt="SweetLink header banner" width="1100">
