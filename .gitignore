@@ -47,3 +47,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Avoid nested lockfiles when installing from repo root.
+daemon/pnpm-lock.yaml
