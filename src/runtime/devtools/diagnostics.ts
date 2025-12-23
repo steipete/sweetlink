@@ -7,6 +7,8 @@ import type {
   SweetLinkBootstrapDiagnostics,
 } from './types.js';
 
+type RequestLike = Pick<Request, 'method' | 'url' | 'resourceType'>;
+
 type LineCollector = {
   append: (line: string) => void;
   flush: () => void;
@@ -233,7 +235,7 @@ export function formatConsoleArg(value: unknown): string {
 }
 
 export function createNetworkEntryFromRequest(
-  request: Request,
+  request: RequestLike,
   status?: number,
   failureText?: string
 ): DevToolsNetworkEntry {

@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Request as PlaywrightRequest } from 'playwright-core';
 import type { DevToolsConsoleEntry, SweetLinkBootstrapDiagnostics } from '../src/runtime/devtools';
 
 vi.mock('playwright-core', () => ({
@@ -14,14 +15,14 @@ vi.mock('../src/util/time', () => ({
 
 const fetchMock = vi.fn();
 
+const globalWithFetch: { fetch?: unknown } = globalThis;
+
 beforeAll(() => {
-  // @ts-expect-error assign fetch for the test environment
-  global.fetch = fetchMock;
+  globalWithFetch.fetch = fetchMock;
 });
 
 afterAll(() => {
-  // @ts-expect-error clean up fetch after tests complete
-  global.fetch = undefined;
+  globalWithFetch.fetch = undefined;
 });
 
 beforeEach(() => {
@@ -43,11 +44,10 @@ const delay = vi.mocked(timeModule.delay);
 
 describe('runtime/devtools diagnostics logging', () => {
   const captured: string[] = [];
-  let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     captured.length = 0;
-    warnSpy = vi.spyOn(console, 'warn').mockImplementation((message?: unknown) => {
+    vi.spyOn(console, 'warn').mockImplementation((message?: unknown) => {
       if (typeof message === 'string') {
         captured.push(message);
       }
@@ -55,7 +55,7 @@ describe('runtime/devtools diagnostics logging', () => {
   });
 
   afterEach(() => {
-    warnSpy.mockRestore();
+    vi.restoreAllMocks();
   });
 
   it('logs a concise summary with auth hints, overlay details, and route errors', () => {
@@ -67,7 +67,7 @@ describe('runtime/devtools diagnostics logging', () => {
       errors: [
         {
           type: 'auth-fetch',
-          message: 'Authentication required for /api/auth/session',
+          message: 'Authentication required for /api/auth/get-session',
           status: 401,
           source: 'auth.ts',
         },
@@ -170,7 +170,7 @@ describe('createNetworkEntryFromRequest', () => {
       method: () => 'POST',
       url: () => 'https://example.dev/api',
       resourceType: () => 'xhr',
-    } as unknown as import('playwright-core').Request;
+    } satisfies Pick<PlaywrightRequest, 'method' | 'url' | 'resourceType'>;
 
     const entry = createNetworkEntryFromRequest(mockRequest, 200, undefined);
 
