@@ -2,10 +2,9 @@ import type { Request } from 'playwright-core';
 import { BENIGN_CONSOLE_TYPES, IGNORABLE_DIAGNOSTIC_MESSAGES } from './constants.js';
 import type {
   BootstrapDiagnosticError,
-  DevToolsConsoleEntry,
-  DevToolsNetworkEntry,
   SweetLinkBootstrapDiagnostics,
 } from './types.js';
+import type { DevToolsConsoleEntry, DevToolsNetworkEntry } from './config.js';
 
 type RequestLike = Pick<Request, 'method' | 'url' | 'resourceType'>;
 

@@ -22,51 +22,6 @@ export interface SweetLinkBootstrapDiagnostics {
     } | null;
 }
 export type BootstrapDiagnosticError = NonNullable<SweetLinkBootstrapDiagnostics['errors']>[number];
-export interface DevToolsConfig {
-    readonly devtoolsUrl: string;
-    readonly port: number;
-    readonly userDataDir: string;
-    readonly updatedAt: number;
-    readonly targetUrl?: string;
-    readonly sessionId?: string;
-    readonly oauthScriptPath?: string | null;
-    readonly viewport?: {
-        readonly width: number;
-        readonly height: number;
-        readonly deviceScaleFactor?: number;
-    };
-}
-export interface DevToolsState {
-    endpoint: string;
-    sessionId?: string;
-    viewport?: {
-        readonly width: number;
-        readonly height: number;
-        readonly deviceScaleFactor?: number;
-    };
-    console: DevToolsConsoleEntry[];
-    network: DevToolsNetworkEntry[];
-    updatedAt: number;
-}
-export interface DevToolsConsoleEntry {
-    readonly ts: number;
-    readonly type: string;
-    readonly text: string;
-    readonly args: unknown[];
-    readonly location?: {
-        readonly url?: string;
-        readonly lineNumber?: number;
-        readonly columnNumber?: number;
-    };
-}
-export interface DevToolsNetworkEntry {
-    readonly ts: number;
-    readonly method: string;
-    readonly url: string;
-    readonly status?: number;
-    readonly resourceType?: string;
-    readonly failureText?: string;
-}
 export interface DevToolsTabEntry {
     id: string;
     title: string;
