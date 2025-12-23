@@ -1,0 +1,1 @@
+{"version":3,"file":"app-label.d.ts","sourceRoot":"","sources":["../../../src/util/app-label.ts"],"names":[],"mappings":"AAEA,eAAO,MAAM,iBAAiB,qBAAqB,CAAC;AAGpD,wBAAgB,iBAAiB,CAAC,KAAK,EAAE,OAAO,GAAG,MAAM,GAAG,IAAI,CAM/D;AAED,wBAAgB,cAAc,CAAC,KAAK,EAAE,MAAM,GAAG,IAAI,GAAG,SAAS,GAAG,MAAM,CAEvE;AAED,wBAAgB,oBAAoB,CAAC,KAAK,EAAE,MAAM,GAAG,IAAI,GAAG,SAAS,GAAG,MAAM,CAM7E"}

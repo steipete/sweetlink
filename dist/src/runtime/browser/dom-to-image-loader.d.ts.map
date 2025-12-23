@@ -1,0 +1,1 @@
+{"version":3,"file":"dom-to-image-loader.d.ts","sourceRoot":"","sources":["../../../../src/runtime/browser/dom-to-image-loader.ts"],"names":[],"mappings":"AAEA,KAAK,gBAAgB,GAAG;IAAE,MAAM,EAAE,CAAC,IAAI,EAAE,WAAW,EAAE,OAAO,CAAC,EAAE,OAAO,KAAK,OAAO,CAAC,MAAM,CAAC,CAAA;CAAE,CAAC;AAe9F,wBAAsB,wBAAwB,IAAI,OAAO,CAAC,gBAAgB,CAAC,CAkD1E"}

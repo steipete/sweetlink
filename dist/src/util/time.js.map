@@ -1,0 +1,1 @@
+{"version":3,"file":"time.js","sourceRoot":"","sources":["../../../src/util/time.ts"],"names":[],"mappings":"AAAA,uFAAuF;AACvF,MAAM,UAAU,KAAK,CAAC,EAAU;IAC9B,OAAO,IAAI,OAAO,CAAC,CAAC,OAAO,EAAE,EAAE;QAC7B,UAAU,CAAC,OAAO,EAAE,EAAE,CAAC,CAAC;IAC1B,CAAC,CAAC,CAAC;AACL,CAAC"}

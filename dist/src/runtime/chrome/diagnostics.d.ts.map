@@ -1,0 +1,1 @@
+{"version":3,"file":"diagnostics.d.ts","sourceRoot":"","sources":["../../../../src/runtime/chrome/diagnostics.ts"],"names":[],"mappings":"AAGA,wBAAsB,2BAA2B,CAC/C,WAAW,EAAE,MAAM,EACnB,SAAS,EAAE,MAAM,GAChB,OAAO,CAAC;IAAE,WAAW,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IAAC,QAAQ,CAAC,EAAE,MAAM,GAAG,IAAI,CAAC;IAAC,KAAK,CAAC,EAAE,MAAM,GAAG,IAAI,CAAA;CAAE,GAAG,IAAI,CAAC,CA+ClG"}
