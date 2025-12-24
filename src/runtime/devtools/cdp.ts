@@ -202,6 +202,7 @@ export async function evaluateInDevToolsTab(
   }
 
   const candidate =
+    tabs.find((tab) => tab.url === targetUrl && tab.webSocketDebuggerUrl) ||
     tabs.find((tab) => urlsRoughlyMatch(tab.url, targetUrl) && tab.webSocketDebuggerUrl) ||
     tabs.find((tab) => tab.webSocketDebuggerUrl);
 

@@ -166,7 +166,8 @@ export async function evaluateInDevToolsTab(devtoolsUrl, targetUrl, expression) 
     if (tabs.length === 0) {
         throw new Error('No DevTools tabs available');
     }
-    const candidate = tabs.find((tab) => urlsRoughlyMatch(tab.url, targetUrl) && tab.webSocketDebuggerUrl) ||
+    const candidate = tabs.find((tab) => tab.url === targetUrl && tab.webSocketDebuggerUrl) ||
+        tabs.find((tab) => urlsRoughlyMatch(tab.url, targetUrl) && tab.webSocketDebuggerUrl) ||
         tabs.find((tab) => tab.webSocketDebuggerUrl);
     if (!candidate?.webSocketDebuggerUrl) {
         throw new Error('DevTools tab does not expose a debugger WebSocket URL');
