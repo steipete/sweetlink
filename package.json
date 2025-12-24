@@ -1,6 +1,6 @@
 {
   "name": "sweetlink",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "private": false,
   "type": "module",
@@ -28,6 +28,7 @@
     "@biomejs/biome": "^2.3.4",
     "@types/node": "^22.19.0",
     "@types/ws": "^8.18.1",
+    "jsdom": "^27.3.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "ultracite": "^6.3.2",

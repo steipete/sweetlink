@@ -14,7 +14,7 @@ import { describeUnknown, extractEventMessage } from '../../util/errors.js';
 import { delay } from '../../util/time.js';
 import { DEVTOOLS_PORT_SCAN_END, DEVTOOLS_PORT_SCAN_START } from '../chrome/reuse/constants.js';
 import { urlsRoughlyMatch } from '../url.js';
-import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsNetworkEntry, DevToolsState } from './config.js';
+import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsState } from './config.js';
 import type {
   DevToolsTabEntry,
   SweetLinkBootstrapDiagnostics,
