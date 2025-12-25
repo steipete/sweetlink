@@ -18,13 +18,13 @@ import {
   type SweetLinkConsoleEvent,
   type SweetLinkSessionSummary,
   verifySweetLinkToken,
-} from '@sweetlink/shared';
-import { readSweetLinkEnv } from '@sweetlink/shared/env';
+} from '../../shared/src/index.js';
+import { readSweetLinkEnv } from '../../shared/src/env.js';
 import {
   getDefaultSweetLinkSecretPath,
   resolveSweetLinkSecret,
   type SweetLinkSecretResolution,
-} from '@sweetlink/shared/node';
+} from '../../shared/src/node.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { z } from 'zod';
 import { generateSessionCodename } from './codename.js';

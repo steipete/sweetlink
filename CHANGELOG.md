@@ -9,6 +9,7 @@
 - **Cookie sync stability**: Chrome cookie harvesting runs sequentially to avoid dropped reads; added regression coverage.
 - **Daemon entrypoints**: added the `sweetlinkd` bin plus `sweetlink daemon` subcommand for daemon starts.
 - **Reuse fallback**: when a reused DevTools session fails to reach the deep link, `sweetlink open` now launches a fresh controlled window and retries.
+- **Daemon shared resolution**: `sweetlinkd` now loads shared helpers via bundled paths so local installs and links run cleanly.
 
 ## 0.1.0 — 2025-11-22 (Initial release)
 

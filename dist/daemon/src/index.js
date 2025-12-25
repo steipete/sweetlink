@@ -6,9 +6,9 @@ import { createServer as createHttpsServer, request as httpsRequest } from 'node
 import os from 'node:os';
 import path from 'node:path';
 import { URL } from 'node:url';
-import { createSweetLinkCommandId, SWEETLINK_DEFAULT_PORT, SWEETLINK_HEARTBEAT_INTERVAL_MS, SWEETLINK_HEARTBEAT_TOLERANCE_MS, SWEETLINK_WS_PATH, verifySweetLinkToken, } from '@sweetlink/shared';
-import { readSweetLinkEnv } from '@sweetlink/shared/env';
-import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from '@sweetlink/shared/node';
+import { createSweetLinkCommandId, SWEETLINK_DEFAULT_PORT, SWEETLINK_HEARTBEAT_INTERVAL_MS, SWEETLINK_HEARTBEAT_TOLERANCE_MS, SWEETLINK_WS_PATH, verifySweetLinkToken, } from '../../shared/src/index.js';
+import { readSweetLinkEnv } from '../../shared/src/env.js';
+import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from '../../shared/src/node.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { z } from 'zod';
 import { generateSessionCodename } from './codename.js';
