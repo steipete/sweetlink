@@ -25,14 +25,14 @@
     "sweetlink": "./dist/src/index.js"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.4",
-    "@types/node": "^22.19.0",
+    "@biomejs/biome": "^2.3.10",
+    "@types/node": "^22.19.3",
     "@types/ws": "^8.18.1",
     "jsdom": "^27.3.0",
-    "tsx": "^4.20.6",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "ultracite": "^6.3.2",
-    "vitest": "^4.0.8"
+    "ultracite": "^6.5.0",
+    "vitest": "^4.0.16"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -71,19 +71,19 @@
     "pnpm": ">=10.16.0"
   },
   "dependencies": {
-    "arkregex": "^0.0.2",
+    "arkregex": "^0.0.5",
     "chrome-cookies-secure": "^3.0.0",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
-    "es-toolkit": "^1.41.0",
+    "es-toolkit": "^1.43.0",
     "html2canvas": "^1.4.1",
-    "playwright-core": "^1.56.1",
-    "puppeteer": "^24.29.1",
+    "playwright-core": "^1.57.0",
+    "puppeteer": "^24.34.0",
     "random-word-slugs": "^0.1.7",
     "tldjs": "^2.3.2",
     "undici": "^7.16.0",
     "ws": "^8.18.3",
-    "zod": "^3.25.76"
+    "zod": "^4.2.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

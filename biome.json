@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "extends": [
     "ultracite/core",
     "ultracite/react",
@@ -73,7 +73,8 @@
       "!**/public/mockServiceWorker.js",
       "!**/.jscpd-report",
       "!**/reports",
-      "!scripts/cli/iterm-bundle.js"
+      "!scripts/cli/iterm-bundle.js",
+      "!!src/runtime/browser/selector-discovery.ts"
     ]
   },
   "formatter": {
