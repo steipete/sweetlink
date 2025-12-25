@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import type { CliConfig } from '../types.js';
+import type { CliConfig, DevBootstrapConfig } from '../types.js';
 interface ResolvedServerConfig {
     readonly env: string;
     readonly start: string[] | null;
@@ -12,6 +12,7 @@ export interface RootProgramOptions {
     readonly appUrl: string;
     readonly daemonUrl: string;
     readonly adminKey: string | null;
+    readonly devBootstrap: DevBootstrapConfig | null;
     readonly oauthScriptPath: string | null;
     readonly servers: ResolvedServerConfig[];
 }

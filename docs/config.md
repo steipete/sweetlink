@@ -22,6 +22,7 @@ This guide documents every supported key for the config file and environment ove
 | `prodUrl` | string | Base URL for production runs (`--env prod`). Defaults to the same origin as `appUrl` unless `SWEETLINK_PROD_URL` or the config overrides it. |
 | `daemonUrl` | string | SweetLink daemon origin (defaults to `https://localhost:4455`). CLI flag `--daemon-url` overrides it. |
 | `adminKey` | string | Admin API key used for CLI token requests. Provide it via `--admin-key`, `SWEETLINK_LOCAL_ADMIN_API_KEY` (preferred), `SWEETLINK_ADMIN_API_KEY`, or the legacy `SWEETISTICS_*` variables. |
+| `devBootstrap` | object | Optional dev bootstrap config that lets SweetLink fetch a local admin key + dev login URL automatically. |
 | `port` | number | Convenience shortcut that rewrites the local `appUrl` port when `appUrl` itself is not specified. |
 | `cookieMappings` | array | Additional host/origin pairs SweetLink should copy cookies for. See below for the schema. |
 | `healthChecks.paths` | array | Extra HTTP paths (relative or absolute URLs) that SweetLink probes when checking server health. |
@@ -77,6 +78,24 @@ Use `servers` to let SweetLink start or probe your dev stack when it’s offline
 - `timeoutMs` (number, optional) – How long to wait for the server to become healthy after running the start command. Defaults to 30000 (30 seconds).
 
 If `servers` is omitted, SweetLink still pings `appUrl`/`healthChecks.paths` but it will not try to start the stack automatically.
+
+### `devBootstrap`
+
+Use `devBootstrap` to point SweetLink at a local endpoint that mints a short-lived admin API key and provides a dev-login URL. This is most useful when your dev environment has no admin cookies yet.
+
+```json
+{
+  "devBootstrap": {
+    "path": "/api/admin/sweetlink/bootstrap",
+    "loginPath": "/auth/signin?dev=1&sweetlink=auto",
+    "redirectParam": "redirect"
+  }
+}
+```
+
+- `path` (string, required) – API endpoint SweetLink will POST to when it needs a dev admin key. The response should include `adminApiKey` and optionally `loginPath`.
+- `loginPath` (string, optional) – Default login URL SweetLink can open before deep-linking (overridden by the API response if provided).
+- `redirectParam` (string, optional) – Query param name used to pass the target path (defaults to `redirect`).
 
 ### `oauthScript`
 

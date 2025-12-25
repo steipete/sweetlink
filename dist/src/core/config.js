@@ -52,6 +52,13 @@ export const readRootProgramOptions = (command) => {
         (sweetLinkEnv.cliOauthScriptPath ? resolveCliPath(sweetLinkEnv.cliOauthScriptPath) : null);
     const optionLabel = normalizeAppLabel(rawOptions.appLabel);
     const fallbackAppLabel = formatAppLabel(config.appLabel ?? sweetLinkEnv.appLabel);
+    const devBootstrap = config.devBootstrap
+        ? {
+            endpoint: config.devBootstrap.endpoint ?? null,
+            loginPath: config.devBootstrap.loginPath ?? null,
+            redirectParam: config.devBootstrap.redirectParam ?? null,
+        }
+        : null;
     const servers = (config.servers ?? []).map((server) => ({
         env: server.env,
         start: server.start ?? null,
@@ -63,6 +70,7 @@ export const readRootProgramOptions = (command) => {
         appUrl: normalizeUrlOption(optionUrl, fallbackAppUrl),
         daemonUrl: normalizeUrlOption(rawOptions.daemonUrl, fallbackDaemonUrl),
         adminKey: normalizeAdminKey(fallbackAdminKey),
+        devBootstrap,
         oauthScriptPath: fallbackOauthScriptPath,
         appLabel: optionLabel ?? fallbackAppLabel,
         servers,
@@ -79,6 +87,7 @@ export function resolveConfig(command) {
     return {
         appLabel: options.appLabel,
         adminApiKey: options.adminKey,
+        devBootstrap: options.devBootstrap,
         appBaseUrl: options.appUrl,
         daemonBaseUrl: options.daemonUrl,
         oauthScriptPath: options.oauthScriptPath,

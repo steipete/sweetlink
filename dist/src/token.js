@@ -1,5 +1,6 @@
 import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from '../shared/src/index.js';
 import { resolveSweetLinkSecret } from '../shared/src/node.js';
+import { loadDevBootstrap } from './core/dev-bootstrap.js';
 import { fetchJson } from './http.js';
 import { describeAppForPrompt } from './util/app-label.js';
 import { describeUnknown } from './util/errors.js';
@@ -13,12 +14,14 @@ export async function fetchCliToken(config) {
     if (cachedCliToken && cachedCliToken.expiresAt - 30 > now) {
         return cachedCliToken.token;
     }
-    if (config.adminApiKey) {
+    const bootstrap = await loadDevBootstrap(config).catch(() => null);
+    const adminApiKey = config.adminApiKey ?? bootstrap?.adminApiKey ?? null;
+    if (adminApiKey) {
         try {
             const response = await fetchJson(`${config.appBaseUrl.replace(TRAILING_SLASH_PATTERN, '')}/api/admin/sweetlink/cli-token`, {
                 method: 'POST',
                 headers: {
-                    Authorization: `Bearer ${config.adminApiKey}`,
+                    Authorization: `Bearer ${adminApiKey}`,
                     'Content-Type': 'application/json',
                 },
             });
@@ -49,7 +52,7 @@ export async function fetchCliToken(config) {
     catch (error) {
         const detail = error instanceof Error ? error.message : describeUnknown(error);
         const targetDescription = describeAppForPrompt(config.appLabel);
-        const hint = config.adminApiKey
+        const hint = adminApiKey
             ? `Check that your admin key is valid or ensure ${targetDescription} is running.`
             : 'Provide --admin-key or start the SweetLink daemon once (pnpm sweetlink) to generate the shared secret.';
         throw new Error(`Unable to resolve SweetLink CLI token. Reason: ${detail}. ${hint}`);

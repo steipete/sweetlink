@@ -1,3 +1,4 @@
+import { buildDevBootstrapLoginUrl } from '../../core/dev-bootstrap.js';
 import { logDebugError } from '../../util/errors.js';
 import { delay } from '../../util/time.js';
 import { attemptTwitterOauthAutoAccept } from '../devtools/oauth.js';
@@ -54,6 +55,21 @@ export async function ensureDeepLinkAuthFlow(params) {
         let currentUrl = normalizeUrl(page.url());
         if (currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl.toString())) {
             return { signInClicked: false, navigatedToTarget: true, finalUrl: currentUrl.toString() };
+        }
+        const devLoginUrl = buildDevBootstrapLoginUrl(targetUrl.toString());
+        if (devLoginUrl) {
+            const devLoginResult = await attemptDevBootstrapLogin(page, devLoginUrl, targetUrl.toString());
+            if (devLoginResult.attempted) {
+                signInClicked = true;
+            }
+            if (devLoginResult.navigatedToTarget) {
+                return {
+                    signInClicked,
+                    navigatedToTarget: true,
+                    finalUrl: devLoginResult.finalUrl,
+                };
+            }
+            currentUrl = normalizeUrl(page.url());
         }
         if (!currentUrl || !isSameOrigin(currentUrl.toString(), targetOrigin)) {
             await navigatePuppeteerPage(page, targetOrigin, 2);
@@ -176,6 +192,28 @@ async function attemptOauthKickoff(page, callbackUrl) {
         return { started: false, reason: 'exception' };
     });
     return Boolean(result?.started);
+}
+async function attemptDevBootstrapLogin(page, loginUrl, targetUrl) {
+    try {
+        await navigatePuppeteerPage(page, loginUrl, 2);
+        await delay(800);
+        let currentUrl = normalizeUrl(page.url());
+        if (currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl)) {
+            return { attempted: true, navigatedToTarget: true, finalUrl: currentUrl.toString() };
+        }
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+            await delay(500);
+            currentUrl = normalizeUrl(page.url());
+            if (currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl)) {
+                return { attempted: true, navigatedToTarget: true, finalUrl: currentUrl.toString() };
+            }
+        }
+        return { attempted: true, navigatedToTarget: false, finalUrl: currentUrl?.toString() ?? null };
+    }
+    catch (error) {
+        logDebugError('Dev bootstrap login failed', error);
+        return { attempted: true, navigatedToTarget: false, finalUrl: null };
+    }
 }
 function normalizeUrl(raw) {
     if (!raw) {

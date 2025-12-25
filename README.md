@@ -140,6 +140,7 @@ Place the config file in your project root (or any parent directory). With the f
 - `prodUrl` – Base URL for `--env prod` runs (smoke tests, screenshots). Falls back to the same origin as `appUrl` when omitted or when `SWEETLINK_PROD_URL` is unset.
 - `daemonUrl` – Location of the SweetLink daemon. Defaults to `https://localhost:4455`; override when you run the daemon remotely.
 - `adminKey` – Admin API key used when the CLI requests short-lived session tokens. Provide it via config/`--admin-key`, `SWEETLINK_LOCAL_ADMIN_API_KEY` (preferred for dev), `SWEETLINK_ADMIN_API_KEY` (prod), or the legacy `SWEETISTICS_*` variables for backwards compatibility.
+- `devBootstrap` – Optional dev bootstrap settings that let the CLI fetch a local admin key + dev login URL on demand (endpoint + login path).
 - `port` – Injected into `appUrl` when no explicit host is provided. Handy for per-service configs (`4100`, `5173`, etc.).
 - `healthChecks.paths` – Additional paths the CLI and watchdog probe before assuming the app is healthy. Include JSON APIs or custom `/healthz` endpoints to catch silent failures.
 - `cookieMappings` – List of `{ hosts, origins }` entries that teach SweetLink which Chrome profiles to harvest cookies from. Map every hostname your app serves (including wildcards) to the origins you need (auth providers, REST APIs, CDNs). SweetLink combines these with the primary origin for the target URL; no extra domains are assumed automatically.

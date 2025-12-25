@@ -86,6 +86,10 @@ function normalizeConfig(raw, baseDirectory) {
     if (cookieMappings.length > 0) {
         config.cookieMappings = cookieMappings;
     }
+    const devBootstrap = normalizeDevBootstrapSection(raw.devBootstrap);
+    if (devBootstrap) {
+        config.devBootstrap = devBootstrap;
+    }
     const healthChecks = normalizeHealthChecksSection(raw.healthChecks);
     if (healthChecks) {
         config.healthChecks = healthChecks;
@@ -133,6 +137,29 @@ function normalizeStringArray(value) {
         const trimmed = item.trim();
         return trimmed.length > 0 ? trimmed : null;
     }));
+}
+function normalizeOptionalString(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+}
+function normalizeDevBootstrapSection(value) {
+    if (!value || typeof value !== 'object') {
+        return null;
+    }
+    if (Array.isArray(value)) {
+        return null;
+    }
+    const record = value;
+    const endpoint = normalizeOptionalString(record.endpoint ?? record.path);
+    const loginPath = normalizeOptionalString(record.loginPath);
+    const redirectParam = normalizeOptionalString(record.redirectParam);
+    if (!endpoint && !loginPath) {
+        return null;
+    }
+    return { endpoint: endpoint ?? undefined, loginPath: loginPath ?? undefined, redirectParam: redirectParam ?? undefined };
 }
 function normalizeCookieMappingsSection(value) {
     if (!Array.isArray(value)) {

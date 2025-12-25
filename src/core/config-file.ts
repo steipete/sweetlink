@@ -28,6 +28,12 @@ export interface SweetLinkServerConfig {
   timeoutMs?: number;
 }
 
+export interface SweetLinkDevBootstrapConfig {
+  endpoint?: string;
+  loginPath?: string;
+  redirectParam?: string;
+}
+
 export interface SweetLinkFileConfig {
   appLabel?: string;
   appUrl?: string;
@@ -35,6 +41,7 @@ export interface SweetLinkFileConfig {
   daemonUrl?: string;
   adminKey?: string;
   port?: number;
+  devBootstrap?: SweetLinkDevBootstrapConfig;
   cookieMappings?: SweetLinkCookieMapping[];
   healthChecks?: SweetLinkHealthChecksConfig;
   smokeRoutes?: SweetLinkSmokeRoutesConfig;
@@ -141,6 +148,10 @@ function normalizeConfig(raw: Record<string, unknown>, baseDirectory: string | n
   if (cookieMappings.length > 0) {
     config.cookieMappings = cookieMappings;
   }
+  const devBootstrap = normalizeDevBootstrapSection(raw.devBootstrap);
+  if (devBootstrap) {
+    config.devBootstrap = devBootstrap;
+  }
   const healthChecks = normalizeHealthChecksSection(raw.healthChecks);
   if (healthChecks) {
     config.healthChecks = healthChecks;
@@ -192,6 +203,31 @@ function normalizeStringArray(value: unknown): string[] {
       return trimmed.length > 0 ? trimmed : null;
     })
   );
+}
+
+function normalizeOptionalString(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function normalizeDevBootstrapSection(value: unknown): SweetLinkDevBootstrapConfig | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const endpoint = normalizeOptionalString(record.endpoint ?? record.path);
+  const loginPath = normalizeOptionalString(record.loginPath);
+  const redirectParam = normalizeOptionalString(record.redirectParam);
+  if (!endpoint && !loginPath) {
+    return null;
+  }
+  return { endpoint: endpoint ?? undefined, loginPath: loginPath ?? undefined, redirectParam: redirectParam ?? undefined };
 }
 
 function normalizeCookieMappingsSection(value: unknown): SweetLinkCookieMapping[] {

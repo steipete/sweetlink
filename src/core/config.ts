@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { Command } from 'commander';
 import { sweetLinkEnv } from '../env.js';
-import type { CliConfig } from '../types.js';
+import type { CliConfig, DevBootstrapConfig } from '../types.js';
 import { formatAppLabel, normalizeAppLabel } from '../util/app-label.js';
 import { loadSweetLinkFileConfig } from './config-file.js';
 import { readCommandOptions } from './env.js';
@@ -19,6 +19,7 @@ export interface RootProgramOptions {
   readonly appUrl: string;
   readonly daemonUrl: string;
   readonly adminKey: string | null;
+  readonly devBootstrap: DevBootstrapConfig | null;
   readonly oauthScriptPath: string | null;
   readonly servers: ResolvedServerConfig[];
 }
@@ -83,6 +84,13 @@ export const readRootProgramOptions = (command: Command): RootProgramOptions => 
     (sweetLinkEnv.cliOauthScriptPath ? resolveCliPath(sweetLinkEnv.cliOauthScriptPath) : null);
   const optionLabel = normalizeAppLabel(rawOptions.appLabel);
   const fallbackAppLabel = formatAppLabel(config.appLabel ?? sweetLinkEnv.appLabel);
+  const devBootstrap = config.devBootstrap
+    ? {
+        endpoint: config.devBootstrap.endpoint ?? null,
+        loginPath: config.devBootstrap.loginPath ?? null,
+        redirectParam: config.devBootstrap.redirectParam ?? null,
+      }
+    : null;
 
   const servers: ResolvedServerConfig[] = (config.servers ?? []).map((server) => ({
     env: server.env,
@@ -96,6 +104,7 @@ export const readRootProgramOptions = (command: Command): RootProgramOptions => 
     appUrl: normalizeUrlOption(optionUrl, fallbackAppUrl),
     daemonUrl: normalizeUrlOption(rawOptions.daemonUrl, fallbackDaemonUrl),
     adminKey: normalizeAdminKey(fallbackAdminKey),
+    devBootstrap,
     oauthScriptPath: fallbackOauthScriptPath,
     appLabel: optionLabel ?? fallbackAppLabel,
     servers,
@@ -113,6 +122,7 @@ export function resolveConfig(command: Command): CliConfig {
   return {
     appLabel: options.appLabel,
     adminApiKey: options.adminKey,
+    devBootstrap: options.devBootstrap,
     appBaseUrl: options.appUrl,
     daemonBaseUrl: options.daemonUrl,
     oauthScriptPath: options.oauthScriptPath,

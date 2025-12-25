@@ -17,6 +17,11 @@ export interface SweetLinkServerConfig {
     cwd?: string;
     timeoutMs?: number;
 }
+export interface SweetLinkDevBootstrapConfig {
+    endpoint?: string;
+    loginPath?: string;
+    redirectParam?: string;
+}
 export interface SweetLinkFileConfig {
     appLabel?: string;
     appUrl?: string;
@@ -24,6 +29,7 @@ export interface SweetLinkFileConfig {
     daemonUrl?: string;
     adminKey?: string;
     port?: number;
+    devBootstrap?: SweetLinkDevBootstrapConfig;
     cookieMappings?: SweetLinkCookieMapping[];
     healthChecks?: SweetLinkHealthChecksConfig;
     smokeRoutes?: SweetLinkSmokeRoutesConfig;
