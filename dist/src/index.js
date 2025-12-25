@@ -484,42 +484,50 @@ async function handleControlledOpen(context, waitToken) {
 }
 async function handleControlledReuse(context, waitToken, reuseResult) {
     const shouldFocus = context.foreground && !context.headless;
+    let deepLinkResult = null;
     if (context.enableDevtools) {
         await registerControlledChromeInstance(reuseResult.devtoolsUrl, reuseResult.userDataDir);
         await cleanupControlledChromeRegistry(reuseResult.devtoolsUrl);
         await signalSweetLinkBootstrap(reuseResult.devtoolsUrl, context.targetUrlString);
-        if (!reuseResult.targetAlreadyOpen) {
-            try {
-                const deepLinkResult = await ensureDeepLinkAuthFlow({
-                    devtoolsUrl: reuseResult.devtoolsUrl,
-                    targetUrl: context.targetUrlString,
-                    oauthScriptPath: context.oauthScriptPath,
-                });
-                if (deepLinkResult.signInClicked) {
-                    console.log('Triggered Sweetistics sign-in to reach the deep link.');
+        try {
+            deepLinkResult = await ensureDeepLinkAuthFlow({
+                devtoolsUrl: reuseResult.devtoolsUrl,
+                targetUrl: context.targetUrlString,
+                oauthScriptPath: context.oauthScriptPath,
+            });
+            if (deepLinkResult.signInClicked) {
+                console.log('Triggered Sweetistics sign-in to reach the deep link.');
+            }
+            const oauthAttempt = deepLinkResult.oauthAttempt;
+            if (oauthAttempt) {
+                if (oauthAttempt.handled) {
+                    console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
                 }
-                const oauthAttempt = deepLinkResult.oauthAttempt;
-                if (oauthAttempt) {
-                    if (oauthAttempt.handled) {
-                        console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
-                    }
-                    else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
-                        const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
-                            ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
-                            : '';
-                        console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
-                    }
+                else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
+                    const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
+                        ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
+                        : '';
+                    console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
                 }
             }
-            catch (error) {
-                if (sweetLinkDebug) {
-                    console.warn('Deep-link auth flow failed:', error);
-                }
+        }
+        catch (error) {
+            if (sweetLinkDebug) {
+                console.warn('Deep-link auth flow failed:', error);
             }
         }
     }
     else {
         console.log('DevTools automation disabled (--no-devtools); skipping telemetry bootstrap and OAuth auto-click.');
+    }
+    if (context.enableDevtools && (!deepLinkResult || !deepLinkResult.navigatedToTarget)) {
+        console.warn('Deep link did not resolve in reused controlled Chrome; launching a fresh controlled window.');
+        const freshContext = {
+            ...context,
+            preferredPort: undefined,
+        };
+        await handleControlledLaunch(freshContext, waitToken);
+        return;
     }
     console.log(`Reused controlled Chrome at ${reuseResult.devtoolsUrl} (env: ${context.env}).`);
     if (reuseResult.targetAlreadyOpen) {
