@@ -26,7 +26,7 @@ SweetLink is the agent-ready way to "connect your agent to your web app. Like Pl
 - Node.js 22+
 - `pnpm` (managed via Corepack)
 - TLS requirements: `brew install mkcert nss`
-- SweetLink daemon (`apps/sweetlink/daemon`) running locally or via `pnpm sweetlink:daemon`
+- SweetLink daemon running locally (`pnpm exec sweetlink daemon` or `pnpm exec sweetlinkd`)
 - Trust the local certificate once: `pnpm sweetlink trust-ca`
 
 ## Installation
@@ -46,6 +46,7 @@ pnpm sweetlink --help
 
 Common workflows:
 
+- `pnpm exec sweetlink daemon` – start the SweetLink daemon (alias: `pnpm exec sweetlinkd`).
 - `pnpm sweetlink open --controlled --path /dashboard` – launch/reuse the controlled Chrome window.
 - `pnpm sweetlink open --url http://localhost:4100/dashboard` – target a non-default host/port for one-off runs.
 - `pnpm sweetlink sessions` – view active sessions (codename, heartbeat, socket state, buffered console errors).
@@ -79,7 +80,7 @@ SweetLink defaults to `https://localhost:4455` for daemon traffic. Run `pnpm swe
 SweetLink consists of two cooperating pieces:
 
 - **CLI** – a Node.js client that parses your commands (`open`, `smoke`, `sessions`, etc.), reads `sweetlink.json`, and establishes a control session with your browser.
-- **Daemon** – a long-lived service (`pnpm sweetlink:daemon`) that launches or attaches to a DevTools-enabled Chrome instance, forwards console/network telemetry, and executes remote evaluations on behalf of the CLI.
+- **Daemon** – a long-lived service (`pnpm exec sweetlink daemon` or `pnpm exec sweetlinkd`) that launches or attaches to a DevTools-enabled Chrome instance, forwards console/network telemetry, and executes remote evaluations on behalf of the CLI.
 
 The typical flow looks like this:
 

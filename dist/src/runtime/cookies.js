@@ -28,14 +28,18 @@ export async function collectChromeCookies(targetUrl) {
     if (debugCookies) {
         console.log('Cookie sync debug enabled.');
     }
-    await Promise.all(origins.map((origin) => collectCookiesForOrigin({
-        origin,
-        secureModule,
-        profileOverride,
-        collected,
-        debugCookies,
-        targetBaseUrl,
-    })));
+    // chrome-cookies-secure can miss results under parallel reads; keep this sequential.
+    for (const origin of origins) {
+        // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
+        await collectCookiesForOrigin({
+            origin,
+            secureModule,
+            profileOverride,
+            collected,
+            debugCookies,
+            targetBaseUrl,
+        });
+    }
     pruneIncompatibleCookies(targetBaseUrl, collected);
     return [...collected.values()];
 }
@@ -49,9 +53,9 @@ export async function collectChromeCookiesForDomains(domains) {
     const profileOverride = cliEnv.chromeProfilePath ?? undefined;
     const debugCookies = cliEnv.cookieDebug;
     const results = {};
-    await Promise.all(domains.map(async (domainCandidate) => {
+    for (const domainCandidate of domains) {
         if (!domainCandidate) {
-            return;
+            continue;
         }
         const domain = domainCandidate;
         const origins = new Set(normalizeDomainToOrigins(domain));
@@ -63,14 +67,17 @@ export async function collectChromeCookiesForDomains(domains) {
         }
         const collected = new Map();
         const originList = [...origins.values()].filter((origin) => Boolean(origin));
-        await Promise.all(originList.map((origin) => collectCookiesForOrigin({
-            origin,
-            secureModule,
-            profileOverride,
-            collected,
-            debugCookies,
-            targetBaseUrl: new URL(origin),
-        })));
+        for (const origin of originList) {
+            // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
+            await collectCookiesForOrigin({
+                origin,
+                secureModule,
+                profileOverride,
+                collected,
+                debugCookies,
+                targetBaseUrl: new URL(origin),
+            });
+        }
         const targetIterator = origins.values().next();
         const targetCandidate = targetIterator.done ? domain : targetIterator.value;
         const targetBase = targetCandidate ? tryParseUrl(targetCandidate) : null;
@@ -78,7 +85,7 @@ export async function collectChromeCookiesForDomains(domains) {
             pruneIncompatibleCookies(targetBase, collected);
         }
         results[domain] = [...collected.values()];
-    }));
+    }
     return results;
 }
 /** Returns the full set of origins SweetLink cares about for authentication. */

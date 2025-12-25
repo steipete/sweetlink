@@ -5,6 +5,9 @@
 - **Browser runtime tests moved in**: migrated Sweetistics runtime/browser test coverage into SweetLink’s own suite.
 - **JSDOM-backed runtime specs**: added `jsdom` dev dependency to support browser runtime tests.
 - **DevTools cleanup**: removed an unused DevTools CDP import to keep lint noise down.
+- **OAuth deep linking**: `sweetlink open` now auto-kicks OAuth and re-navigates to deep paths when a sign-in flow is required.
+- **Cookie sync stability**: Chrome cookie harvesting runs sequentially to avoid dropped reads; added regression coverage.
+- **Daemon entrypoints**: added the `sweetlinkd` bin plus `sweetlink daemon` subcommand for daemon starts.
 
 ## 0.1.0 — 2025-11-22 (Initial release)
 

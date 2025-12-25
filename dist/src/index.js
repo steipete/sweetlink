@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, rm } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +18,7 @@ import { cleanupControlledChromeRegistry, registerControlledChromeInstance } fro
 import { sweetLinkCliTestMode, sweetLinkDebug, sweetLinkEnv } from './env.js';
 import { fetchJson } from './http.js';
 import { collectPuppeteerDiagnostics, focusControlledChromePage, launchChrome, launchControlledChrome, prepareChromeLaunch, reuseExistingControlledChrome, signalSweetLinkBootstrap, waitForSweetLinkSession, } from './runtime/chrome.js';
+import { ensureDeepLinkAuthFlow } from './runtime/chrome/deep-link.js';
 import { buildCookieOrigins, collectChromeCookies, collectChromeCookiesForDomains, normalizePuppeteerCookie, } from './runtime/cookies.js';
 import { ensureDevStackRunning as ensureDevStackRunningRuntime, isAppReachable as isAppReachableRuntime, maybeInstallMkcertDispatcher, } from './runtime/devstack.js';
 import { attemptTwitterOauthAutoAccept, collectBootstrapDiagnostics, connectToDevTools, createEmptyDevToolsState, createNetworkEntryFromRequest, DEVTOOLS_CONSOLE_LIMIT, DEVTOOLS_NETWORK_LIMIT, DEVTOOLS_STATE_PATH, deriveDevtoolsLinkInfo, diagnosticsContainBlockingIssues, ensureBackgroundDevtoolsListener, fetchDevToolsTabs, formatConsoleArg, loadDevToolsConfig, loadDevToolsState, logBootstrapDiagnostics, saveDevToolsConfig, saveDevToolsState, serializeConsoleMessage, trimBuffer, } from './runtime/devtools.js';
@@ -285,6 +287,14 @@ program
     .action(async (options, command) => {
     await runOpenCommand(options, command, program);
 });
+program
+    .command('daemon')
+    .description('Launch the SweetLink daemon process')
+    .argument('[args...]', 'Arguments forwarded to sweetlinkd')
+    .allowUnknownOption(true)
+    .action(async (_args, command) => {
+    await runDaemonCommand(command);
+});
 async function runOpenCommand(options, command, rootProgram) {
     const context = buildOpenCommandContext(options, command, rootProgram);
     if (!context.controlled) {
@@ -317,6 +327,29 @@ async function runOpenCommand(options, command, rootProgram) {
         return;
     }
     await handleUncontrolledOpen(context, waitToken);
+}
+async function runDaemonCommand(command) {
+    const parent = command.parent;
+    const rawArgs = parent?.rawArgs ?? process.argv;
+    const daemonIndex = rawArgs.findIndex((arg) => arg === 'daemon');
+    const afterDaemon = daemonIndex === -1 ? [] : rawArgs.slice(daemonIndex + 1);
+    const passthroughIndex = afterDaemon.indexOf('--');
+    const forwarded = passthroughIndex >= 0
+        ? afterDaemon.slice(passthroughIndex + 1)
+        : (command.args ?? []).filter((value) => typeof value === 'string');
+    const child = spawn('sweetlinkd', forwarded, { stdio: 'inherit', env: process.env });
+    child.on('error', (error) => {
+        if (isErrnoException(error) && error.code === 'ENOENT') {
+            console.error('Unable to find "sweetlinkd" on PATH. Try `pnpm exec sweetlinkd` instead.');
+            process.exitCode = 1;
+            return;
+        }
+        console.error('Failed to launch sweetlinkd:', extractEventMessage(error));
+        process.exitCode = 1;
+    });
+    child.on('exit', (code) => {
+        process.exitCode = code ?? 0;
+    });
 }
 function buildOpenCommandContext(options, command, rootProgram) {
     const config = resolveConfig(command);
@@ -455,25 +488,33 @@ async function handleControlledReuse(context, waitToken, reuseResult) {
         await registerControlledChromeInstance(reuseResult.devtoolsUrl, reuseResult.userDataDir);
         await cleanupControlledChromeRegistry(reuseResult.devtoolsUrl);
         await signalSweetLinkBootstrap(reuseResult.devtoolsUrl, context.targetUrlString);
-        try {
-            const oauthAttempt = await attemptTwitterOauthAutoAccept({
-                devtoolsUrl: reuseResult.devtoolsUrl,
-                sessionUrl: context.targetUrlString,
-                scriptPath: context.oauthScriptPath,
-            });
-            if (oauthAttempt.handled) {
-                console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
+        if (!reuseResult.targetAlreadyOpen) {
+            try {
+                const deepLinkResult = await ensureDeepLinkAuthFlow({
+                    devtoolsUrl: reuseResult.devtoolsUrl,
+                    targetUrl: context.targetUrlString,
+                    oauthScriptPath: context.oauthScriptPath,
+                });
+                if (deepLinkResult.signInClicked) {
+                    console.log('Triggered Sweetistics sign-in to reach the deep link.');
+                }
+                const oauthAttempt = deepLinkResult.oauthAttempt;
+                if (oauthAttempt) {
+                    if (oauthAttempt.handled) {
+                        console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
+                    }
+                    else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
+                        const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
+                            ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
+                            : '';
+                        console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
+                    }
+                }
             }
-            else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
-                const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
-                    ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
-                    : '';
-                console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
-            }
-        }
-        catch (error) {
-            if (sweetLinkDebug) {
-                console.warn('OAuth auto-accept attempt failed:', error);
+            catch (error) {
+                if (sweetLinkDebug) {
+                    console.warn('Deep-link auth flow failed:', error);
+                }
             }
         }
     }
@@ -527,24 +568,30 @@ async function handleControlledLaunch(context, waitToken) {
         await cleanupControlledChromeRegistry(info.devtoolsUrl);
         await signalSweetLinkBootstrap(info.devtoolsUrl, context.targetUrlString);
         try {
-            const oauthAttempt = await attemptTwitterOauthAutoAccept({
+            const deepLinkResult = await ensureDeepLinkAuthFlow({
                 devtoolsUrl: info.devtoolsUrl,
-                sessionUrl: context.targetUrlString,
-                scriptPath: context.oauthScriptPath,
+                targetUrl: context.targetUrlString,
+                oauthScriptPath: context.oauthScriptPath,
             });
-            if (oauthAttempt.handled) {
-                console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
+            if (deepLinkResult.signInClicked) {
+                console.log('Triggered Sweetistics sign-in to reach the deep link.');
             }
-            else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
-                const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
-                    ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
-                    : '';
-                console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
+            const oauthAttempt = deepLinkResult.oauthAttempt;
+            if (oauthAttempt) {
+                if (oauthAttempt.handled) {
+                    console.log(`Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''}.`);
+                }
+                else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
+                    const locationHint = oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
+                        ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
+                        : '';
+                    console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
+                }
             }
         }
         catch (error) {
             if (sweetLinkDebug) {
-                console.warn('OAuth auto-accept attempt failed:', error);
+                console.warn('Deep-link auth flow failed:', error);
             }
         }
     }

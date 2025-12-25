@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const cookieResponses = new Map<string, Record<string, unknown>[]>();
-const getCookiesPromisedMock = vi.fn((origin: string) => {
+const defaultGetCookiesPromisedImpl = (origin: string) => {
   const normalized = origin.endsWith('/') ? origin : `${origin}/`;
   return Promise.resolve(cookieResponses.get(normalized) ?? []);
-});
+};
+const getCookiesPromisedMock = vi.fn(defaultGetCookiesPromisedImpl);
 
 const shouldFailChromeModule = vi.hoisted(() => ({ value: false }));
 
@@ -56,6 +57,7 @@ const { collectChromeCookies, collectChromeCookiesForDomains } = await import('.
 beforeEach(() => {
   cookieResponses.clear();
   getCookiesPromisedMock.mockClear();
+  getCookiesPromisedMock.mockImplementation(defaultGetCookiesPromisedImpl);
 });
 
 describe('collectChromeCookies', () => {
@@ -129,6 +131,21 @@ describe('collectChromeCookies', () => {
 
     expect(cookies).toEqual([]);
     shouldFailChromeModule.value = false;
+  });
+
+  it('reads cookie origins sequentially to avoid sqlite contention', async () => {
+    const tracker = { inFlight: 0, maxInFlight: 0 };
+    getCookiesPromisedMock.mockImplementation(async () => {
+      tracker.inFlight += 1;
+      tracker.maxInFlight = Math.max(tracker.maxInFlight, tracker.inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      tracker.inFlight -= 1;
+      return [];
+    });
+
+    await collectChromeCookies('https://localhost:4455/dashboard');
+
+    expect(tracker.maxInFlight).toBe(1);
   });
 });
 

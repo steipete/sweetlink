@@ -22,7 +22,8 @@
     "cli"
   ],
   "bin": {
-    "sweetlink": "./dist/src/index.js"
+    "sweetlink": "./dist/src/index.js",
+    "sweetlinkd": "./dist/daemon/src/index.js"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",

@@ -62,18 +62,18 @@ export async function collectChromeCookies(targetUrl: string): Promise<Puppeteer
     console.log('Cookie sync debug enabled.');
   }
 
-  await Promise.all(
-    origins.map((origin) =>
-      collectCookiesForOrigin({
-        origin,
-        secureModule,
-        profileOverride,
-        collected,
-        debugCookies,
-        targetBaseUrl,
-      })
-    )
-  );
+  // chrome-cookies-secure can miss results under parallel reads; keep this sequential.
+  for (const origin of origins) {
+    // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
+    await collectCookiesForOrigin({
+      origin,
+      secureModule,
+      profileOverride,
+      collected,
+      debugCookies,
+      targetBaseUrl,
+    });
+  }
 
   pruneIncompatibleCookies(targetBaseUrl, collected);
 
@@ -95,42 +95,39 @@ export async function collectChromeCookiesForDomains(
   const debugCookies = cliEnv.cookieDebug;
   const results: Record<string, PuppeteerCookieParam[]> = {};
 
-  await Promise.all(
-    domains.map(async (domainCandidate) => {
-      if (!domainCandidate) {
-        return;
+  for (const domainCandidate of domains) {
+    if (!domainCandidate) {
+      continue;
+    }
+    const domain = domainCandidate;
+    const origins = new Set<string>(normalizeDomainToOrigins(domain));
+    const hostCandidate = extractHostCandidate(domain);
+    if (hostCandidate) {
+      for (const extra of resolveConfiguredCookieOrigins(hostCandidate)) {
+        origins.add(extra);
       }
-      const domain = domainCandidate;
-      const origins = new Set<string>(normalizeDomainToOrigins(domain));
-      const hostCandidate = extractHostCandidate(domain);
-      if (hostCandidate) {
-        for (const extra of resolveConfiguredCookieOrigins(hostCandidate)) {
-          origins.add(extra);
-        }
-      }
-      const collected = new Map<string, PuppeteerCookieParam>();
-      const originList = [...origins.values()].filter((origin): origin is string => Boolean(origin));
-      await Promise.all(
-        originList.map((origin) =>
-          collectCookiesForOrigin({
-            origin,
-            secureModule,
-            profileOverride,
-            collected,
-            debugCookies,
-            targetBaseUrl: new URL(origin),
-          })
-        )
-      );
-      const targetIterator = origins.values().next();
-      const targetCandidate = targetIterator.done ? domain : targetIterator.value;
-      const targetBase = targetCandidate ? tryParseUrl(targetCandidate) : null;
-      if (targetBase) {
-        pruneIncompatibleCookies(targetBase, collected);
-      }
-      results[domain] = [...collected.values()];
-    })
-  );
+    }
+    const collected = new Map<string, PuppeteerCookieParam>();
+    const originList = [...origins.values()].filter((origin): origin is string => Boolean(origin));
+    for (const origin of originList) {
+      // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
+      await collectCookiesForOrigin({
+        origin,
+        secureModule,
+        profileOverride,
+        collected,
+        debugCookies,
+        targetBaseUrl: new URL(origin),
+      });
+    }
+    const targetIterator = origins.values().next();
+    const targetCandidate = targetIterator.done ? domain : targetIterator.value;
+    const targetBase = targetCandidate ? tryParseUrl(targetCandidate) : null;
+    if (targetBase) {
+      pruneIncompatibleCookies(targetBase, collected);
+    }
+    results[domain] = [...collected.values()];
+  }
 
   return results;
 }
