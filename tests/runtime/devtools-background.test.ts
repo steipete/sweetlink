@@ -166,6 +166,10 @@ describe('ensureBackgroundDevtoolsListener', () => {
     rmMock.mockRejectedValue(createErrno('EACCES'));
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
 
+    vi.spyOn(process, 'kill').mockImplementation(() => {
+      throw createErrno('ESRCH');
+    });
+
     spawnMock.mockReturnValue(createChildProcess(888));
 
     await ensureBackgroundDevtoolsListener({});
