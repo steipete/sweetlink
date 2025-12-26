@@ -2,7 +2,7 @@ import { buildDevBootstrapLoginUrl } from '../../core/dev-bootstrap.js';
 import { logDebugError } from '../../util/errors.js';
 import { delay } from '../../util/time.js';
 import { attemptTwitterOauthAutoAccept } from '../devtools/oauth.js';
-import { urlsRoughlyMatch } from '../url.js';
+import { buildWaitCandidateUrls, urlsRoughlyMatch } from '../url.js';
 import { PUPPETEER_NAVIGATION_TIMEOUT_MS } from './constants.js';
 import { connectPuppeteerBrowser, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer.js';
 const OAUTH_HOSTS = new Set(['x.com', 'twitter.com', 'api.twitter.com']);
@@ -71,7 +71,7 @@ export async function ensureDeepLinkAuthFlow(params) {
             }
             currentUrl = normalizeUrl(page.url());
         }
-        if (!currentUrl || !isSameOrigin(currentUrl.toString(), targetOrigin)) {
+        if (!(currentUrl && isSameOrigin(currentUrl.toString(), targetOrigin))) {
             await navigatePuppeteerPage(page, targetOrigin, 2);
             await delay(500);
             currentUrl = normalizeUrl(page.url());
@@ -131,7 +131,7 @@ export async function ensureDeepLinkAuthFlow(params) {
 }
 async function attemptAppSignIn(page) {
     const handle = await page.evaluateHandle((targets) => {
-        const candidates = document.querySelectorAll('button, a, div[role=\"button\"]');
+        const candidates = document.querySelectorAll('button, a, div[role="button"]');
         for (const candidate of candidates) {
             const text = candidate.textContent?.trim().toLowerCase() ?? '';
             if (!text) {
@@ -201,13 +201,26 @@ async function attemptDevBootstrapLogin(page, loginUrl, targetUrl) {
         if (currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl)) {
             return { attempted: true, navigatedToTarget: true, finalUrl: currentUrl.toString() };
         }
-        for (let attempt = 0; attempt < 6; attempt += 1) {
-            await delay(500);
-            currentUrl = normalizeUrl(page.url());
-            if (currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl)) {
-                return { attempted: true, navigatedToTarget: true, finalUrl: currentUrl.toString() };
+        const candidates = buildWaitCandidateUrls(targetUrl);
+        await page
+            .waitForFunction((matchCandidates) => {
+            try {
+                const url = new URL(window.location.href);
+                url.hash = '';
+                const full = url.toString();
+                if (matchCandidates.includes(full)) {
+                    return true;
+                }
+                url.search = '';
+                const withoutQuery = url.toString();
+                return matchCandidates.includes(withoutQuery);
             }
-        }
+            catch {
+                return false;
+            }
+        }, { polling: 250, timeout: 6 * 500 + 250 }, candidates)
+            .catch(() => null);
+        currentUrl = normalizeUrl(page.url());
         return { attempted: true, navigatedToTarget: false, finalUrl: currentUrl?.toString() ?? null };
     }
     catch (error) {

@@ -48,7 +48,7 @@ const normalizeResponse = (raw, fallback) => {
         loginPath: loginPath ?? fallback?.loginPath ?? null,
         redirectParam: redirectParam ?? fallback?.redirectParam ?? null,
     };
-    if (!merged.adminApiKey && !merged.loginPath) {
+    if (!(merged.adminApiKey || merged.loginPath)) {
         return null;
     }
     return merged;

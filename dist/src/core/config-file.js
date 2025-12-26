@@ -156,7 +156,7 @@ function normalizeDevBootstrapSection(value) {
     const endpoint = normalizeOptionalString(record.endpoint ?? record.path);
     const loginPath = normalizeOptionalString(record.loginPath);
     const redirectParam = normalizeOptionalString(record.redirectParam);
-    if (!endpoint && !loginPath) {
+    if (!(endpoint || loginPath)) {
         return null;
     }
     return { endpoint: endpoint ?? undefined, loginPath: loginPath ?? undefined, redirectParam: redirectParam ?? undefined };

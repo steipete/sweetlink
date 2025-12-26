@@ -13,7 +13,7 @@ import { registerRunJsCommand } from './commands/run-js.js';
 import { registerTrustCaCommand } from './commands/trust-ca.js';
 import { readRootProgramOptions, resolveConfig } from './core/config.js';
 import { loadSweetLinkFileConfig } from './core/config-file.js';
-import { readCommandOptions } from './core/env.js';
+import { cloneProcessEnv, readCommandOptions } from './core/env.js';
 import { cleanupControlledChromeRegistry, registerControlledChromeInstance } from './devtools-registry.js';
 import { sweetLinkCliTestMode, sweetLinkDebug, sweetLinkEnv } from './env.js';
 import { fetchJson } from './http.js';
@@ -292,8 +292,8 @@ program
     .description('Launch the SweetLink daemon process')
     .argument('[args...]', 'Arguments forwarded to sweetlinkd')
     .allowUnknownOption(true)
-    .action(async (_args, command) => {
-    await runDaemonCommand(command);
+    .action((_args, command) => {
+    runDaemonCommand(command);
 });
 async function runOpenCommand(options, command, rootProgram) {
     const context = buildOpenCommandContext(options, command, rootProgram);
@@ -328,7 +328,7 @@ async function runOpenCommand(options, command, rootProgram) {
     }
     await handleUncontrolledOpen(context, waitToken);
 }
-async function runDaemonCommand(command) {
+function runDaemonCommand(command) {
     const parent = command.parent;
     const rawArgs = parent?.rawArgs ?? process.argv;
     const daemonIndex = rawArgs.findIndex((arg) => arg === 'daemon');
@@ -337,7 +337,7 @@ async function runDaemonCommand(command) {
     const forwarded = passthroughIndex >= 0
         ? afterDaemon.slice(passthroughIndex + 1)
         : (command.args ?? []).filter((value) => typeof value === 'string');
-    const child = spawn('sweetlinkd', forwarded, { stdio: 'inherit', env: process.env });
+    const child = spawn('sweetlinkd', forwarded, { stdio: 'inherit', env: cloneProcessEnv() });
     child.on('error', (error) => {
         if (isErrnoException(error) && error.code === 'ENOENT') {
             console.error('Unable to find "sweetlinkd" on PATH. Try `pnpm exec sweetlinkd` instead.');
@@ -520,7 +520,7 @@ async function handleControlledReuse(context, waitToken, reuseResult) {
     else {
         console.log('DevTools automation disabled (--no-devtools); skipping telemetry bootstrap and OAuth auto-click.');
     }
-    if (context.enableDevtools && (!deepLinkResult || !deepLinkResult.navigatedToTarget)) {
+    if (context.enableDevtools && !deepLinkResult?.navigatedToTarget) {
         console.warn('Deep link did not resolve in reused controlled Chrome; launching a fresh controlled window.');
         const freshContext = {
             ...context,
