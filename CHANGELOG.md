@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.2.0 — Unreleased
+## 0.2.1 — Unreleased
+
+- _No changes yet._
+
+## 0.2.0 — 2025-12-26
 
 - **Browser runtime tests moved in**: migrated Sweetistics runtime/browser test coverage into SweetLink’s own suite.
 - **JSDOM-backed runtime specs**: added `jsdom` dev dependency to support browser runtime tests.
