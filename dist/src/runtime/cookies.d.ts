@@ -1,17 +1,3 @@
-export interface ChromeCookiesSecureModule {
-    getCookiesPromised(url: string, format: 'object', profilePath?: string): Promise<Record<string, ChromeCookieEntry>>;
-    getCookiesPromised(url: string, format: 'puppeteer', profilePath?: string): Promise<Record<string, unknown>[]>;
-}
-interface ChromeCookieEntry {
-    name?: string;
-    value?: string;
-    domain?: string;
-    path?: string;
-    secure?: boolean;
-    httpOnly?: boolean;
-    sameSite?: string;
-    expirationDate?: number;
-}
 export interface PuppeteerCookieParam {
     name: string;
     value: string;
@@ -33,5 +19,4 @@ export declare function normalizePuppeteerCookie(cookie: Record<string, unknown>
     sourceBase: URL;
     targetBase: URL;
 }): PuppeteerCookieParam | null;
-export {};
 //# sourceMappingURL=cookies.d.ts.map

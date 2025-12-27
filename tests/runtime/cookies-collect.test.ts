@@ -1,22 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const cookieResponses = new Map<string, Record<string, unknown>[]>();
-const defaultGetCookiesPromisedImpl = (origin: string) => {
-  const normalized = origin.endsWith('/') ? origin : `${origin}/`;
-  return Promise.resolve(cookieResponses.get(normalized) ?? []);
-};
-const getCookiesPromisedMock = vi.fn(defaultGetCookiesPromisedImpl);
-
-const shouldFailChromeModule = vi.hoisted(() => ({ value: false }));
-
-vi.mock('chrome-cookies-secure', () => {
-  if (shouldFailChromeModule.value) {
-    throw new Error('module load failed');
+const cookieResponses = new Map<string, unknown[]>();
+const getCookiesMock = vi.fn((options: { url: string; origins?: string[] }) => {
+  const origins = new Set<string>();
+  for (const candidate of options.origins ?? []) {
+    try {
+      origins.add(new URL(candidate).origin);
+    } catch {
+      // ignore malformed origin candidates
+    }
   }
-  return {
-    getCookiesPromised: getCookiesPromisedMock,
-  };
+  const cookies: unknown[] = [];
+  for (const origin of origins) {
+    const items = cookieResponses.get(origin);
+    if (Array.isArray(items)) {
+      cookies.push(...items);
+    }
+  }
+  return { cookies, warnings: [] };
 });
+
+vi.mock('@steipete/sweet-cookie', () => ({
+  getCookies: getCookiesMock,
+}));
 
 vi.mock('tldjs', () => ({
   getDomain: (uri: string) => {
@@ -56,13 +62,12 @@ const { collectChromeCookies, collectChromeCookiesForDomains } = await import('.
 
 beforeEach(() => {
   cookieResponses.clear();
-  getCookiesPromisedMock.mockClear();
-  getCookiesPromisedMock.mockImplementation(defaultGetCookiesPromisedImpl);
+  getCookiesMock.mockClear();
 });
 
 describe('collectChromeCookies', () => {
   it('rehomes cookies for localhost targets and prunes incompatible entries', async () => {
-    cookieResponses.set('https://localhost:4455/', [
+    cookieResponses.set('https://localhost:4455', [
       {
         name: '__Secure-session',
         value: 'abc',
@@ -79,11 +84,11 @@ describe('collectChromeCookies', () => {
         path: '/',
       },
     ]);
-    cookieResponses.set('https://example-auth.dev/', [
+    cookieResponses.set('https://example-auth.dev', [
       {
         name: 'auth-token',
         value: 'xyz',
-        domain: '.example.dev',
+        domain: 'example.dev',
         path: '/',
       },
     ]);
@@ -94,20 +99,20 @@ describe('collectChromeCookies', () => {
     expect(names).toContain('__Secure-session');
     expect(names).toContain('auth-token');
     expect(names).not.toContain('_vercel_session');
-    expect(getCookiesPromisedMock).toHaveBeenCalledWith(
-      'https://localhost:4455/',
-      'puppeteer',
-      cliEnvMock.chromeProfilePath
+
+    expect(getCookiesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://localhost:4455/dashboard',
+        chromeProfile: cliEnvMock.chromeProfilePath,
+        browsers: ['chrome'],
+      })
     );
-    expect(getCookiesPromisedMock).toHaveBeenCalledWith(
-      'https://example-auth.dev/',
-      'puppeteer',
-      cliEnvMock.chromeProfilePath
-    );
+    const call = getCookiesMock.mock.calls[0]?.[0] as { origins?: string[] } | undefined;
+    expect(call?.origins ?? []).toEqual(expect.arrayContaining(['https://localhost:4455', 'https://example-auth.dev']));
   });
 
   it('normalizes secure cookies when targeting http origins', async () => {
-    cookieResponses.set('http://internal.dev/', [
+    cookieResponses.set('http://internal.dev', [
       {
         name: '__Secure-auth',
         value: 'token',
@@ -124,38 +129,26 @@ describe('collectChromeCookies', () => {
     ]);
   });
 
-  it('returns empty results when chrome-cookies-secure cannot be loaded', async () => {
-    shouldFailChromeModule.value = true;
-
+  it('returns empty results when no cookies are returned', async () => {
     const cookies = await collectChromeCookies('https://example.dev/app');
 
     expect(cookies).toEqual([]);
-    shouldFailChromeModule.value = false;
   });
 
-  it('reads cookie origins sequentially to avoid sqlite contention', async () => {
-    const tracker = { inFlight: 0, maxInFlight: 0 };
-    getCookiesPromisedMock.mockImplementation(async () => {
-      tracker.inFlight += 1;
-      tracker.maxInFlight = Math.max(tracker.maxInFlight, tracker.inFlight);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      tracker.inFlight -= 1;
-      return [];
-    });
-
+  it('delegates cookie collection to sweet-cookie', async () => {
     await collectChromeCookies('https://localhost:4455/dashboard');
 
-    expect(tracker.maxInFlight).toBe(1);
+    expect(getCookiesMock).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('collectChromeCookiesForDomains', () => {
   it('groups cookies per domain and normalizes entries', async () => {
-    cookieResponses.set('https://example.dev/', [
+    cookieResponses.set('https://example.dev', [
       {
         name: 'session',
         value: '123',
-        domain: '.example.dev',
+        domain: 'example.dev',
         path: '/',
       },
     ]);
@@ -165,9 +158,9 @@ describe('collectChromeCookiesForDomains', () => {
     expect(result['example.dev']).toHaveLength(1);
     expect(result['example.dev'][0]).toMatchObject({
       name: 'session',
-      domain: '.example.dev',
+      domain: 'example.dev',
       path: '/',
     });
-    expect(getCookiesPromisedMock).toHaveBeenCalled();
+    expect(getCookiesMock).toHaveBeenCalled();
   });
 });

@@ -72,8 +72,8 @@
     "pnpm": ">=10.16.0"
   },
   "dependencies": {
+    "@steipete/sweet-cookie": "github:steipete/sweet-cookie#path:packages/core",
     "arkregex": "^0.0.5",
-    "chrome-cookies-secure": "^3.0.0",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
     "es-toolkit": "^1.43.0",
@@ -89,9 +89,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
-      "keytar",
       "puppeteer",
-      "sqlite3",
       "tldjs"
     ],
     "overrides": {

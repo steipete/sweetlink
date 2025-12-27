@@ -1,56 +1,50 @@
 import { regex } from 'arkregex';
-import { spawn } from 'node:child_process';
+import { getCookies } from '@steipete/sweet-cookie';
 import { loadSweetLinkFileConfig } from '../core/config-file.js';
-import { cloneProcessEnv } from '../core/env.js';
 import { cliEnv } from '../env.js';
 import { describeUnknown } from '../util/errors.js';
 let tldPatchedForLocalhost;
-let attemptedSqliteRebuild;
 const PROTOCOL_PREFIX_PATTERN = regex.as('^[a-z]+://', 'i');
 const LEADING_DOT_PATTERN = regex.as(String.raw `^\.`);
 const SECURE_PREFIX_PATTERN = regex.as('^__Secure-');
 const HOST_PREFIX_PATTERN = regex.as('^__Host-');
-const SQLITE_NODE_PATTERN = regex.as(String.raw `node_sqlite3\.node`, 'i');
-const SQLITE_BINDINGS_PATTERN = regex.as('bindings file', 'i');
-const SQLITE_SELF_REGISTER_PATTERN = regex.as('Module did not self-register', 'i');
 /** Collects cookies from the main Chrome profile matching the provided URL. */
 export async function collectChromeCookies(targetUrl) {
     await ensureTldPatchedForLocalhost();
-    const secureModule = await loadChromeCookiesModule();
-    if (!secureModule) {
-        return [];
-    }
-    const profileOverride = cliEnv.chromeProfilePath ?? undefined;
-    const origins = buildCookieOrigins(targetUrl);
-    const collected = new Map();
     const debugCookies = cliEnv.cookieDebug;
-    const targetBaseUrl = new URL(targetUrl);
     if (debugCookies) {
         console.log('Cookie sync debug enabled.');
     }
-    // chrome-cookies-secure can miss results under parallel reads; keep this sequential.
-    for (const origin of origins) {
-        // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
-        await collectCookiesForOrigin({
-            origin,
-            secureModule,
-            profileOverride,
-            collected,
-            debugCookies,
-            targetBaseUrl,
-        });
+    const origins = buildCookieOrigins(targetUrl);
+    const expandedOrigins = expandCookieOriginsForFallbacks(origins);
+    const targetBaseUrl = new URL(targetUrl);
+    const { cookies, warnings } = await getCookies({
+        url: targetUrl,
+        origins: expandedOrigins,
+        browsers: ['chrome'],
+        chromeProfile: cliEnv.chromeProfilePath ?? undefined,
+        debug: debugCookies,
+        oracleInlineFallback: true,
+        mode: 'first',
+    });
+    if (debugCookies && warnings.length > 0) {
+        for (const warning of warnings) {
+            console.warn('[SweetLink] Cookie warning:', warning);
+        }
     }
+    const collected = new Map();
+    ingestSweetCookieCookies({
+        cookies,
+        targetBaseUrl,
+        collected,
+        debug: debugCookies,
+    });
     pruneIncompatibleCookies(targetBaseUrl, collected);
     return [...collected.values()];
 }
 /** Collects cookies for each domain and groups them by the originating host. */
 export async function collectChromeCookiesForDomains(domains) {
     await ensureTldPatchedForLocalhost();
-    const secureModule = await loadChromeCookiesModule();
-    if (!secureModule) {
-        return {};
-    }
-    const profileOverride = cliEnv.chromeProfilePath ?? undefined;
     const debugCookies = cliEnv.cookieDebug;
     const results = {};
     for (const domainCandidate of domains) {
@@ -65,22 +59,35 @@ export async function collectChromeCookiesForDomains(domains) {
                 origins.add(extra);
             }
         }
+        const expandedOrigins = expandCookieOriginsForFallbacks([...origins.values()]);
         const collected = new Map();
-        const originList = [...origins.values()].filter((origin) => Boolean(origin));
-        for (const origin of originList) {
-            // biome-ignore lint/performance/noAwaitInLoops: cookie reads must stay sequential for reliability.
-            await collectCookiesForOrigin({
-                origin,
-                secureModule,
-                profileOverride,
-                collected,
-                debugCookies,
-                targetBaseUrl: new URL(origin),
-            });
-        }
         const targetIterator = origins.values().next();
         const targetCandidate = targetIterator.done ? domain : targetIterator.value;
         const targetBase = targetCandidate ? tryParseUrl(targetCandidate) : null;
+        const targetBaseUrl = targetBase ?? (targetCandidate ? tryParseUrl(`https://${targetCandidate}`) : null);
+        if (targetCandidate && targetBaseUrl) {
+            // biome-ignore lint/performance/noAwaitInLoops: cookie reads should stay sequential for predictable prompts/logging.
+            const { cookies, warnings } = await getCookies({
+                url: targetCandidate,
+                origins: expandedOrigins,
+                browsers: ['chrome'],
+                chromeProfile: cliEnv.chromeProfilePath ?? undefined,
+                debug: debugCookies,
+                oracleInlineFallback: true,
+                mode: 'first',
+            });
+            if (debugCookies && warnings.length > 0) {
+                for (const warning of warnings) {
+                    console.warn('[SweetLink] Cookie warning:', warning);
+                }
+            }
+            ingestSweetCookieCookies({
+                cookies,
+                targetBaseUrl,
+                collected,
+                debug: debugCookies,
+            });
+        }
         if (targetBase) {
             pruneIncompatibleCookies(targetBase, collected);
         }
@@ -98,121 +105,28 @@ export function buildCookieOrigins(targetUrl) {
     }
     return [...origins];
 }
-async function collectCookiesForOrigin({ origin, secureModule, profileOverride, collected, debugCookies, targetBaseUrl, }) {
-    const cookieOrigin = origin.endsWith('/') ? origin : `${origin}/`;
-    let sourceBaseUrl = null;
-    try {
-        sourceBaseUrl = new URL(cookieOrigin);
-    }
-    catch {
-        if (debugCookies) {
-            console.log(`Skipping malformed cookie origin candidate ${cookieOrigin}`);
-        }
+function ingestSweetCookieCookies({ cookies, targetBaseUrl, collected, debug, }) {
+    if (!cookies?.length) {
         return;
     }
-    const fallbackOrigins = deriveCookieOriginFallbacks(sourceBaseUrl);
-    const attemptCookieRead = async (candidateOrigin, reason) => {
-        if (debugCookies) {
-            if (reason === 'primary') {
-                console.log(`Reading Chrome cookies for ${candidateOrigin}`);
-            }
-            else {
-                console.log(`Retrying cookie collection for ${cookieOrigin} using fallback ${candidateOrigin}`);
-            }
-        }
-        try {
-            let candidateBase = null;
-            try {
-                candidateBase = new URL(candidateOrigin);
-            }
-            catch {
-                candidateBase = null;
-            }
-            if (!candidateBase) {
-                return 'parse-error';
-            }
-            sourceBaseUrl = candidateBase;
-            const beforeSize = collected.size;
-            const raw = (await secureModule.getCookiesPromised(candidateOrigin, 'puppeteer', profileOverride));
-            if (raw && raw.length > 0) {
-                ingestChromeCookies({
-                    rawCookies: raw,
-                    sourceBaseUrl: candidateBase,
-                    targetBaseUrl,
-                    collected,
-                    sourceOrigin: candidateOrigin,
-                    debug: debugCookies,
-                });
-                return collected.size > beforeSize ? 'added' : 'empty';
-            }
-            return 'empty';
-        }
-        catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            if (message.includes('Could not parse domain from URI')) {
-                if (reason === 'fallback' && debugCookies) {
-                    console.log(`Fallback cookie origin ${candidateOrigin} also failed: ${message}`);
-                }
-                return 'parse-error';
-            }
-            if (reason === 'primary') {
-                console.warn(`Failed to read cookies from Chrome for ${candidateOrigin}:`, message);
-                console.warn('If this persists, ensure Chrome is running and you are logged in, then rerun the command.');
-            }
-            else if (debugCookies) {
-                console.log(`Fallback cookie origin ${candidateOrigin} also failed: ${message}`);
-            }
-            return 'failed';
-        }
-    };
-    const primaryResult = await attemptCookieRead(cookieOrigin, 'primary');
-    const shouldAttemptFallback = fallbackOrigins.length > 0 && (primaryResult === 'empty' || primaryResult === 'parse-error');
-    if (!shouldAttemptFallback) {
-        if (primaryResult === 'parse-error' && debugCookies) {
-            console.log(`Giving up on cookie sync for ${cookieOrigin}; chrome-cookies-secure cannot parse the host.`);
-        }
-        return;
-    }
-    let sawParseError = primaryResult === 'parse-error';
-    for (const fallbackOrigin of fallbackOrigins) {
-        // biome-ignore lint/performance/noAwaitInLoops: fallback attempts must run sequentially to stop on the first success.
-        const result = await attemptCookieRead(fallbackOrigin, 'fallback');
-        if (result === 'added') {
-            return;
-        }
-        if (result === 'parse-error') {
-            sawParseError = true;
-        }
-    }
-    if (debugCookies) {
-        const reasonMessage = sawParseError
-            ? 'chrome-cookies-secure cannot parse the host.'
-            : 'no cookies were found after fallback candidates.';
-        console.log(`Giving up on cookie sync for ${cookieOrigin}; ${reasonMessage}`);
-    }
-}
-function ingestChromeCookies({ rawCookies, sourceBaseUrl, targetBaseUrl, collected, sourceOrigin, debug, }) {
-    if (!rawCookies?.length) {
-        return;
-    }
-    for (const cookie of rawCookies) {
+    for (const cookie of cookies) {
         if (debug) {
-            console.log(`Saw cookie ${describeUnknown(cookie.name, 'unknown')} from ${sourceOrigin}`);
+            console.log(`Saw cookie ${describeUnknown(cookie.name, 'unknown')} from Sweet Cookie`);
         }
-        const mapped = normalizePuppeteerCookie(cookie, {
-            sourceBase: sourceBaseUrl,
+        const mapped = normalizePuppeteerCookie(sweetCookieToChromeCookieRecord(cookie), {
+            sourceBase: resolveCookieSourceBase(cookie, targetBaseUrl),
             targetBase: targetBaseUrl,
         });
         if (!mapped) {
             continue;
         }
-        const key = `${mapped.domain ?? mapped.url ?? sourceBaseUrl.origin}|${mapped.path ?? '/'}|${mapped.name}`;
+        const key = `${mapped.domain ?? mapped.url ?? targetBaseUrl.origin}|${mapped.path ?? '/'}|${mapped.name}`;
         if (!collected.has(key)) {
             collected.set(key, mapped);
         }
     }
     if (debug) {
-        console.log(`${collected.size} cookies captured so far after ${sourceOrigin}`);
+        console.log(`${collected.size} cookies captured so far`);
     }
 }
 function deriveCookieOriginFallbacks(baseUrl) {
@@ -238,6 +152,20 @@ function deriveCookieOriginFallbacks(baseUrl) {
     }
     candidates.delete(`${baseUrl.origin}/`);
     return [...candidates];
+}
+function expandCookieOriginsForFallbacks(origins) {
+    const expanded = new Set();
+    for (const origin of origins) {
+        expanded.add(origin);
+        const base = tryParseUrl(origin.endsWith('/') ? origin : `${origin}/`);
+        if (!base) {
+            continue;
+        }
+        for (const fallback of deriveCookieOriginFallbacks(base)) {
+            expanded.add(fallback);
+        }
+    }
+    return [...expanded.values()];
 }
 function normalizeDomainToOrigins(domain) {
     const trimmed = domain.trim();
@@ -418,7 +346,7 @@ export function normalizePuppeteerCookie(cookie, bases) {
 }
 function normalizeSameSite(value) {
     if (!value) {
-        return;
+        return undefined;
     }
     const normalized = value.toLowerCase();
     if (normalized === 'strict') {
@@ -430,7 +358,7 @@ function normalizeSameSite(value) {
     if (normalized === 'no_restriction' || normalized === 'none') {
         return 'None';
     }
-    return;
+    return undefined;
 }
 function pruneIncompatibleCookies(targetBaseUrl, collected) {
     if (collected.size === 0) {
@@ -489,60 +417,30 @@ async function ensureTldPatchedForLocalhost() {
         console.warn('Failed to patch tldjs for localhost support:', error);
     }
 }
-const SQLITE_BINDING_HINT = [
-    'SweetLink needs chrome-cookies-secure to read your Chrome cookie DB.',
-    'Rebuild the native modules once per workspace so Node 25 picks up the sqlite3 binding:',
-    '  PYTHON=/usr/bin/python3 npm_config_build_from_source=1 pnpm rebuild chrome-cookies-secure sqlite3 keytar --workspace-root',
-].join('\n');
-const isSqliteBindingError = (error) => {
-    if (!(error instanceof Error)) {
-        return false;
-    }
-    const message = error.message ?? '';
-    return (SQLITE_NODE_PATTERN.test(message) ||
-        SQLITE_BINDINGS_PATTERN.test(message) ||
-        SQLITE_SELF_REGISTER_PATTERN.test(message));
-};
-async function loadChromeCookiesModule() {
-    let imported;
-    try {
-        imported = await import('chrome-cookies-secure');
-    }
-    catch (error) {
-        console.warn('Failed to load chrome-cookies-secure to copy cookies:', error);
-        if (isSqliteBindingError(error)) {
-            const rebuilt = await attemptSqliteRebuild();
-            if (rebuilt) {
-                return loadChromeCookiesModule();
-            }
-            console.warn(SQLITE_BINDING_HINT);
-        }
-        else {
-            console.warn('If this persists, run `pnpm rebuild chrome-cookies-secure sqlite3 keytar --workspace-root`.');
-        }
-        return null;
-    }
-    const secureModule = resolveChromeCookieModule(imported);
-    if (!secureModule) {
-        console.warn('chrome-cookies-secure does not expose getCookiesPromised(); skipping cookie copy.');
-        return null;
-    }
-    return secureModule;
+function sweetCookieToChromeCookieRecord(cookie) {
+    const record = {
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain,
+        path: cookie.path,
+        secure: cookie.secure,
+        httpOnly: cookie.httpOnly,
+        sameSite: cookie.sameSite,
+        expires: cookie.expires,
+    };
+    return record;
 }
-function resolveChromeCookieModule(candidate) {
-    if (hasGetCookiesPromised(candidate)) {
-        return candidate;
-    }
-    if (typeof candidate === 'object' && candidate !== null) {
-        const defaultExport = Reflect.get(candidate, 'default');
-        if (hasGetCookiesPromised(defaultExport)) {
-            return defaultExport;
+function resolveCookieSourceBase(cookie, fallback) {
+    const origin = cookie.source?.origin;
+    if (typeof origin === 'string' && origin.length > 0) {
+        try {
+            return new URL(origin);
+        }
+        catch {
+            return fallback;
         }
     }
-    return null;
-}
-function hasGetCookiesPromised(value) {
-    return Boolean(value && typeof value.getCookiesPromised === 'function');
+    return fallback;
 }
 function resolveTldModule(value) {
     if (typeof value !== 'object' || value === null) {
@@ -560,40 +458,5 @@ function resolveTldModule(value) {
         }
     }
     return null;
-}
-function attemptSqliteRebuild() {
-    if (attemptedSqliteRebuild) {
-        return Promise.resolve(false);
-    }
-    attemptedSqliteRebuild = true;
-    const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-    const args = ['rebuild', 'chrome-cookies-secure', 'sqlite3', 'keytar', '--workspace-root'];
-    const childEnv = cloneProcessEnv();
-    const pythonBinary = childEnv.PYTHON ?? '/usr/bin/python3';
-    const rebuildCommand = `${pnpmCommand} ${args.join(' ')}`;
-    console.warn('[SweetLink] Attempting to rebuild sqlite3 bindings automatically…');
-    console.warn(`[SweetLink] Running: npm_config_build_from_source=1 PYTHON=${pythonBinary} ${rebuildCommand}`);
-    return new Promise((resolve) => {
-        childEnv.npm_config_build_from_source = '1';
-        childEnv.PYTHON = childEnv.PYTHON ?? '/usr/bin/python3';
-        const child = spawn(pnpmCommand, args, {
-            stdio: 'inherit',
-            env: childEnv,
-        });
-        child.on('exit', (code) => {
-            if (code === 0) {
-                console.warn('[SweetLink] sqlite3 rebuild completed successfully.');
-                resolve(true);
-            }
-            else {
-                console.warn('[SweetLink] sqlite3 rebuild failed with exit code', code ?? 0);
-                resolve(false);
-            }
-        });
-        child.on('error', (spawnError) => {
-            console.warn('[SweetLink] Unable to spawn pnpm to rebuild sqlite3:', spawnError);
-            resolve(false);
-        });
-    });
 }
 //# sourceMappingURL=cookies.js.map
