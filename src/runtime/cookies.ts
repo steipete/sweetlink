@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { regex } from 'arkregex';
 import { getCookies, type Cookie } from '@steipete/sweet-cookie';
 import { loadSweetLinkFileConfig, type SweetLinkCookieMapping } from '../core/config-file.js';
@@ -22,6 +25,18 @@ const PROTOCOL_PREFIX_PATTERN = regex.as('^[a-z]+://', 'i');
 const LEADING_DOT_PATTERN = regex.as(String.raw`^\.`);
 const SECURE_PREFIX_PATTERN = regex.as('^__Secure-');
 const HOST_PREFIX_PATTERN = regex.as('^__Host-');
+const ORACLE_COOKIE_FILES = ['cookies.base64', 'cookies.json'];
+
+const resolveOracleInlineCookiesFile = (): string | undefined => {
+  const oracleDir = path.join(os.homedir(), '.oracle');
+  for (const filename of ORACLE_COOKIE_FILES) {
+    const candidate = path.join(oracleDir, filename);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return;
+};
 
 /** Collects cookies from the main Chrome profile matching the provided URL. */
 export async function collectChromeCookies(targetUrl: string): Promise<PuppeteerCookieParam[]> {
@@ -35,6 +50,10 @@ export async function collectChromeCookies(targetUrl: string): Promise<Puppeteer
   const origins = buildCookieOrigins(targetUrl);
   const expandedOrigins = expandCookieOriginsForFallbacks(origins);
   const targetBaseUrl = new URL(targetUrl);
+  const inlineCookiesFile = resolveOracleInlineCookiesFile();
+  if (debugCookies && inlineCookiesFile) {
+    console.log(`[SweetLink] Using inline cookie fallback from ${inlineCookiesFile}.`);
+  }
 
   const { cookies, warnings } = await getCookies({
     url: targetUrl,
@@ -42,7 +61,7 @@ export async function collectChromeCookies(targetUrl: string): Promise<Puppeteer
     browsers: ['chrome'],
     chromeProfile: cliEnv.chromeProfilePath ?? undefined,
     debug: debugCookies,
-    oracleInlineFallback: true,
+    ...(inlineCookiesFile ? { inlineCookiesFile } : {}),
     mode: 'first',
   });
 
@@ -71,6 +90,10 @@ export async function collectChromeCookiesForDomains(
   await ensureTldPatchedForLocalhost();
   const debugCookies = cliEnv.cookieDebug;
   const results: Record<string, PuppeteerCookieParam[]> = {};
+  const inlineCookiesFile = resolveOracleInlineCookiesFile();
+  if (debugCookies && inlineCookiesFile) {
+    console.log(`[SweetLink] Using inline cookie fallback from ${inlineCookiesFile}.`);
+  }
 
   for (const domainCandidate of domains) {
     if (!domainCandidate) {
@@ -99,7 +122,7 @@ export async function collectChromeCookiesForDomains(
         browsers: ['chrome'],
         chromeProfile: cliEnv.chromeProfilePath ?? undefined,
         debug: debugCookies,
-        oracleInlineFallback: true,
+        ...(inlineCookiesFile ? { inlineCookiesFile } : {}),
         mode: 'first',
       });
 
