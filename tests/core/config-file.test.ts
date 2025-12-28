@@ -55,7 +55,7 @@ describe('core/config-file', () => {
           paths: ['/api/health'],
         },
         smokeRoutes: {
-          defaults: ['timeline/home', 'settings/account'],
+          defaults: ['timeline', 'settings/account'],
           presets: {
             custom: ['foo', 'bar'],
           },
@@ -91,7 +91,7 @@ describe('core/config-file', () => {
         paths: ['/api/health'],
       },
       smokeRoutes: {
-        defaults: ['timeline/home', 'settings/account'],
+        defaults: ['timeline', 'settings/account'],
         presets: {
           custom: ['foo', 'bar'],
         },

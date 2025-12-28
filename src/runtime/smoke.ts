@@ -67,7 +67,7 @@ type SmokeProgressFile = {
 };
 
 const builtinSmokePresets = {
-  main: ['timeline/home', 'insights', 'search', 'pulse'],
+  main: ['timeline', 'insights', 'search', 'pulse'],
   settings: [
     'settings/account',
     'settings/activity',

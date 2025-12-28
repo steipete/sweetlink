@@ -114,7 +114,7 @@ beforeEach(() => {
 describe('smoke route helpers', () => {
   it('merges builtin and configured presets when deriving routes', () => {
     const routes = deriveSmokeRoutes('main,custom,/direct?foo=1', ['fallback']);
-    expect(routes).toContain('timeline/home');
+    expect(routes).toContain('timeline');
     expect(routes).toContain('custom-route');
     expect(routes).toContain('/direct?foo=1');
   });

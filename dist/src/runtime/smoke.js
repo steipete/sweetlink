@@ -42,7 +42,7 @@ const normalizeSmokePresets = (presets) => {
 };
 const SMOKE_PROGRESS_PATH = path.join(os.homedir(), '.sweetlink', 'smoke-progress.json');
 const builtinSmokePresets = {
-    main: ['timeline/home', 'insights', 'search', 'pulse'],
+    main: ['timeline', 'insights', 'search', 'pulse'],
     settings: [
         'settings/account',
         'settings/activity',

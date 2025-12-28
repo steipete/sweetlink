@@ -19,14 +19,16 @@ describe('runtime/url utilities', () => {
   });
 
   it('trims trailing slashes but preserves root path', () => {
-    expect(trimTrailingSlash('/timeline/home/')).toBe('/timeline/home');
+    expect(trimTrailingSlash('/timeline/index/')).toBe('/timeline/index');
     expect(trimTrailingSlash('///')).toBe('/');
     expect(trimTrailingSlash('')).toBe('/');
   });
 
   it('compares URLs loosely, allowing marketing suffixes', () => {
-    expect(urlsRoughlyMatch('https://localhost:3000/timeline/home', 'https://localhost:3000/timeline/')).toBe(true);
     expect(urlsRoughlyMatch('https://localhost:3000/timeline/index', 'https://localhost:3000/timeline/')).toBe(true);
+    expect(urlsRoughlyMatch('https://localhost:3000/timeline/overview', 'https://localhost:3000/timeline/')).toBe(
+      true
+    );
     expect(urlsRoughlyMatch('https://localhost:3000/settings/account', 'https://localhost:3000/insights')).toBe(false);
     expect(urlsRoughlyMatch('invalid-url', 'invalid-url')).toBe(true);
     expect(urlsRoughlyMatch('invalid-url', 'another')).toBe(false);
@@ -39,7 +41,6 @@ describe('runtime/url utilities', () => {
         'http://localhost:3000/',
         'http://localhost:3000/?sweetlink=auto',
         'http://localhost:3000/timeline',
-        'http://localhost:3000/timeline/home',
         'http://localhost:3000/timeline/index',
         'http://localhost:3000/timeline/overview',
         'http://localhost:3000/auth/signin',

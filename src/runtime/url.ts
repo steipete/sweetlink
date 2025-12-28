@@ -1,7 +1,7 @@
 import { URL } from 'node:url';
 import { LEADING_SLASH_PATTERN, TRAILING_SLASH_PATTERN } from '../util/regex.js';
 
-export const LOOSE_PATH_SUFFIXES = ['home', 'index', 'overview'] as const;
+export const LOOSE_PATH_SUFFIXES = ['index', 'overview'] as const;
 
 let pathRedirects: Record<string, string> = {};
 

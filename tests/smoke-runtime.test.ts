@@ -54,7 +54,7 @@ describe('runtime/smoke utilities', () => {
     it('expands preset tokens and deduplicates routes', () => {
       const result = deriveSmokeRoutes('main,settings,billing-only,pulse,pulse', ['fallback']);
       expect(result).toEqual([
-        'timeline/home',
+        'timeline',
         'insights',
         'search',
         'pulse',
@@ -71,7 +71,7 @@ describe('runtime/smoke utilities', () => {
     });
 
     it('falls back to defaults when user input is empty', () => {
-      const defaults = ['timeline/home', 'insights'];
+      const defaults = ['timeline', 'insights'];
       expect(deriveSmokeRoutes('', defaults)).toEqual(defaults);
       expect(deriveSmokeRoutes('   ', defaults)).toEqual(defaults);
     });
@@ -79,7 +79,7 @@ describe('runtime/smoke utilities', () => {
 
   describe('buildSmokeRouteUrl', () => {
     it('normalizes relative routes and applies sweetlink flag', () => {
-      const base = new URL('http://localhost:3000/timeline/home?sweetlink=auto');
+      const base = new URL('http://localhost:3000/timeline?sweetlink=auto');
       const target = buildSmokeRouteUrl(base, 'insights?tab=overview');
       expect(target.toString()).toBe('http://localhost:3000/insights?tab=overview&sweetlink=auto');
     });
@@ -97,7 +97,7 @@ describe('runtime/smoke utilities', () => {
     it('resolves immediately when the active session socket is already open', async () => {
       sessionModuleMocks.getSessionSummaryById.mockResolvedValue({
         sessionId: 'abc',
-        url: 'http://localhost:3000/timeline/home',
+        url: 'http://localhost:3000/timeline',
         title: 'Timeline',
         topOrigin: 'http://localhost:3000',
         createdAt: Date.now(),
@@ -110,7 +110,7 @@ describe('runtime/smoke utilities', () => {
         token: 'token',
         sessionId: 'abc',
         devtoolsUrl: 'http://127.0.0.1:9222',
-        currentUrl: 'http://localhost:3000/timeline/home',
+        currentUrl: 'http://localhost:3000/timeline',
         timeoutMs: 500,
       });
 

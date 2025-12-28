@@ -1,6 +1,6 @@
 import { URL } from 'node:url';
 import { LEADING_SLASH_PATTERN, TRAILING_SLASH_PATTERN } from '../util/regex.js';
-export const LOOSE_PATH_SUFFIXES = ['home', 'index', 'overview'];
+export const LOOSE_PATH_SUFFIXES = ['index', 'overview'];
 let pathRedirects = {};
 export function configurePathRedirects(map) {
     pathRedirects = {};
