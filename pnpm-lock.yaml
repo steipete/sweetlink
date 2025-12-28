@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@steipete/sweet-cookie':
-        specifier: github:steipete/sweet-cookie#path:packages/core
-        version: https://codeload.github.com/steipete/sweet-cookie/tar.gz/cefe014c0f8669a9eb4b11a2aac4ed8818c87f3f#path:packages/core
+        specifier: 0.1.0
+        version: 0.1.0
       arkregex:
         specifier: ^0.0.5
         version: 0.0.5
@@ -486,9 +486,8 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@steipete/sweet-cookie@https://codeload.github.com/steipete/sweet-cookie/tar.gz/cefe014c0f8669a9eb4b11a2aac4ed8818c87f3f#path:packages/core':
-    resolution: {path: packages/core, tarball: https://codeload.github.com/steipete/sweet-cookie/tar.gz/cefe014c0f8669a9eb4b11a2aac4ed8818c87f3f}
-    version: 0.0.0
+  '@steipete/sweet-cookie@0.1.0':
+    resolution: {integrity: sha512-cF8hS6rTohAFI1NAm2/HM9omBlw6V1DpwF6q5e9FB+l274HjtyirCgCc6QK2Rtuh7uDoqWHshFQZPsceyJuVgw==}
     engines: {node: '>=22'}
 
   '@tootallnate/quickjs-emscripten@0.23.0':
@@ -1609,7 +1608,7 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@steipete/sweet-cookie@https://codeload.github.com/steipete/sweet-cookie/tar.gz/cefe014c0f8669a9eb4b11a2aac4ed8818c87f3f#path:packages/core': {}
+  '@steipete/sweet-cookie@0.1.0': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 

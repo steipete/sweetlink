@@ -72,7 +72,7 @@
     "pnpm": ">=10.16.0"
   },
   "dependencies": {
-    "@steipete/sweet-cookie": "github:steipete/sweet-cookie#path:packages/core",
+    "@steipete/sweet-cookie": "0.1.0",
     "arkregex": "^0.0.5",
     "commander": "^14.0.2",
     "dotenv": "^17.2.3",
