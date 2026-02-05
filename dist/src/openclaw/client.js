@@ -11,7 +11,13 @@ export class OpenClawClient {
     profile;
     healthCache = null;
     constructor(config) {
-        const parsed = new URL(config.url);
+        let parsed;
+        try {
+            parsed = new URL(config.url);
+        }
+        catch {
+            throw new OpenClawError(`Invalid OpenClaw URL: ${config.url}`, 0);
+        }
         if (!ALLOWED_PROTOCOLS.has(parsed.protocol)) {
             throw new OpenClawError(`Unsupported OpenClaw URL protocol: ${parsed.protocol}`, 0);
         }

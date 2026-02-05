@@ -14,8 +14,8 @@ export function registerOpenClawStatusCommand(program) {
         }
         console.log(`OpenClaw server: ${ocConfig.url}`);
         console.log(`Profile: ${ocConfig.profile}`);
-        const client = new OpenClawClient(ocConfig);
         try {
+            const client = new OpenClawClient(ocConfig);
             const health = await client.health({ skipCache: true });
             console.log(`Running: ${health.running}`);
             console.log(`CDP ready: ${health.cdpReady}`);

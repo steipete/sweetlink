@@ -26,8 +26,8 @@ export function registerNavigateCommand(program) {
             process.exitCode = 1;
             return;
         }
-        const client = new OpenClawClient(ocConfig);
         try {
+            const client = new OpenClawClient(ocConfig);
             const result = await client.navigate({ url: parsed.toString() });
             console.log(`Navigated to ${result.url}`);
         }
