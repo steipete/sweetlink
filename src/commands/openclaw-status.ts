@@ -2,6 +2,18 @@ import type { Command } from 'commander';
 import { OpenClawClient } from '../openclaw/client.js';
 import { resolveOpenClawConfig } from '../openclaw/config.js';
 
+/** Sanitize URL for display — removes credentials to prevent leakage. */
+function sanitizeUrlForDisplay(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.username = '';
+    parsed.password = '';
+    return parsed.toString();
+  } catch {
+    return '(invalid URL)';
+  }
+}
+
 export function registerOpenClawStatusCommand(program: Command): void {
   program
     .command('openclaw-status')
@@ -16,7 +28,7 @@ export function registerOpenClawStatusCommand(program: Command): void {
         return;
       }
 
-      console.log(`OpenClaw server: ${ocConfig.url}`);
+      console.log(`OpenClaw server: ${sanitizeUrlForDisplay(ocConfig.url)}`);
       console.log(`Profile: ${ocConfig.profile}`);
 
       try {

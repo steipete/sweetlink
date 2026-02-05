@@ -1,1 +1,1 @@
-{"version":3,"file":"openclaw-status.d.ts","sourceRoot":"","sources":["../../../src/commands/openclaw-status.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAIzC,wBAAgB,6BAA6B,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CAqCpE"}
+{"version":3,"file":"openclaw-status.d.ts","sourceRoot":"","sources":["../../../src/commands/openclaw-status.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,WAAW,CAAC;AAgBzC,wBAAgB,6BAA6B,CAAC,OAAO,EAAE,OAAO,GAAG,IAAI,CAqCpE"}
