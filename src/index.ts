@@ -16,6 +16,7 @@ import {
   type SweetLinkScreenshotRenderer,
   type SweetLinkSelectorCandidate,
 } from '../shared/src/index.js';
+import { registerAiSnapshotCommand } from './commands/ai-snapshot.js';
 import { registerClickCommand } from './commands/click.js';
 import { registerRunJsCommand } from './commands/run-js.js';
 import { registerTrustCaCommand } from './commands/trust-ca.js';
@@ -398,6 +399,7 @@ program
     console.log('');
   });
 
+registerAiSnapshotCommand(program);
 registerRunJsCommand(program);
 registerTrustCaCommand(program);
 registerClickCommand(program);
