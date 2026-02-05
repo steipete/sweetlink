@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const PROFILE_NOT_FOUND = /Profile not found/;
+const STATUS_500 = /500 Internal Server Error/;
+
 const fetchMock = vi.fn();
 // @ts-expect-error -- global fetch override for testing
 global.fetch = fetchMock;
@@ -148,13 +151,8 @@ describe('OpenClawClient', () => {
     it('throws OpenClawError with upstream message', async () => {
       mockError(404, { error: 'Profile not found' });
       await expect(client.snapshot()).rejects.toThrow(OpenClawError);
-      await expect(
-        // Need a fresh mock since the previous one was consumed
-        (async () => {
-          mockError(404, { error: 'Profile not found' });
-          return client.snapshot();
-        })(),
-      ).rejects.toThrow(/Profile not found/);
+      mockError(404, { error: 'Profile not found' });
+      await expect(client.snapshot()).rejects.toThrow(PROFILE_NOT_FOUND);
     });
 
     it('includes status code on error', async () => {
@@ -173,9 +171,9 @@ describe('OpenClawClient', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-        json: async () => { throw new Error('no json'); },
+        json: () => Promise.reject(new Error('no json')),
       });
-      await expect(client.snapshot()).rejects.toThrow(/500 Internal Server Error/);
+      await expect(client.snapshot()).rejects.toThrow(STATUS_500);
     });
   });
 });

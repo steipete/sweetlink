@@ -2,7 +2,12 @@ import type { Command } from 'commander';
 import { readCommandOptions } from '../core/env.js';
 import { OpenClawClient } from '../openclaw/client.js';
 import { resolveOpenClawConfig } from '../openclaw/config.js';
-import type { OpenClawSnapshotParams, OpenClawSnapshotResponse } from '../openclaw/types.js';
+import type {
+  OpenClawConfig,
+  OpenClawSnapshotAiResponse,
+  OpenClawSnapshotAriaResponse,
+  OpenClawSnapshotParams,
+} from '../openclaw/types.js';
 
 interface SnapshotCommandOptions {
   format?: string;
@@ -49,45 +54,56 @@ export function registerSnapshotCommand(program: Command): void {
         return;
       }
 
-      const format = options.format === 'aria' ? 'aria' : 'ai';
-      const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
-
-      const params: OpenClawSnapshotParams = {
-        format,
-        refs,
-        ...(options.efficient || ocConfig.efficient ? { mode: 'efficient' as const } : {}),
-        ...(options.interactive ? { interactive: true } : {}),
-        ...(options.labels ? { labels: true } : {}),
-        ...(options.compact ? { compact: true } : {}),
-        ...(options.depth !== undefined ? { depth: options.depth } : {}),
-        ...(options.maxChars !== undefined ? { maxChars: options.maxChars } : {}),
-        ...(options.selector ? { selector: options.selector } : {}),
-        ...(options.frame ? { frame: options.frame } : {}),
-      };
-
-      const result: OpenClawSnapshotResponse = await client.snapshot(params);
+      const params = buildSnapshotParams(options, ocConfig);
+      const result = await client.snapshot(params);
 
       if (result.format === 'ai') {
-        console.log(result.snapshot);
-        if (result.truncated) {
-          console.warn('(output truncated)');
-        }
-        if (result.stats) {
-          const s = result.stats;
-          console.error(`[${s.lines} lines, ${s.chars} chars, ${s.refs} refs, ${s.interactive} interactive]`);
-        }
-        if (result.imagePath) {
-          console.error(`Labels image: ${result.imagePath}`);
-        }
+        renderAiSnapshot(result);
       } else {
-        for (const node of result.nodes) {
-          const indent = '  '.repeat(node.depth);
-          const parts = [`${indent}${node.role}`];
-          if (node.name) parts.push(`"${node.name}"`);
-          if (node.ref) parts.push(`[${node.ref}]`);
-          if (node.value) parts.push(`value="${node.value}"`);
-          console.log(parts.join(' '));
-        }
+        renderAriaSnapshot(result);
       }
     });
+}
+
+function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClawConfig): OpenClawSnapshotParams {
+  const format = options.format === 'aria' ? 'aria' : 'ai';
+  const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
+
+  return {
+    format,
+    refs,
+    ...(options.efficient || ocConfig.efficient ? { mode: 'efficient' as const } : {}),
+    ...(options.interactive ? { interactive: true } : {}),
+    ...(options.labels ? { labels: true } : {}),
+    ...(options.compact ? { compact: true } : {}),
+    ...(options.depth !== undefined ? { depth: options.depth } : {}),
+    ...(options.maxChars !== undefined ? { maxChars: options.maxChars } : {}),
+    ...(options.selector ? { selector: options.selector } : {}),
+    ...(options.frame ? { frame: options.frame } : {}),
+  };
+}
+
+function renderAiSnapshot(result: OpenClawSnapshotAiResponse): void {
+  console.log(result.snapshot);
+  if (result.truncated) {
+    console.warn('(output truncated)');
+  }
+  if (result.stats) {
+    const s = result.stats;
+    console.error(`[${s.lines} lines, ${s.chars} chars, ${s.refs} refs, ${s.interactive} interactive]`);
+  }
+  if (result.imagePath) {
+    console.error(`Labels image: ${result.imagePath}`);
+  }
+}
+
+function renderAriaSnapshot(result: OpenClawSnapshotAriaResponse): void {
+  for (const node of result.nodes) {
+    const indent = '  '.repeat(node.depth);
+    const parts = [`${indent}${node.role}`];
+    if (node.name) parts.push(`"${node.name}"`);
+    if (node.ref) parts.push(`[${node.ref}]`);
+    if (node.value) parts.push(`value="${node.value}"`);
+    console.log(parts.join(' '));
+  }
 }
