@@ -73,6 +73,7 @@ export function registerSnapshotCommand(program: Command): void {
 
 const MAX_DEPTH = 100; // Reasonable max DOM traversal depth
 const MAX_CHARS = 10_000_000; // 10MB max output
+const MAX_SELECTOR_LENGTH = 10_000; // 10KB max for CSS selectors
 
 /** Validates a positive integer within safe bounds. Returns undefined if invalid. */
 function safePositiveInt(value: number | undefined, max: number): number | undefined {
@@ -81,11 +82,20 @@ function safePositiveInt(value: number | undefined, max: number): number | undef
   return Math.floor(value);
 }
 
+/** Validates string length. Returns undefined if missing or exceeds max. */
+function validateStringLength(value: string | undefined, max: number): string | undefined {
+  if (value === undefined) return undefined;
+  if (value.length > max) return undefined;
+  return value;
+}
+
 function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClawConfig): OpenClawSnapshotParams {
   const format = options.format === 'aria' ? 'aria' : 'ai';
   const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
   const depth = safePositiveInt(options.depth, MAX_DEPTH);
   const maxChars = safePositiveInt(options.maxChars, MAX_CHARS);
+  const selector = validateStringLength(options.selector, MAX_SELECTOR_LENGTH);
+  const frame = validateStringLength(options.frame, MAX_SELECTOR_LENGTH);
 
   return {
     format,
@@ -96,8 +106,8 @@ function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClaw
     ...(options.compact ? { compact: true } : {}),
     ...(depth !== undefined ? { depth } : {}),
     ...(maxChars !== undefined ? { maxChars } : {}),
-    ...(options.selector ? { selector: options.selector } : {}),
-    ...(options.frame ? { frame: options.frame } : {}),
+    ...(selector ? { selector } : {}),
+    ...(frame ? { frame } : {}),
   };
 }
 
