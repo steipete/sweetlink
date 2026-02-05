@@ -2,6 +2,16 @@ import { readCommandOptions } from '../core/env.js';
 import { OpenClawClient } from '../openclaw/client.js';
 import { resolveOpenClawConfig } from '../openclaw/config.js';
 const VALID_BUTTONS = new Set(['left', 'right', 'middle']);
+const MAX_DIMENSION = 32_767; // Reasonable upper bound for viewport dimensions
+const MAX_TIMEOUT_MS = 300_000; // 5 minutes max timeout
+/** Validates a positive integer within safe bounds. Returns undefined if invalid. */
+function safePositiveInt(value, max) {
+    if (value === undefined)
+        return undefined;
+    if (!Number.isFinite(value) || value <= 0 || value > max)
+        return undefined;
+    return Math.floor(value);
+}
 export function registerActCommand(program) {
     program
         .command('act')
@@ -55,7 +65,7 @@ export function registerActCommand(program) {
     });
 }
 function buildAction(options) {
-    const timeoutMs = options.timeout;
+    const timeoutMs = safePositiveInt(options.timeout, MAX_TIMEOUT_MS);
     switch (options.kind) {
         case 'click': {
             if (!options.ref)
@@ -104,11 +114,11 @@ function buildAction(options) {
             return { kind: 'select', ref: options.ref, values: options.values, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
         }
         case 'resize': {
-            if (options.width === undefined || options.height === undefined)
+            const width = safePositiveInt(options.width, MAX_DIMENSION);
+            const height = safePositiveInt(options.height, MAX_DIMENSION);
+            if (width === undefined || height === undefined)
                 return null;
-            if (options.width <= 0 || options.height <= 0)
-                return null;
-            return { kind: 'resize', width: Math.floor(options.width), height: Math.floor(options.height) };
+            return { kind: 'resize', width, height };
         }
         case 'wait':
             return { kind: 'wait', ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
