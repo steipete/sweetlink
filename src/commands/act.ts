@@ -97,68 +97,70 @@ export function registerActCommand(program: Command): void {
     });
 }
 
+function buildClickAction(options: ActCommandOptions, timeoutMs: number | undefined): OpenClawAction | null {
+  if (!options.ref) return null;
+  const button = options.button && VALID_BUTTONS.has(options.button)
+    ? (options.button as 'left' | 'right' | 'middle')
+    : undefined;
+  return {
+    kind: 'click',
+    ref: options.ref,
+    ...(options.doubleClick ? { doubleClick: true } : {}),
+    ...(button ? { button } : {}),
+    ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+  };
+}
+
+function buildTypeAction(options: ActCommandOptions, timeoutMs: number | undefined): OpenClawAction | null {
+  if (!options.ref || options.text === undefined) return null;
+  const text = validateStringLength(options.text, MAX_TEXT_LENGTH);
+  if (text === null) return null;
+  return {
+    kind: 'type',
+    ref: options.ref,
+    text,
+    ...(options.submit ? { submit: true } : {}),
+    ...(options.slowly ? { slowly: true } : {}),
+    ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+  };
+}
+
+function buildSelectAction(options: ActCommandOptions, timeoutMs: number | undefined): OpenClawAction | null {
+  if (!(options.ref && options.values)) return null;
+  const validatedValues = options.values.map((v) => validateStringLength(v, MAX_VALUE_LENGTH));
+  if (validatedValues.some((v) => v === null)) return null;
+  return { kind: 'select', ref: options.ref, values: validatedValues as string[], ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
+}
+
 function buildAction(options: ActCommandOptions): OpenClawAction | null {
   const timeoutMs = safePositiveInt(options.timeout, MAX_TIMEOUT_MS);
 
   switch (options.kind) {
-    case 'click': {
-      if (!options.ref) return null;
-      const button = options.button && VALID_BUTTONS.has(options.button)
-        ? (options.button as 'left' | 'right' | 'middle')
-        : undefined;
-      return {
-        kind: 'click',
-        ref: options.ref,
-        ...(options.doubleClick ? { doubleClick: true } : {}),
-        ...(button ? { button } : {}),
-        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
-      };
-    }
-    case 'type': {
-      if (!options.ref || options.text === undefined) return null;
-      const text = validateStringLength(options.text, MAX_TEXT_LENGTH);
-      if (text === null) return null;
-      return {
-        kind: 'type',
-        ref: options.ref,
-        text,
-        ...(options.submit ? { submit: true } : {}),
-        ...(options.slowly ? { slowly: true } : {}),
-        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
-      };
-    }
-    case 'press': {
-      if (!options.key) return null;
-      return { kind: 'press', key: options.key };
-    }
-    case 'hover': {
-      if (!options.ref) return null;
-      return { kind: 'hover', ref: options.ref, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
-    }
-    case 'drag': {
-      if (!(options.startRef && options.endRef)) return null;
-      return { kind: 'drag', startRef: options.startRef, endRef: options.endRef, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
-    }
-    case 'select': {
-      if (!(options.ref && options.values)) return null;
-      // Validate each value's length
-      const validatedValues = options.values.map((v) => validateStringLength(v, MAX_VALUE_LENGTH));
-      if (validatedValues.some((v) => v === null)) return null;
-      return { kind: 'select', ref: options.ref, values: validatedValues as string[], ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
-    }
+    case 'click':
+      return buildClickAction(options, timeoutMs);
+    case 'type':
+      return buildTypeAction(options, timeoutMs);
+    case 'press':
+      return options.key ? { kind: 'press', key: options.key } : null;
+    case 'hover':
+      return options.ref ? { kind: 'hover', ref: options.ref, ...(timeoutMs !== undefined ? { timeoutMs } : {}) } : null;
+    case 'drag':
+      return options.startRef && options.endRef
+        ? { kind: 'drag', startRef: options.startRef, endRef: options.endRef, ...(timeoutMs !== undefined ? { timeoutMs } : {}) }
+        : null;
+    case 'select':
+      return buildSelectAction(options, timeoutMs);
     case 'resize': {
       const width = safePositiveInt(options.width, MAX_DIMENSION);
       const height = safePositiveInt(options.height, MAX_DIMENSION);
-      if (width === undefined || height === undefined) return null;
-      return { kind: 'resize', width, height };
+      return width !== undefined && height !== undefined ? { kind: 'resize', width, height } : null;
     }
     case 'wait':
       return { kind: 'wait', ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     case 'evaluate': {
       if (!options.fn) return null;
       const fn = validateStringLength(options.fn, MAX_FN_LENGTH);
-      if (fn === null) return null;
-      return { kind: 'evaluate', fn, ...(options.ref ? { ref: options.ref } : {}) };
+      return fn !== null ? { kind: 'evaluate', fn, ...(options.ref ? { ref: options.ref } : {}) } : null;
     }
     case 'close':
       return { kind: 'close' };

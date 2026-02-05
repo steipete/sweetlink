@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const PROFILE_NOT_FOUND = /Profile not found/;
 const STATUS_500 = /500 Internal Server Error/;
+const TIMED_OUT = /timed out/;
 
 const fetchMock = vi.fn();
 // @ts-expect-error -- global fetch override for testing
@@ -243,7 +244,7 @@ describe('OpenClawClient', () => {
       const abortError = new Error('The operation was aborted');
       abortError.name = 'AbortError';
       fetchMock.mockRejectedValueOnce(abortError);
-      await expect(client.snapshot()).rejects.toThrow(/timed out/);
+      await expect(client.snapshot()).rejects.toThrow(TIMED_OUT);
     });
   });
 });
