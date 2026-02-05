@@ -8,8 +8,12 @@ import { fileURLToPath } from 'node:url';
 import { Command, CommanderError, Option } from 'commander';
 import { compact, uniq } from 'es-toolkit';
 import { createSweetLinkCommandId, } from '../shared/src/index.js';
+import { registerActCommand } from './commands/act.js';
 import { registerClickCommand } from './commands/click.js';
+import { registerNavigateCommand } from './commands/navigate.js';
+import { registerOpenClawStatusCommand } from './commands/openclaw-status.js';
 import { registerRunJsCommand } from './commands/run-js.js';
+import { registerSnapshotCommand } from './commands/snapshot.js';
 import { registerTrustCaCommand } from './commands/trust-ca.js';
 import { readRootProgramOptions, resolveConfig } from './core/config.js';
 import { loadSweetLinkFileConfig } from './core/config-file.js';
@@ -240,6 +244,10 @@ program
 registerRunJsCommand(program);
 registerTrustCaCommand(program);
 registerClickCommand(program);
+registerSnapshotCommand(program);
+registerActCommand(program);
+registerNavigateCommand(program);
+registerOpenClawStatusCommand(program);
 program
     .command('console <sessionId>')
     .description('Fetch buffered console events for a session')

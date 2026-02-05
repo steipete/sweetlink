@@ -113,6 +113,10 @@ function normalizeConfig(raw, baseDirectory) {
             config.oauthScript = resolved;
         }
     }
+    const openclaw = normalizeOpenClawSection(raw.openclaw);
+    if (openclaw) {
+        config.openclaw = openclaw;
+    }
     return config;
 }
 function resolveConfigPath(candidate, baseDirectory) {
@@ -307,5 +311,31 @@ function normalizeRedirectsSection(value) {
         redirects[sourcePath] = targetPath;
     }
     return Object.keys(redirects).length > 0 ? redirects : undefined;
+}
+function normalizeOpenClawSection(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return null;
+    }
+    const record = value;
+    const config = {};
+    if (typeof record.enabled === 'boolean') {
+        config.enabled = record.enabled;
+    }
+    if (typeof record.url === 'string' && record.url.trim().length > 0) {
+        config.url = record.url.trim();
+    }
+    if (typeof record.profile === 'string' && record.profile.trim().length > 0) {
+        config.profile = record.profile.trim();
+    }
+    if (record.snapshotFormat === 'ai' || record.snapshotFormat === 'aria') {
+        config.snapshotFormat = record.snapshotFormat;
+    }
+    if (record.refs === 'role' || record.refs === 'aria') {
+        config.refs = record.refs;
+    }
+    if (typeof record.efficient === 'boolean') {
+        config.efficient = record.efficient;
+    }
+    return Object.keys(config).length > 0 ? config : null;
 }
 //# sourceMappingURL=config-file.js.map

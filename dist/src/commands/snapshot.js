@@ -1,0 +1,98 @@
+import { readCommandOptions } from '../core/env.js';
+import { OpenClawClient } from '../openclaw/client.js';
+import { resolveOpenClawConfig } from '../openclaw/config.js';
+export function registerSnapshotCommand(program) {
+    program
+        .command('snapshot')
+        .description('Capture an AI-optimized page snapshot via OpenClaw')
+        .option('--format <format>', 'Snapshot format: ai (default) or aria', 'ai')
+        .option('--efficient', 'Use efficient mode (compact, limited depth)', false)
+        .option('--interactive', 'Only include interactive elements', false)
+        .option('--labels', 'Overlay numbered labels on interactive elements (requires format=ai)', false)
+        .option('--compact', 'Remove empty/unnamed structural elements', false)
+        .option('--depth <n>', 'Max tree depth', Number)
+        .option('--max-chars <n>', 'Truncate output at N characters', Number)
+        .option('--selector <css>', 'CSS selector for subtree')
+        .option('--frame <selector>', 'Frame/iframe selector')
+        .option('--refs <mode>', 'Ref generation mode: role (default) or aria')
+        .action(async function () {
+        const options = readCommandOptions(this);
+        const ocConfig = resolveOpenClawConfig();
+        if (!ocConfig.enabled) {
+            console.error('OpenClaw integration is not enabled. Add { "openclaw": { "enabled": true } } to sweetlink.json.');
+            process.exitCode = 1;
+            return;
+        }
+        const client = new OpenClawClient(ocConfig);
+        const ready = await client.isReady();
+        if (!ready) {
+            console.error('OpenClaw is not ready. Run `sweetlink openclaw-status` for details.');
+            process.exitCode = 1;
+            return;
+        }
+        const params = buildSnapshotParams(options, ocConfig);
+        try {
+            const result = await client.snapshot(params);
+            if (result.format === 'ai') {
+                renderAiSnapshot(result);
+            }
+            else {
+                renderAriaSnapshot(result);
+            }
+        }
+        catch (error) {
+            console.error('Snapshot failed:', error instanceof Error ? error.message : String(error));
+            process.exitCode = 1;
+        }
+    });
+}
+function positiveInt(value) {
+    if (value === undefined)
+        return undefined;
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
+}
+function buildSnapshotParams(options, ocConfig) {
+    const format = options.format === 'aria' ? 'aria' : 'ai';
+    const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
+    const depth = positiveInt(options.depth);
+    const maxChars = positiveInt(options.maxChars);
+    return {
+        format,
+        refs,
+        ...(options.efficient || ocConfig.efficient ? { mode: 'efficient' } : {}),
+        ...(options.interactive ? { interactive: true } : {}),
+        ...(options.labels ? { labels: true } : {}),
+        ...(options.compact ? { compact: true } : {}),
+        ...(depth !== undefined ? { depth } : {}),
+        ...(maxChars !== undefined ? { maxChars } : {}),
+        ...(options.selector ? { selector: options.selector } : {}),
+        ...(options.frame ? { frame: options.frame } : {}),
+    };
+}
+function renderAiSnapshot(result) {
+    console.log(result.snapshot);
+    if (result.truncated) {
+        console.warn('(output truncated)');
+    }
+    if (result.stats) {
+        const s = result.stats;
+        console.error(`[${s.lines} lines, ${s.chars} chars, ${s.refs} refs, ${s.interactive} interactive]`);
+    }
+    if (result.imagePath) {
+        console.error(`Labels image: ${result.imagePath}`);
+    }
+}
+function renderAriaSnapshot(result) {
+    for (const node of result.nodes) {
+        const indent = '  '.repeat(node.depth);
+        const parts = [`${indent}${node.role}`];
+        if (node.name)
+            parts.push(`"${node.name}"`);
+        if (node.ref)
+            parts.push(`[${node.ref}]`);
+        if (node.value)
+            parts.push(`value="${node.value}"`);
+        console.log(parts.join(' '));
+    }
+}
+//# sourceMappingURL=snapshot.js.map

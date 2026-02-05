@@ -22,6 +22,14 @@ export interface SweetLinkDevBootstrapConfig {
     loginPath?: string;
     redirectParam?: string;
 }
+export interface SweetLinkOpenClawFileConfig {
+    enabled?: boolean;
+    url?: string;
+    profile?: string;
+    snapshotFormat?: string;
+    refs?: string;
+    efficient?: boolean;
+}
 export interface SweetLinkFileConfig {
     appLabel?: string;
     appUrl?: string;
@@ -36,6 +44,7 @@ export interface SweetLinkFileConfig {
     redirects?: SweetLinkRedirectsConfig;
     servers?: SweetLinkServerConfig[];
     oauthScript?: string;
+    openclaw?: SweetLinkOpenClawFileConfig;
 }
 interface LoadedConfig {
     readonly path: string | null;

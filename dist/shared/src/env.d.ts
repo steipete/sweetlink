@@ -16,6 +16,8 @@ export interface SweetLinkSharedEnv {
     readonly cliChromeProfilePath: string | null;
     readonly cliCookieDebug: boolean;
     readonly cliOauthScriptPath: string | null;
+    readonly openclawUrl: string | null;
+    readonly openclawProfile: string | null;
     readonly debug: boolean;
     readonly cliTestMode: boolean;
 }
