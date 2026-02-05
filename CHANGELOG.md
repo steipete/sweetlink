@@ -2,7 +2,7 @@
 
 ## 0.2.1 — Unreleased
 
-- _No changes yet._
+- **OpenClaw integration**: optional browser backend for AI-optimized page snapshots and ref-based interactions. New commands: `snapshot`, `act`, `navigate`, `openclaw-status`. Configure via `openclaw` section in `sweetlink.json` or `SWEETLINK_OPENCLAW_URL`/`SWEETLINK_OPENCLAW_PROFILE` env vars. Includes graceful fallback to native SweetLink when OpenClaw is unavailable.
 
 ## 0.2.0 — 2025-12-26
 
