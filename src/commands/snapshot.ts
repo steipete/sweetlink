@@ -55,12 +55,18 @@ export function registerSnapshotCommand(program: Command): void {
       }
 
       const params = buildSnapshotParams(options, ocConfig);
-      const result = await client.snapshot(params);
 
-      if (result.format === 'ai') {
-        renderAiSnapshot(result);
-      } else {
-        renderAriaSnapshot(result);
+      try {
+        const result = await client.snapshot(params);
+
+        if (result.format === 'ai') {
+          renderAiSnapshot(result);
+        } else {
+          renderAriaSnapshot(result);
+        }
+      } catch (error) {
+        console.error('Snapshot failed:', error instanceof Error ? error.message : String(error));
+        process.exitCode = 1;
       }
     });
 }

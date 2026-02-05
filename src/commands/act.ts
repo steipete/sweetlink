@@ -4,6 +4,8 @@ import { OpenClawClient } from '../openclaw/client.js';
 import { resolveOpenClawConfig } from '../openclaw/config.js';
 import type { OpenClawAction } from '../openclaw/types.js';
 
+const VALID_BUTTONS = new Set(['left', 'right', 'middle']);
+
 interface ActCommandOptions {
   kind: string;
   ref?: string;
@@ -59,14 +61,19 @@ export function registerActCommand(program: Command): void {
         return;
       }
 
-      const result = await client.act(action);
-      if (result.result !== undefined) {
-        console.log(typeof result.result === 'string' ? result.result : JSON.stringify(result.result, null, 2));
-      } else {
-        console.log(`Action ${options.kind} completed.`);
-      }
-      if (result.url) {
-        console.error(`URL: ${result.url}`);
+      try {
+        const result = await client.act(action);
+        if (result.result !== undefined) {
+          console.log(typeof result.result === 'string' ? result.result : JSON.stringify(result.result, null, 2));
+        } else {
+          console.log(`Action ${options.kind} completed.`);
+        }
+        if (result.url) {
+          console.error(`URL: ${result.url}`);
+        }
+      } catch (error) {
+        console.error('Action failed:', error instanceof Error ? error.message : String(error));
+        process.exitCode = 1;
       }
     });
 }
@@ -77,11 +84,14 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
   switch (options.kind) {
     case 'click': {
       if (!options.ref) return null;
+      const button = options.button && VALID_BUTTONS.has(options.button)
+        ? (options.button as 'left' | 'right' | 'middle')
+        : undefined;
       return {
         kind: 'click',
         ref: options.ref,
         ...(options.doubleClick ? { doubleClick: true } : {}),
-        ...(options.button ? { button: options.button as 'left' | 'right' | 'middle' } : {}),
+        ...(button ? { button } : {}),
         ...(timeoutMs ? { timeoutMs } : {}),
       };
     }

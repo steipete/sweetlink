@@ -23,6 +23,7 @@ import { OpenClawError } from './types.js';
 
 const HEALTH_CACHE_TTL_MS = 5000;
 const TRAILING_SLASHES = /\/+$/;
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 interface CachedHealth {
   readonly result: OpenClawHealthResponse;
@@ -35,6 +36,10 @@ export class OpenClawClient {
   private healthCache: CachedHealth | null = null;
 
   constructor(config: Pick<OpenClawConfig, 'url' | 'profile'>) {
+    const parsed = new URL(config.url);
+    if (!ALLOWED_PROTOCOLS.has(parsed.protocol)) {
+      throw new OpenClawError(`Unsupported OpenClaw URL protocol: ${parsed.protocol}`, 0);
+    }
     this.baseUrl = config.url.replace(TRAILING_SLASHES, '');
     this.profile = config.profile;
   }
@@ -157,7 +162,11 @@ export class OpenClawClient {
   }
 
   private buildUrl(urlPath: string, query?: Record<string, string>): string {
+    const base = new URL(this.baseUrl);
     const url = new URL(urlPath, this.baseUrl);
+    if (url.origin !== base.origin) {
+      throw new OpenClawError(`Refusing request to different origin: ${url.origin}`, 0);
+    }
     if (query) {
       for (const [key, value] of Object.entries(query)) {
         url.searchParams.set(key, value);

@@ -2,6 +2,8 @@ import type { Command } from 'commander';
 import { OpenClawClient } from '../openclaw/client.js';
 import { resolveOpenClawConfig } from '../openclaw/config.js';
 
+const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
+
 export function registerNavigateCommand(program: Command): void {
   program
     .command('navigate <url>')
@@ -15,8 +17,28 @@ export function registerNavigateCommand(program: Command): void {
         return;
       }
 
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        console.error(`Invalid URL: ${url}`);
+        process.exitCode = 1;
+        return;
+      }
+
+      if (!ALLOWED_NAVIGATE_PROTOCOLS.has(parsed.protocol)) {
+        console.error(`Unsupported protocol: ${parsed.protocol}. Only http: and https: are allowed.`);
+        process.exitCode = 1;
+        return;
+      }
+
       const client = new OpenClawClient(ocConfig);
-      const result = await client.navigate({ url });
-      console.log(`Navigated to ${result.url}`);
+      try {
+        const result = await client.navigate({ url: parsed.toString() });
+        console.log(`Navigated to ${result.url}`);
+      } catch (error) {
+        console.error('Navigation failed:', error instanceof Error ? error.message : String(error));
+        process.exitCode = 1;
+      }
     });
 }

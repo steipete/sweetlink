@@ -35,6 +35,18 @@ describe('OpenClawClient', () => {
     client = new OpenClawClient({ url: 'http://127.0.0.1:18791', profile: 'test' });
   });
 
+  describe('constructor validation', () => {
+    it('rejects non-http protocols', () => {
+      expect(() => new OpenClawClient({ url: 'file:///etc/passwd', profile: 'test' })).toThrow(OpenClawError);
+      expect(() => new OpenClawClient({ url: 'ftp://evil.com', profile: 'test' })).toThrow(OpenClawError);
+    });
+
+    it('accepts http and https', () => {
+      expect(() => new OpenClawClient({ url: 'http://localhost:18791', profile: 'x' })).not.toThrow();
+      expect(() => new OpenClawClient({ url: 'https://localhost:18791', profile: 'x' })).not.toThrow();
+    });
+  });
+
   describe('health', () => {
     it('returns health status from server', async () => {
       mockOk({ running: true, cdpReady: true });
