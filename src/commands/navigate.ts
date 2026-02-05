@@ -4,6 +4,20 @@ import { resolveOpenClawConfig } from '../openclaw/config.js';
 
 const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
 
+/** Sanitize URL for error messages — removes credentials to prevent leakage. */
+function sanitizeUrlForError(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.username = '';
+    parsed.password = '';
+    return parsed.toString();
+  } catch {
+    // If we can't parse it, truncate and indicate it's invalid
+    const truncated = url.length > 100 ? `${url.slice(0, 100)}...` : url;
+    return truncated;
+  }
+}
+
 export function registerNavigateCommand(program: Command): void {
   program
     .command('navigate <url>')
@@ -21,7 +35,7 @@ export function registerNavigateCommand(program: Command): void {
       try {
         parsed = new URL(url);
       } catch {
-        console.error(`Invalid URL: ${url}`);
+        console.error(`Invalid URL: ${sanitizeUrlForError(url)}`);
         process.exitCode = 1;
         return;
       }
