@@ -71,9 +71,16 @@ export function registerSnapshotCommand(program: Command): void {
     });
 }
 
+function positiveInt(value: number | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
+}
+
 function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClawConfig): OpenClawSnapshotParams {
   const format = options.format === 'aria' ? 'aria' : 'ai';
   const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
+  const depth = positiveInt(options.depth);
+  const maxChars = positiveInt(options.maxChars);
 
   return {
     format,
@@ -82,8 +89,8 @@ function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClaw
     ...(options.interactive ? { interactive: true } : {}),
     ...(options.labels ? { labels: true } : {}),
     ...(options.compact ? { compact: true } : {}),
-    ...(options.depth !== undefined ? { depth: options.depth } : {}),
-    ...(options.maxChars !== undefined ? { maxChars: options.maxChars } : {}),
+    ...(depth !== undefined ? { depth } : {}),
+    ...(maxChars !== undefined ? { maxChars } : {}),
     ...(options.selector ? { selector: options.selector } : {}),
     ...(options.frame ? { frame: options.frame } : {}),
   };

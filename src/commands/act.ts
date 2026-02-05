@@ -92,7 +92,7 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
         ref: options.ref,
         ...(options.doubleClick ? { doubleClick: true } : {}),
         ...(button ? { button } : {}),
-        ...(timeoutMs ? { timeoutMs } : {}),
+        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
       };
     }
     case 'type': {
@@ -103,7 +103,7 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
         text: options.text,
         ...(options.submit ? { submit: true } : {}),
         ...(options.slowly ? { slowly: true } : {}),
-        ...(timeoutMs ? { timeoutMs } : {}),
+        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
       };
     }
     case 'press': {
@@ -112,22 +112,23 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
     }
     case 'hover': {
       if (!options.ref) return null;
-      return { kind: 'hover', ref: options.ref, ...(timeoutMs ? { timeoutMs } : {}) };
+      return { kind: 'hover', ref: options.ref, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     }
     case 'drag': {
       if (!(options.startRef && options.endRef)) return null;
-      return { kind: 'drag', startRef: options.startRef, endRef: options.endRef, ...(timeoutMs ? { timeoutMs } : {}) };
+      return { kind: 'drag', startRef: options.startRef, endRef: options.endRef, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     }
     case 'select': {
       if (!(options.ref && options.values)) return null;
-      return { kind: 'select', ref: options.ref, values: options.values, ...(timeoutMs ? { timeoutMs } : {}) };
+      return { kind: 'select', ref: options.ref, values: options.values, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     }
     case 'resize': {
       if (options.width === undefined || options.height === undefined) return null;
-      return { kind: 'resize', width: options.width, height: options.height };
+      if (options.width <= 0 || options.height <= 0) return null;
+      return { kind: 'resize', width: Math.floor(options.width), height: Math.floor(options.height) };
     }
     case 'wait':
-      return { kind: 'wait', ...(timeoutMs ? { timeoutMs } : {}) };
+      return { kind: 'wait', ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     case 'evaluate': {
       if (!options.fn) return null;
       return { kind: 'evaluate', fn: options.fn, ...(options.ref ? { ref: options.ref } : {}) };

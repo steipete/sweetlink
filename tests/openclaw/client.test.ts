@@ -134,6 +134,16 @@ describe('OpenClawClient', () => {
       const result = await client.navigate({ url: 'http://example.com/page' });
       expect(result.url).toBe('http://example.com/page');
     });
+
+    it('rejects non-http protocols', async () => {
+      await expect(client.navigate({ url: 'file:///etc/passwd' })).rejects.toThrow(OpenClawError);
+      await expect(client.navigate({ url: 'javascript:alert(1)' })).rejects.toThrow(OpenClawError);
+      await expect(client.navigate({ url: 'ftp://evil.com' })).rejects.toThrow(OpenClawError);
+    });
+
+    it('rejects invalid URLs', async () => {
+      await expect(client.navigate({ url: 'not a url' })).rejects.toThrow(OpenClawError);
+    });
   });
 
   describe('tabs', () => {
@@ -148,6 +158,11 @@ describe('OpenClawClient', () => {
       mockOk({ targetId: 't2', title: 'New', url: 'http://new.com' });
       const tab = await client.openTab('http://new.com');
       expect(tab.targetId).toBe('t2');
+    });
+
+    it('rejects non-http protocols for openTab', async () => {
+      await expect(client.openTab('file:///etc/passwd')).rejects.toThrow(OpenClawError);
+      await expect(client.openTab('javascript:alert(1)')).rejects.toThrow(OpenClawError);
     });
 
     it('closes a tab', async () => {

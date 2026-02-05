@@ -30,6 +30,12 @@ describe('resolveOpenClawConfig', () => {
     expect(config.efficient).toBe(true);
   });
 
+  it('auto-enables when url is explicitly set', () => {
+    const config = resolveOpenClawConfig({ url: 'http://custom:9999' });
+    expect(config.enabled).toBe(true);
+    expect(config.url).toBe('http://custom:9999');
+  });
+
   it('ignores invalid snapshotFormat values', () => {
     const config = resolveOpenClawConfig({ snapshotFormat: 'invalid' });
     expect(config.snapshotFormat).toBe('ai');

@@ -24,6 +24,7 @@ import { OpenClawError } from './types.js';
 const HEALTH_CACHE_TTL_MS = 5000;
 const TRAILING_SLASHES = /\/+$/;
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
+const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
 
 interface CachedHealth {
   readonly result: OpenClawHealthResponse;
@@ -100,6 +101,7 @@ export class OpenClawClient {
   // -- Navigate ---------------------------------------------------------------
 
   async navigate(params: OpenClawNavigateParams): Promise<OpenClawNavigateResponse> {
+    assertSafeNavigateUrl(params.url);
     return await this.post<OpenClawNavigateResponse>('/navigate', params, { profile: this.profile });
   }
 
@@ -110,6 +112,7 @@ export class OpenClawClient {
   }
 
   async openTab(url: string): Promise<OpenClawTab> {
+    assertSafeNavigateUrl(url);
     return await this.post<OpenClawTab>('/tabs/open', { url }, { profile: this.profile });
   }
 
@@ -194,5 +197,17 @@ async function safeJson(response: Response): Promise<unknown> {
     return await response.json();
   } catch {
     return null;
+  }
+}
+
+function assertSafeNavigateUrl(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new OpenClawError(`Invalid navigation URL: ${url}`, 0);
+  }
+  if (!ALLOWED_NAVIGATE_PROTOCOLS.has(parsed.protocol)) {
+    throw new OpenClawError(`Unsupported navigation URL protocol: ${parsed.protocol}`, 0);
   }
 }

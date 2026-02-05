@@ -32,7 +32,8 @@ export function resolveOpenClawConfig(fileOverride?: SweetLinkOpenClawFileConfig
 
   const efficient = file?.efficient ?? OPENCLAW_DEFAULTS.efficient;
 
-  const enabled = file?.enabled ?? OPENCLAW_DEFAULTS.enabled;
+  const hasExplicitUrl = Boolean(file?.url ?? sweetLinkEnv.openclawUrl);
+  const enabled = file?.enabled ?? (hasExplicitUrl || OPENCLAW_DEFAULTS.enabled);
 
   return { enabled, url, profile, snapshotFormat, refs, efficient };
 }

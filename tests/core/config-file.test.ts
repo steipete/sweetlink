@@ -135,6 +135,53 @@ describe('core/config-file', () => {
     ]);
   });
 
+  it('normalizes openclaw section from sweetlink.json', () => {
+    const filePath = path.join(process.cwd(), 'sweetlink.json');
+    writeFileSync(
+      filePath,
+      JSON.stringify({
+        openclaw: {
+          enabled: true,
+          url: 'http://localhost:9000',
+          profile: 'myprofile',
+          snapshotFormat: 'aria',
+          refs: 'aria',
+          efficient: true,
+        },
+      }),
+      'utf8'
+    );
+
+    const loaded = loadSweetLinkFileConfig();
+    expect(loaded.config.openclaw).toEqual({
+      enabled: true,
+      url: 'http://localhost:9000',
+      profile: 'myprofile',
+      snapshotFormat: 'aria',
+      refs: 'aria',
+      efficient: true,
+    });
+  });
+
+  it('omits openclaw section when values are invalid or empty', () => {
+    const filePath = path.join(process.cwd(), 'sweetlink.json');
+    writeFileSync(
+      filePath,
+      JSON.stringify({
+        openclaw: {
+          snapshotFormat: 'invalid',
+          refs: 'invalid',
+          url: '  ',
+          profile: '',
+        },
+      }),
+      'utf8'
+    );
+
+    const loaded = loadSweetLinkFileConfig();
+    expect(loaded.config.openclaw).toBeUndefined();
+  });
+
   it('returns empty config and warns when JSON is invalid', () => {
     const filePath = path.join(process.cwd(), 'sweetlink.json');
     writeFileSync(filePath, '{ invalid json', 'utf8');
