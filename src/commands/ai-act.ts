@@ -15,7 +15,17 @@ type ActionKind =
   | 'uncheck'
   | 'press'
   | 'drag'
-  | 'select';
+  | 'select'
+  | 'fill'
+  | 'resize'
+  | 'wait'
+  | 'evaluate'
+  | 'close';
+
+interface FillField {
+  ref: string;
+  value: string;
+}
 
 interface AiActCommandOptions {
   kind: ActionKind;
@@ -25,6 +35,11 @@ interface AiActCommandOptions {
   startRef?: string;
   endRef?: string;
   values?: string[];
+  fields?: string[];
+  width?: number;
+  height?: number;
+  time?: number;
+  fn?: string;
   submit?: boolean;
   slowly?: boolean;
   doubleClick?: boolean;
@@ -43,12 +58,19 @@ const VALID_ACTIONS: readonly ActionKind[] = [
   'press',
   'drag',
   'select',
+  'fill',
+  'resize',
+  'wait',
+  'evaluate',
+  'close',
 ];
 
 const VALID_BUTTONS = new Set(['left', 'right', 'middle']);
 const REF_FORMAT_PATTERN = /^[a-z]\d+$/i;
 const MAX_TEXT_LENGTH = 1_000_000; // 1MB
 const MAX_KEY_LENGTH = 100;
+const MAX_FN_LENGTH = 100_000; // 100KB
+const MAX_DIMENSION = 32_767;
 
 /**
  * Registers the ai-act command for ref-based element interactions.
@@ -67,6 +89,11 @@ export function registerAiActCommand(program: Command): void {
     .option('--start-ref <ref>', 'Drag start element ref (for drag action)')
     .option('--end-ref <ref>', 'Drag end element ref (for drag action)')
     .option('--values <values...>', 'Values to select (for select action)')
+    .option('--fields <fields...>', 'Fields to fill as ref:value pairs (for fill action)')
+    .option('--width <n>', 'Viewport width (for resize action)', Number)
+    .option('--height <n>', 'Viewport height (for resize action)', Number)
+    .option('--time <ms>', 'Time to wait in ms (for wait action)', Number)
+    .option('--fn <code>', 'JavaScript function to evaluate (for evaluate action)')
     .option('--submit', 'Press Enter after typing (for type action)', false)
     .option('--slowly', 'Type one character at a time (for type action)', false)
     .option('--double-click', 'Double-click (for click action)', false)
@@ -97,11 +124,57 @@ export function registerAiActCommand(program: Command): void {
       // Connect to browser
       const { page } = await connectToDevTools(config);
 
-      // For press action, no ref needed
+      // Handle actions that don't need refs
       if (kind === 'press') {
         const key = options.key as string;
         await page.keyboard.press(key);
         console.log(`✓ press "${key}"`);
+        return;
+      }
+
+      if (kind === 'resize') {
+        const width = options.width as number;
+        const height = options.height as number;
+        await page.setViewportSize({ width, height });
+        console.log(`✓ resize viewport to ${width}x${height}`);
+        return;
+      }
+
+      if (kind === 'wait') {
+        const time = options.time as number;
+        await page.waitForTimeout(time);
+        console.log(`✓ waited ${time}ms`);
+        return;
+      }
+
+      if (kind === 'evaluate') {
+        const fn = options.fn as string;
+        const ref = options.ref;
+        let result: unknown;
+
+        if (ref) {
+          // Evaluate with element context
+          const tree = await fetchAccessibilityTree(page);
+          const registry = assignRefs(tree);
+          const { selector } = await resolveRef(page, registry, ref);
+          const locator = page.locator(selector).first();
+          result = await locator.evaluate(new Function('element', fn) as (el: Element) => unknown);
+        } else {
+          // Evaluate in page context
+          result = await page.evaluate(new Function(fn) as () => unknown);
+        }
+
+        if (result !== undefined) {
+          console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+        } else {
+          console.log('✓ evaluate completed');
+        }
+        return;
+      }
+
+      if (kind === 'close') {
+        await page.close();
+        console.log('✓ page closed');
         return;
       }
 
@@ -121,63 +194,126 @@ export function registerAiActCommand(program: Command): void {
  * Validates action inputs based on the action kind.
  */
 function validateActionInputs(kind: ActionKind, options: AiActCommandOptions): void {
-  switch (kind) {
-    case 'press':
-      if (!options.key) {
-        throw new Error('The --key option is required for the press action');
-      }
-      if (options.key.length > MAX_KEY_LENGTH) {
-        throw new Error(`Key name exceeds maximum length of ${MAX_KEY_LENGTH} characters`);
-      }
-      break;
+  const validators: Record<ActionKind, () => void> = {
+    press: () => validatePressInputs(options),
+    drag: () => validateDragInputs(options),
+    select: () => validateSelectInputs(options),
+    fill: () => validateFillInputs(options),
+    resize: () => validateResizeInputs(options),
+    wait: () => validateWaitInputs(options),
+    evaluate: () => validateEvaluateInputs(options),
+    close: () => { /* No validation needed */ },
+    type: () => validateTypeInputs(options),
+    click: () => validateClickInputs(options),
+    hover: () => validateRefRequired(options, 'hover'),
+    focus: () => validateRefRequired(options, 'focus'),
+    clear: () => validateRefRequired(options, 'clear'),
+    check: () => validateRefRequired(options, 'check'),
+    uncheck: () => validateRefRequired(options, 'uncheck'),
+  };
 
-    case 'drag':
-      if (!(options.startRef && options.endRef)) {
-        throw new Error('Both --start-ref and --end-ref are required for the drag action');
-      }
-      validateRef(options.startRef, 'start-ref');
-      validateRef(options.endRef, 'end-ref');
-      break;
+  validators[kind]();
+}
 
-    case 'select':
-      if (!options.ref) {
-        throw new Error('The --ref option is required for the select action');
-      }
-      validateRef(options.ref, 'ref');
-      if (!options.values || options.values.length === 0) {
-        throw new Error('The --values option is required for the select action');
-      }
-      break;
-
-    case 'type':
-      if (!options.ref) {
-        throw new Error('The --ref option is required for the type action');
-      }
-      validateRef(options.ref, 'ref');
-      if (!options.text) {
-        throw new Error('The --text option is required for the type action');
-      }
-      if (options.text.length > MAX_TEXT_LENGTH) {
-        throw new Error(`Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters`);
-      }
-      break;
-
-    case 'click':
-      if (!options.ref) {
-        throw new Error('The --ref option is required for the click action');
-      }
-      validateRef(options.ref, 'ref');
-      if (options.button && !VALID_BUTTONS.has(options.button)) {
-        throw new Error(`Invalid button: ${options.button}. Valid: left, right, middle`);
-      }
-      break;
-
-    default:
-      if (!options.ref) {
-        throw new Error(`The --ref option is required for the ${kind} action`);
-      }
-      validateRef(options.ref, 'ref');
+function validatePressInputs(options: AiActCommandOptions): void {
+  if (!options.key) {
+    throw new Error('The --key option is required for the press action');
   }
+  if (options.key.length > MAX_KEY_LENGTH) {
+    throw new Error(`Key name exceeds maximum length of ${MAX_KEY_LENGTH} characters`);
+  }
+}
+
+function validateDragInputs(options: AiActCommandOptions): void {
+  if (!(options.startRef && options.endRef)) {
+    throw new Error('Both --start-ref and --end-ref are required for the drag action');
+  }
+  validateRef(options.startRef, 'start-ref');
+  validateRef(options.endRef, 'end-ref');
+}
+
+function validateSelectInputs(options: AiActCommandOptions): void {
+  if (!options.ref) {
+    throw new Error('The --ref option is required for the select action');
+  }
+  validateRef(options.ref, 'ref');
+  if (!options.values || options.values.length === 0) {
+    throw new Error('The --values option is required for the select action');
+  }
+}
+
+function validateFillInputs(options: AiActCommandOptions): void {
+  if (!options.fields || options.fields.length === 0) {
+    throw new Error('The --fields option is required for the fill action (format: ref:value)');
+  }
+  for (const field of options.fields) {
+    const colonIndex = field.indexOf(':');
+    if (colonIndex === -1) {
+      throw new Error(`Invalid field format: ${field}. Expected ref:value`);
+    }
+    const ref = field.slice(0, colonIndex);
+    validateRef(ref, 'field ref');
+  }
+}
+
+function validateResizeInputs(options: AiActCommandOptions): void {
+  if (options.width === undefined || options.height === undefined) {
+    throw new Error('Both --width and --height are required for the resize action');
+  }
+  if (options.width <= 0 || options.width > MAX_DIMENSION) {
+    throw new Error(`Width must be between 1 and ${MAX_DIMENSION}`);
+  }
+  if (options.height <= 0 || options.height > MAX_DIMENSION) {
+    throw new Error(`Height must be between 1 and ${MAX_DIMENSION}`);
+  }
+}
+
+function validateWaitInputs(options: AiActCommandOptions): void {
+  if (options.time === undefined) {
+    throw new Error('The --time option is required for the wait action');
+  }
+  if (options.time <= 0 || options.time > 300_000) {
+    throw new Error('Wait time must be between 1 and 300000 ms');
+  }
+}
+
+function validateEvaluateInputs(options: AiActCommandOptions): void {
+  if (!options.fn) {
+    throw new Error('The --fn option is required for the evaluate action');
+  }
+  if (options.fn.length > MAX_FN_LENGTH) {
+    throw new Error(`Function code exceeds maximum length of ${MAX_FN_LENGTH} characters`);
+  }
+}
+
+function validateTypeInputs(options: AiActCommandOptions): void {
+  if (!options.ref) {
+    throw new Error('The --ref option is required for the type action');
+  }
+  validateRef(options.ref, 'ref');
+  if (!options.text) {
+    throw new Error('The --text option is required for the type action');
+  }
+  if (options.text.length > MAX_TEXT_LENGTH) {
+    throw new Error(`Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters`);
+  }
+}
+
+function validateClickInputs(options: AiActCommandOptions): void {
+  if (!options.ref) {
+    throw new Error('The --ref option is required for the click action');
+  }
+  validateRef(options.ref, 'ref');
+  if (options.button && !VALID_BUTTONS.has(options.button)) {
+    throw new Error(`Invalid button: ${options.button}. Valid: left, right, middle`);
+  }
+}
+
+function validateRefRequired(options: AiActCommandOptions, action: string): void {
+  if (!options.ref) {
+    throw new Error(`The --ref option is required for the ${action} action`);
+  }
+  validateRef(options.ref, 'ref');
 }
 
 /**
@@ -211,6 +347,41 @@ async function resolveRef(
   }
 
   return { selector, element: { role: element.role, name: element.name } };
+}
+
+/**
+ * Parses field strings into FillField objects.
+ */
+function parseFields(fields: string[]): FillField[] {
+  return fields.map((field) => {
+    const colonIndex = field.indexOf(':');
+    return {
+      ref: field.slice(0, colonIndex),
+      value: field.slice(colonIndex + 1),
+    };
+  });
+}
+
+/**
+ * Fills multiple form fields sequentially.
+ */
+async function fillFields(
+  page: Page,
+  registry: RefRegistry,
+  fields: FillField[],
+  timeout: number
+): Promise<string[]> {
+  const results: string[] = [];
+
+  for (const field of fields) {
+    // biome-ignore lint/performance/noAwaitInLoops: fields must be filled sequentially
+    const { selector, element } = await resolveRef(page, registry, field.ref);
+    // biome-ignore lint/performance/noAwaitInLoops: fields must be filled sequentially
+    await page.locator(selector).first().fill(field.value, { timeout });
+    results.push(`${element.role} [${field.ref}]`);
+  }
+
+  return results;
 }
 
 /**
@@ -299,9 +470,19 @@ async function performAction(
       return `select "${values.join(', ')}" in ${element.role} [${options.ref}]`;
     }
 
+    case 'fill': {
+      const fields = parseFields(options.fields as string[]);
+      const filled = await fillFields(page, registry, fields, timeout);
+      return `fill ${filled.length} field${filled.length === 1 ? '' : 's'}: ${filled.join(', ')}`;
+    }
+
+    // These are handled before performAction is called
     case 'press':
-      // Handled before this function
-      throw new Error('press action should be handled before performAction');
+    case 'resize':
+    case 'wait':
+    case 'evaluate':
+    case 'close':
+      throw new Error(`${kind} action should be handled before performAction`);
 
     default: {
       const exhaustiveCheck: never = kind;

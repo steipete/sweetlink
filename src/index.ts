@@ -17,7 +17,12 @@ import {
   type SweetLinkSelectorCandidate,
 } from '../shared/src/index.js';
 import { registerAiActCommand } from './commands/ai-act.js';
+import { registerAiDialogCommand } from './commands/ai-dialog.js';
+import { registerAiNavigateCommand } from './commands/ai-navigate.js';
+import { registerAiPdfCommand } from './commands/ai-pdf.js';
 import { registerAiSnapshotCommand } from './commands/ai-snapshot.js';
+import { registerAiTabsCommand } from './commands/ai-tabs.js';
+import { registerAiUploadCommand } from './commands/ai-upload.js';
 import { registerClickCommand } from './commands/click.js';
 import { registerRunJsCommand } from './commands/run-js.js';
 import { registerTrustCaCommand } from './commands/trust-ca.js';
@@ -401,7 +406,12 @@ program
   });
 
 registerAiActCommand(program);
+registerAiDialogCommand(program);
+registerAiNavigateCommand(program);
+registerAiPdfCommand(program);
 registerAiSnapshotCommand(program);
+registerAiTabsCommand(program);
+registerAiUploadCommand(program);
 registerRunJsCommand(program);
 registerTrustCaCommand(program);
 registerClickCommand(program);
