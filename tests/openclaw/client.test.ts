@@ -46,6 +46,18 @@ describe('OpenClawClient', () => {
       expect(() => new OpenClawClient({ url: '', profile: 'test' })).toThrow(OpenClawError);
     });
 
+    it('sanitizes credentials from error messages for bad protocols', () => {
+      try {
+        // ftp:// is blocked, but we should not leak the password in the error
+        new OpenClawClient({ url: 'ftp://user:secret@evil.com', profile: 'test' });
+        expect.unreachable('should have thrown');
+      } catch (error) {
+        // Protocol error doesn't include credentials (parsed.protocol is clean)
+        expect((error as Error).message).toContain('ftp:');
+        expect((error as Error).message).not.toContain('secret');
+      }
+    });
+
     it('accepts http and https', () => {
       expect(() => new OpenClawClient({ url: 'http://localhost:18791', profile: 'x' })).not.toThrow();
       expect(() => new OpenClawClient({ url: 'https://localhost:18791', profile: 'x' })).not.toThrow();

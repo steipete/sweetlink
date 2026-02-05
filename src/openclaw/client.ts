@@ -26,6 +26,21 @@ const TRAILING_SLASHES = /\/+$/;
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
 
+/** Sanitize URL for error messages — removes credentials to prevent leakage. */
+function sanitizeUrlForError(url: string): string {
+  try {
+    const parsed = new URL(url);
+    // Remove username/password if present
+    parsed.username = '';
+    parsed.password = '';
+    return parsed.toString();
+  } catch {
+    // If we can't parse it, truncate and indicate it's invalid
+    const truncated = url.length > 50 ? `${url.slice(0, 50)}...` : url;
+    return `(invalid URL: ${truncated})`;
+  }
+}
+
 interface CachedHealth {
   readonly result: OpenClawHealthResponse;
   readonly fetchedAt: number;
@@ -41,7 +56,7 @@ export class OpenClawClient {
     try {
       parsed = new URL(config.url);
     } catch {
-      throw new OpenClawError(`Invalid OpenClaw URL: ${config.url}`, 0);
+      throw new OpenClawError(`Invalid OpenClaw URL: ${sanitizeUrlForError(config.url)}`, 0);
     }
     if (!ALLOWED_PROTOCOLS.has(parsed.protocol)) {
       throw new OpenClawError(`Unsupported OpenClaw URL protocol: ${parsed.protocol}`, 0);
@@ -210,7 +225,7 @@ function assertSafeNavigateUrl(url: string): void {
   try {
     parsed = new URL(url);
   } catch {
-    throw new OpenClawError(`Invalid navigation URL: ${url}`, 0);
+    throw new OpenClawError(`Invalid navigation URL: ${sanitizeUrlForError(url)}`, 0);
   }
   if (!ALLOWED_NAVIGATE_PROTOCOLS.has(parsed.protocol)) {
     throw new OpenClawError(`Unsupported navigation URL protocol: ${parsed.protocol}`, 0);

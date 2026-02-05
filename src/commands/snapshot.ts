@@ -71,16 +71,21 @@ export function registerSnapshotCommand(program: Command): void {
     });
 }
 
-function positiveInt(value: number | undefined): number | undefined {
+const MAX_DEPTH = 100; // Reasonable max DOM traversal depth
+const MAX_CHARS = 10_000_000; // 10MB max output
+
+/** Validates a positive integer within safe bounds. Returns undefined if invalid. */
+function safePositiveInt(value: number | undefined, max: number): number | undefined {
   if (value === undefined) return undefined;
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
+  if (!Number.isFinite(value) || value <= 0 || value > max) return undefined;
+  return Math.floor(value);
 }
 
 function buildSnapshotParams(options: SnapshotCommandOptions, ocConfig: OpenClawConfig): OpenClawSnapshotParams {
   const format = options.format === 'aria' ? 'aria' : 'ai';
   const refs = options.refs === 'aria' ? 'aria' : ocConfig.refs;
-  const depth = positiveInt(options.depth);
-  const maxChars = positiveInt(options.maxChars);
+  const depth = safePositiveInt(options.depth, MAX_DEPTH);
+  const maxChars = safePositiveInt(options.maxChars, MAX_CHARS);
 
   return {
     format,
