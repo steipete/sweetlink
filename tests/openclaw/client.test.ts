@@ -41,6 +41,11 @@ describe('OpenClawClient', () => {
       expect(() => new OpenClawClient({ url: 'ftp://evil.com', profile: 'test' })).toThrow(OpenClawError);
     });
 
+    it('rejects invalid URLs with OpenClawError', () => {
+      expect(() => new OpenClawClient({ url: 'not a url', profile: 'test' })).toThrow(OpenClawError);
+      expect(() => new OpenClawClient({ url: '', profile: 'test' })).toThrow(OpenClawError);
+    });
+
     it('accepts http and https', () => {
       expect(() => new OpenClawClient({ url: 'http://localhost:18791', profile: 'x' })).not.toThrow();
       expect(() => new OpenClawClient({ url: 'https://localhost:18791', profile: 'x' })).not.toThrow();

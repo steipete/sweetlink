@@ -28,7 +28,7 @@ export function registerActCommand(program: Command): void {
   program
     .command('act')
     .description('Perform a browser action via OpenClaw using ref IDs from a snapshot')
-    .requiredOption('--kind <kind>', 'Action kind: click, type, press, hover, drag, select, fill, resize, wait, evaluate, close')
+    .requiredOption('--kind <kind>', 'Action kind: click, type, press, hover, drag, select, resize, wait, evaluate, close')
     .option('--ref <ref>', 'Element ref ID (from snapshot)')
     .option('--text <text>', 'Text to type (for kind=type)')
     .option('--key <key>', 'Key name (for kind=press)')
@@ -53,7 +53,6 @@ export function registerActCommand(program: Command): void {
         return;
       }
 
-      const client = new OpenClawClient(ocConfig);
       const action = buildAction(options);
       if (!action) {
         console.error(`Unknown or incomplete action kind: ${options.kind}`);
@@ -62,6 +61,7 @@ export function registerActCommand(program: Command): void {
       }
 
       try {
+        const client = new OpenClawClient(ocConfig);
         const result = await client.act(action);
         if (result.result !== undefined) {
           console.log(typeof result.result === 'string' ? result.result : JSON.stringify(result.result, null, 2));

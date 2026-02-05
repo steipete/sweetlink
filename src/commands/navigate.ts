@@ -32,8 +32,8 @@ export function registerNavigateCommand(program: Command): void {
         return;
       }
 
-      const client = new OpenClawClient(ocConfig);
       try {
+        const client = new OpenClawClient(ocConfig);
         const result = await client.navigate({ url: parsed.toString() });
         console.log(`Navigated to ${result.url}`);
       } catch (error) {

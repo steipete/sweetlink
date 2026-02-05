@@ -46,17 +46,17 @@ export function registerSnapshotCommand(program: Command): void {
         return;
       }
 
-      const client = new OpenClawClient(ocConfig);
-      const ready = await client.isReady();
-      if (!ready) {
-        console.error('OpenClaw is not ready. Run `sweetlink openclaw-status` for details.');
-        process.exitCode = 1;
-        return;
-      }
-
       const params = buildSnapshotParams(options, ocConfig);
 
       try {
+        const client = new OpenClawClient(ocConfig);
+        const ready = await client.isReady();
+        if (!ready) {
+          console.error('OpenClaw is not ready. Run `sweetlink openclaw-status` for details.');
+          process.exitCode = 1;
+          return;
+        }
+
         const result = await client.snapshot(params);
 
         if (result.format === 'ai') {
