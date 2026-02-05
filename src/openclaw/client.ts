@@ -1,0 +1,189 @@
+// ---------------------------------------------------------------------------
+// OpenClaw browser-control HTTP client
+// ---------------------------------------------------------------------------
+
+import type {
+  OpenClawAction,
+  OpenClawActionResponse,
+  OpenClawConfig,
+  OpenClawDialogParams,
+  OpenClawFileUploadParams,
+  OpenClawHealthResponse,
+  OpenClawNavigateParams,
+  OpenClawNavigateResponse,
+  OpenClawPdfResponse,
+  OpenClawScreenshotParams,
+  OpenClawScreenshotResponse,
+  OpenClawSnapshotParams,
+  OpenClawSnapshotResponse,
+  OpenClawTab,
+  OpenClawTabsResponse,
+} from './types.js';
+import { OpenClawError } from './types.js';
+
+const HEALTH_CACHE_TTL_MS = 5000;
+const TRAILING_SLASHES = /\/+$/;
+
+interface CachedHealth {
+  readonly result: OpenClawHealthResponse;
+  readonly fetchedAt: number;
+}
+
+export class OpenClawClient {
+  private readonly baseUrl: string;
+  private readonly profile: string;
+  private healthCache: CachedHealth | null = null;
+
+  constructor(config: Pick<OpenClawConfig, 'url' | 'profile'>) {
+    this.baseUrl = config.url.replace(TRAILING_SLASHES, '');
+    this.profile = config.profile;
+  }
+
+  // -- Health -----------------------------------------------------------------
+
+  async health(options?: { skipCache?: boolean }): Promise<OpenClawHealthResponse> {
+    if (!options?.skipCache && this.healthCache) {
+      const age = Date.now() - this.healthCache.fetchedAt;
+      if (age < HEALTH_CACHE_TTL_MS) {
+        return this.healthCache.result;
+      }
+    }
+    const result = await this.get<OpenClawHealthResponse>('/', { profile: this.profile });
+    this.healthCache = { result, fetchedAt: Date.now() };
+    return result;
+  }
+
+  async isReady(): Promise<boolean> {
+    try {
+      const h = await this.health();
+      return h.running && h.cdpReady;
+    } catch {
+      return false;
+    }
+  }
+
+  // -- Snapshot ---------------------------------------------------------------
+
+  async snapshot(params: OpenClawSnapshotParams = {}): Promise<OpenClawSnapshotResponse> {
+    const query: Record<string, string> = { profile: this.profile };
+    if (params.format) query.format = params.format;
+    if (params.mode) query.mode = params.mode;
+    if (params.refs) query.refs = params.refs;
+    if (params.interactive) query.interactive = 'true';
+    if (params.compact) query.compact = 'true';
+    if (params.depth !== undefined) query.depth = String(params.depth);
+    if (params.maxChars !== undefined) query.maxChars = String(params.maxChars);
+    if (params.labels) query.labels = 'true';
+    if (params.selector) query.selector = params.selector;
+    if (params.frame) query.frame = params.frame;
+    if (params.targetId) query.targetId = params.targetId;
+    return await this.get<OpenClawSnapshotResponse>('/snapshot', query);
+  }
+
+  // -- Act --------------------------------------------------------------------
+
+  async act(action: OpenClawAction): Promise<OpenClawActionResponse> {
+    return await this.post<OpenClawActionResponse>('/act', action, { profile: this.profile });
+  }
+
+  // -- Screenshot -------------------------------------------------------------
+
+  async screenshot(params: OpenClawScreenshotParams = {}): Promise<OpenClawScreenshotResponse> {
+    return await this.post<OpenClawScreenshotResponse>('/screenshot', params, { profile: this.profile });
+  }
+
+  // -- Navigate ---------------------------------------------------------------
+
+  async navigate(params: OpenClawNavigateParams): Promise<OpenClawNavigateResponse> {
+    return await this.post<OpenClawNavigateResponse>('/navigate', params, { profile: this.profile });
+  }
+
+  // -- Tabs -------------------------------------------------------------------
+
+  async tabs(): Promise<OpenClawTabsResponse> {
+    return await this.get<OpenClawTabsResponse>('/tabs', { profile: this.profile });
+  }
+
+  async openTab(url: string): Promise<OpenClawTab> {
+    return await this.post<OpenClawTab>('/tabs/open', { url }, { profile: this.profile });
+  }
+
+  async focusTab(targetId: string): Promise<{ ok: true }> {
+    return await this.post<{ ok: true }>('/tabs/focus', { targetId }, { profile: this.profile });
+  }
+
+  async closeTab(targetId: string): Promise<{ ok: true }> {
+    return await this.delete<{ ok: true }>(`/tabs/${encodeURIComponent(targetId)}`, { profile: this.profile });
+  }
+
+  // -- PDF --------------------------------------------------------------------
+
+  async pdf(targetId?: string): Promise<OpenClawPdfResponse> {
+    return await this.post<OpenClawPdfResponse>('/pdf', targetId ? { targetId } : {}, { profile: this.profile });
+  }
+
+  // -- Dialog / File Upload ---------------------------------------------------
+
+  async dialog(params: OpenClawDialogParams): Promise<{ ok: true }> {
+    return await this.post<{ ok: true }>('/hooks/dialog', params, { profile: this.profile });
+  }
+
+  async fileUpload(params: OpenClawFileUploadParams): Promise<{ ok: true }> {
+    return await this.post<{ ok: true }>('/hooks/file-chooser', params, { profile: this.profile });
+  }
+
+  // -- Internal HTTP helpers --------------------------------------------------
+
+  private async get<T>(urlPath: string, query?: Record<string, string>): Promise<T> {
+    const url = this.buildUrl(urlPath, query);
+    const response = await fetch(url);
+    return await this.handleResponse<T>(response);
+  }
+
+  private async post<T>(urlPath: string, body: unknown, query?: Record<string, string>): Promise<T> {
+    const url = this.buildUrl(urlPath, query);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return await this.handleResponse<T>(response);
+  }
+
+  private async delete<T>(urlPath: string, query?: Record<string, string>): Promise<T> {
+    const url = this.buildUrl(urlPath, query);
+    const response = await fetch(url, { method: 'DELETE' });
+    return await this.handleResponse<T>(response);
+  }
+
+  private buildUrl(urlPath: string, query?: Record<string, string>): string {
+    const url = new URL(urlPath, this.baseUrl);
+    if (query) {
+      for (const [key, value] of Object.entries(query)) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  }
+
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const body = await safeJson(response);
+      const upstream =
+        body && typeof body === 'object' && 'error' in body
+          ? String((body as { error: unknown }).error)
+          : undefined;
+      const detail = upstream ?? `${response.status} ${response.statusText}`;
+      throw new OpenClawError(`OpenClaw request failed: ${detail}`, response.status, upstream);
+    }
+    return (await response.json()) as T;
+  }
+}
+
+async function safeJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}

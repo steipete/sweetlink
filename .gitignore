@@ -49,3 +49,6 @@ Thumbs.db
 
 # Avoid nested lockfiles when installing from repo root.
 daemon/pnpm-lock.yaml
+
+# Issue tracker (local-only)
+.beads/

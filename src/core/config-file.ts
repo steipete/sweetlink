@@ -34,6 +34,15 @@ export interface SweetLinkDevBootstrapConfig {
   redirectParam?: string;
 }
 
+export interface SweetLinkOpenClawFileConfig {
+  enabled?: boolean;
+  url?: string;
+  profile?: string;
+  snapshotFormat?: string;
+  refs?: string;
+  efficient?: boolean;
+}
+
 export interface SweetLinkFileConfig {
   appLabel?: string;
   appUrl?: string;
@@ -48,6 +57,7 @@ export interface SweetLinkFileConfig {
   redirects?: SweetLinkRedirectsConfig;
   servers?: SweetLinkServerConfig[];
   oauthScript?: string;
+  openclaw?: SweetLinkOpenClawFileConfig;
 }
 
 interface LoadedConfig {
@@ -174,6 +184,10 @@ function normalizeConfig(raw: Record<string, unknown>, baseDirectory: string | n
       const resolved = resolveConfigPath(trimmed, baseDirectory);
       config.oauthScript = resolved;
     }
+  }
+  const openclaw = normalizeOpenClawSection(raw.openclaw);
+  if (openclaw) {
+    config.openclaw = openclaw;
   }
   return config;
 }
@@ -401,4 +415,31 @@ function normalizeRedirectsSection(value: unknown): SweetLinkRedirectsConfig | u
     redirects[sourcePath] = targetPath;
   }
   return Object.keys(redirects).length > 0 ? redirects : undefined;
+}
+
+function normalizeOpenClawSection(value: unknown): SweetLinkOpenClawFileConfig | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const config: SweetLinkOpenClawFileConfig = {};
+  if (typeof record.enabled === 'boolean') {
+    config.enabled = record.enabled;
+  }
+  if (typeof record.url === 'string' && record.url.trim().length > 0) {
+    config.url = record.url.trim();
+  }
+  if (typeof record.profile === 'string' && record.profile.trim().length > 0) {
+    config.profile = record.profile.trim();
+  }
+  if (record.snapshotFormat === 'ai' || record.snapshotFormat === 'aria') {
+    config.snapshotFormat = record.snapshotFormat;
+  }
+  if (record.refs === 'role' || record.refs === 'aria') {
+    config.refs = record.refs;
+  }
+  if (typeof record.efficient === 'boolean') {
+    config.efficient = record.efficient;
+  }
+  return Object.keys(config).length > 0 ? config : null;
 }
