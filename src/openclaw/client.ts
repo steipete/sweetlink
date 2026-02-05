@@ -50,6 +50,7 @@ export class OpenClawClient {
   private readonly baseUrl: string;
   private readonly profile: string;
   private healthCache: CachedHealth | null = null;
+  private healthPending: Promise<OpenClawHealthResponse> | null = null;
 
   constructor(config: Pick<OpenClawConfig, 'url' | 'profile'>) {
     let parsed: URL;
@@ -68,12 +69,36 @@ export class OpenClawClient {
   // -- Health -----------------------------------------------------------------
 
   async health(options?: { skipCache?: boolean }): Promise<OpenClawHealthResponse> {
-    if (!options?.skipCache && this.healthCache) {
+    // skipCache: always fetch fresh, bypass deduplication
+    if (options?.skipCache) {
+      const result = await this.get<OpenClawHealthResponse>('/', { profile: this.profile });
+      this.healthCache = { result, fetchedAt: Date.now() };
+      return result;
+    }
+
+    // Check cache
+    if (this.healthCache) {
       const age = Date.now() - this.healthCache.fetchedAt;
       if (age < HEALTH_CACHE_TTL_MS) {
         return this.healthCache.result;
       }
     }
+
+    // Deduplicate concurrent requests: return pending promise if one exists
+    if (this.healthPending) {
+      return this.healthPending;
+    }
+
+    // Start new request
+    this.healthPending = this.fetchHealthInternal();
+    try {
+      return await this.healthPending;
+    } finally {
+      this.healthPending = null;
+    }
+  }
+
+  private async fetchHealthInternal(): Promise<OpenClawHealthResponse> {
     const result = await this.get<OpenClawHealthResponse>('/', { profile: this.profile });
     this.healthCache = { result, fetchedAt: Date.now() };
     return result;

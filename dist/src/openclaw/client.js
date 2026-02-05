@@ -25,6 +25,7 @@ export class OpenClawClient {
     baseUrl;
     profile;
     healthCache = null;
+    healthPending = null;
     constructor(config) {
         let parsed;
         try {
@@ -41,12 +42,33 @@ export class OpenClawClient {
     }
     // -- Health -----------------------------------------------------------------
     async health(options) {
-        if (!options?.skipCache && this.healthCache) {
+        // skipCache: always fetch fresh, bypass deduplication
+        if (options?.skipCache) {
+            const result = await this.get('/', { profile: this.profile });
+            this.healthCache = { result, fetchedAt: Date.now() };
+            return result;
+        }
+        // Check cache
+        if (this.healthCache) {
             const age = Date.now() - this.healthCache.fetchedAt;
             if (age < HEALTH_CACHE_TTL_MS) {
                 return this.healthCache.result;
             }
         }
+        // Deduplicate concurrent requests: return pending promise if one exists
+        if (this.healthPending) {
+            return this.healthPending;
+        }
+        // Start new request
+        this.healthPending = this.fetchHealthInternal();
+        try {
+            return await this.healthPending;
+        }
+        finally {
+            this.healthPending = null;
+        }
+    }
+    async fetchHealthInternal() {
         const result = await this.get('/', { profile: this.profile });
         this.healthCache = { result, fetchedAt: Date.now() };
         return result;

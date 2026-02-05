@@ -90,6 +90,25 @@ describe('OpenClawClient', () => {
       expect(fresh).toEqual({ running: true, cdpReady: false });
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
+
+    it('deduplicates concurrent non-cached health requests', async () => {
+      // Create fresh client with no cache
+      const freshClient = new OpenClawClient({ url: 'http://127.0.0.1:18791', profile: 'test' });
+      // Single mock response - only one fetch should happen for concurrent calls
+      mockOk({ running: true, cdpReady: true });
+      // Fire 3 concurrent requests without skipCache
+      const [r1, r2, r3] = await Promise.all([
+        freshClient.health(),
+        freshClient.health(),
+        freshClient.health(),
+      ]);
+      // All should get the same result
+      expect(r1).toEqual({ running: true, cdpReady: true });
+      expect(r2).toEqual({ running: true, cdpReady: true });
+      expect(r3).toEqual({ running: true, cdpReady: true });
+      // Only one fetch should have been made
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('isReady', () => {

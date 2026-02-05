@@ -3,10 +3,12 @@ export declare class OpenClawClient {
     private readonly baseUrl;
     private readonly profile;
     private healthCache;
+    private healthPending;
     constructor(config: Pick<OpenClawConfig, 'url' | 'profile'>);
     health(options?: {
         skipCache?: boolean;
     }): Promise<OpenClawHealthResponse>;
+    private fetchHealthInternal;
     isReady(): Promise<boolean>;
     snapshot(params?: OpenClawSnapshotParams): Promise<OpenClawSnapshotResponse>;
     act(action: OpenClawAction): Promise<OpenClawActionResponse>;
