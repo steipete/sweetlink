@@ -29,7 +29,7 @@ export function registerOpenClawStatusCommand(program) {
         }
         catch (error) {
             console.error('Failed to connect to OpenClaw:', error instanceof Error ? error.message : String(error));
-            console.log('Hint: ensure OpenClaw is running (`openclaw browser launch`).');
+            console.error('Hint: ensure OpenClaw is running (`openclaw browser launch`).');
             process.exitCode = 1;
         }
     });
