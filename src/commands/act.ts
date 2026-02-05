@@ -7,12 +7,22 @@ import type { OpenClawAction } from '../openclaw/types.js';
 const VALID_BUTTONS = new Set(['left', 'right', 'middle']);
 const MAX_DIMENSION = 32_767; // Reasonable upper bound for viewport dimensions
 const MAX_TIMEOUT_MS = 300_000; // 5 minutes max timeout
+const MAX_TEXT_LENGTH = 1_000_000; // 1MB max for text input
+const MAX_FN_LENGTH = 100_000; // 100KB max for JavaScript code
+const MAX_VALUE_LENGTH = 10_000; // 10KB max per select value
 
 /** Validates a positive integer within safe bounds. Returns undefined if invalid. */
 function safePositiveInt(value: number | undefined, max: number): number | undefined {
   if (value === undefined) return undefined;
   if (!Number.isFinite(value) || value <= 0 || value > max) return undefined;
   return Math.floor(value);
+}
+
+/** Validates string length. Returns null if exceeds max. */
+function validateStringLength(value: string | undefined, max: number): string | null {
+  if (value === undefined) return null;
+  if (value.length > max) return null;
+  return value;
 }
 
 interface ActCommandOptions {
@@ -106,10 +116,12 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
     }
     case 'type': {
       if (!options.ref || options.text === undefined) return null;
+      const text = validateStringLength(options.text, MAX_TEXT_LENGTH);
+      if (text === null) return null;
       return {
         kind: 'type',
         ref: options.ref,
-        text: options.text,
+        text,
         ...(options.submit ? { submit: true } : {}),
         ...(options.slowly ? { slowly: true } : {}),
         ...(timeoutMs !== undefined ? { timeoutMs } : {}),
@@ -129,7 +141,10 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
     }
     case 'select': {
       if (!(options.ref && options.values)) return null;
-      return { kind: 'select', ref: options.ref, values: options.values, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
+      // Validate each value's length
+      const validatedValues = options.values.map((v) => validateStringLength(v, MAX_VALUE_LENGTH));
+      if (validatedValues.some((v) => v === null)) return null;
+      return { kind: 'select', ref: options.ref, values: validatedValues as string[], ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     }
     case 'resize': {
       const width = safePositiveInt(options.width, MAX_DIMENSION);
@@ -141,7 +156,9 @@ function buildAction(options: ActCommandOptions): OpenClawAction | null {
       return { kind: 'wait', ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
     case 'evaluate': {
       if (!options.fn) return null;
-      return { kind: 'evaluate', fn: options.fn, ...(options.ref ? { ref: options.ref } : {}) };
+      const fn = validateStringLength(options.fn, MAX_FN_LENGTH);
+      if (fn === null) return null;
+      return { kind: 'evaluate', fn, ...(options.ref ? { ref: options.ref } : {}) };
     }
     case 'close':
       return { kind: 'close' };
