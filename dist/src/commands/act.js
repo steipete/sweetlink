@@ -7,6 +7,8 @@ const MAX_TIMEOUT_MS = 300_000; // 5 minutes max timeout
 const MAX_TEXT_LENGTH = 1_000_000; // 1MB max for text input
 const MAX_FN_LENGTH = 100_000; // 100KB max for JavaScript code
 const MAX_VALUE_LENGTH = 10_000; // 10KB max per select value
+const MAX_REF_LENGTH = 1000; // 1KB max for element ref IDs
+const MAX_KEY_LENGTH = 100; // 100 chars max for key names
 /** Validates a positive integer within safe bounds. Returns undefined if invalid. */
 function safePositiveInt(value, max) {
     if (value === undefined)
@@ -76,28 +78,30 @@ export function registerActCommand(program) {
     });
 }
 function buildClickAction(options, timeoutMs) {
-    if (!options.ref)
+    const ref = validateStringLength(options.ref, MAX_REF_LENGTH);
+    if (!ref)
         return null;
     const button = options.button && VALID_BUTTONS.has(options.button)
         ? options.button
         : undefined;
     return {
         kind: 'click',
-        ref: options.ref,
+        ref,
         ...(options.doubleClick ? { doubleClick: true } : {}),
         ...(button ? { button } : {}),
         ...(timeoutMs !== undefined ? { timeoutMs } : {}),
     };
 }
 function buildTypeAction(options, timeoutMs) {
-    if (!options.ref || options.text === undefined)
+    const ref = validateStringLength(options.ref, MAX_REF_LENGTH);
+    if (!ref || options.text === undefined)
         return null;
     const text = validateStringLength(options.text, MAX_TEXT_LENGTH);
     if (text === null)
         return null;
     return {
         kind: 'type',
-        ref: options.ref,
+        ref,
         text,
         ...(options.submit ? { submit: true } : {}),
         ...(options.slowly ? { slowly: true } : {}),
@@ -105,12 +109,13 @@ function buildTypeAction(options, timeoutMs) {
     };
 }
 function buildSelectAction(options, timeoutMs) {
-    if (!(options.ref && options.values))
+    const ref = validateStringLength(options.ref, MAX_REF_LENGTH);
+    if (!(ref && options.values))
         return null;
     const validatedValues = options.values.map((v) => validateStringLength(v, MAX_VALUE_LENGTH));
     if (validatedValues.some((v) => v === null))
         return null;
-    return { kind: 'select', ref: options.ref, values: validatedValues, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
+    return { kind: 'select', ref, values: validatedValues, ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
 }
 function buildAction(options) {
     const timeoutMs = safePositiveInt(options.timeout, MAX_TIMEOUT_MS);
@@ -119,14 +124,21 @@ function buildAction(options) {
             return buildClickAction(options, timeoutMs);
         case 'type':
             return buildTypeAction(options, timeoutMs);
-        case 'press':
-            return options.key ? { kind: 'press', key: options.key } : null;
-        case 'hover':
-            return options.ref ? { kind: 'hover', ref: options.ref, ...(timeoutMs !== undefined ? { timeoutMs } : {}) } : null;
-        case 'drag':
-            return options.startRef && options.endRef
-                ? { kind: 'drag', startRef: options.startRef, endRef: options.endRef, ...(timeoutMs !== undefined ? { timeoutMs } : {}) }
+        case 'press': {
+            const key = validateStringLength(options.key, MAX_KEY_LENGTH);
+            return key ? { kind: 'press', key } : null;
+        }
+        case 'hover': {
+            const ref = validateStringLength(options.ref, MAX_REF_LENGTH);
+            return ref ? { kind: 'hover', ref, ...(timeoutMs !== undefined ? { timeoutMs } : {}) } : null;
+        }
+        case 'drag': {
+            const startRef = validateStringLength(options.startRef, MAX_REF_LENGTH);
+            const endRef = validateStringLength(options.endRef, MAX_REF_LENGTH);
+            return startRef && endRef
+                ? { kind: 'drag', startRef, endRef, ...(timeoutMs !== undefined ? { timeoutMs } : {}) }
                 : null;
+        }
         case 'select':
             return buildSelectAction(options, timeoutMs);
         case 'resize': {
@@ -137,10 +149,11 @@ function buildAction(options) {
         case 'wait':
             return { kind: 'wait', ...(timeoutMs !== undefined ? { timeoutMs } : {}) };
         case 'evaluate': {
-            if (!options.fn)
-                return null;
             const fn = validateStringLength(options.fn, MAX_FN_LENGTH);
-            return fn !== null ? { kind: 'evaluate', fn, ...(options.ref ? { ref: options.ref } : {}) } : null;
+            if (!fn)
+                return null;
+            const ref = validateStringLength(options.ref, MAX_REF_LENGTH);
+            return { kind: 'evaluate', fn, ...(ref ? { ref } : {}) };
         }
         case 'close':
             return { kind: 'close' };
