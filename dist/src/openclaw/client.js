@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 import { OpenClawError } from './types.js';
 const HEALTH_CACHE_TTL_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 30_000; // 30 seconds default timeout
 const TRAILING_SLASHES = /\/+$/;
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
@@ -150,12 +151,12 @@ export class OpenClawClient {
     // -- Internal HTTP helpers --------------------------------------------------
     async get(urlPath, query) {
         const url = this.buildUrl(urlPath, query);
-        const response = await fetch(url);
+        const response = await this.fetchWithTimeout(url);
         return await this.handleResponse(response);
     }
     async post(urlPath, body, query) {
         const url = this.buildUrl(urlPath, query);
-        const response = await fetch(url, {
+        const response = await this.fetchWithTimeout(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -164,8 +165,24 @@ export class OpenClawClient {
     }
     async delete(urlPath, query) {
         const url = this.buildUrl(urlPath, query);
-        const response = await fetch(url, { method: 'DELETE' });
+        const response = await this.fetchWithTimeout(url, { method: 'DELETE' });
         return await this.handleResponse(response);
+    }
+    async fetchWithTimeout(url, init) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+        try {
+            return await fetch(url, { ...init, signal: controller.signal });
+        }
+        catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new OpenClawError(`Request timed out after ${DEFAULT_TIMEOUT_MS}ms`, 0);
+            }
+            throw error;
+        }
+        finally {
+            clearTimeout(timeoutId);
+        }
     }
     buildUrl(urlPath, query) {
         const base = new URL(this.baseUrl);

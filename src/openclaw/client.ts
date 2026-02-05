@@ -22,6 +22,7 @@ import type {
 import { OpenClawError } from './types.js';
 
 const HEALTH_CACHE_TTL_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 30_000; // 30 seconds default timeout
 const TRAILING_SLASHES = /\/+$/;
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 const ALLOWED_NAVIGATE_PROTOCOLS = new Set(['http:', 'https:']);
@@ -189,13 +190,13 @@ export class OpenClawClient {
 
   private async get<T>(urlPath: string, query?: Record<string, string>): Promise<T> {
     const url = this.buildUrl(urlPath, query);
-    const response = await fetch(url);
+    const response = await this.fetchWithTimeout(url);
     return await this.handleResponse<T>(response);
   }
 
   private async post<T>(urlPath: string, body: unknown, query?: Record<string, string>): Promise<T> {
     const url = this.buildUrl(urlPath, query);
-    const response = await fetch(url, {
+    const response = await this.fetchWithTimeout(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -205,8 +206,23 @@ export class OpenClawClient {
 
   private async delete<T>(urlPath: string, query?: Record<string, string>): Promise<T> {
     const url = this.buildUrl(urlPath, query);
-    const response = await fetch(url, { method: 'DELETE' });
+    const response = await this.fetchWithTimeout(url, { method: 'DELETE' });
     return await this.handleResponse<T>(response);
+  }
+
+  private async fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new OpenClawError(`Request timed out after ${DEFAULT_TIMEOUT_MS}ms`, 0);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private buildUrl(urlPath: string, query?: Record<string, string>): string {

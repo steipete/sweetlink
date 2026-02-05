@@ -32,6 +32,7 @@ export declare class OpenClawClient {
     private get;
     private post;
     private delete;
+    private fetchWithTimeout;
     private buildUrl;
     private handleResponse;
 }

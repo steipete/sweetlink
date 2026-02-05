@@ -238,5 +238,12 @@ describe('OpenClawClient', () => {
       });
       await expect(client.snapshot()).rejects.toThrow(STATUS_500);
     });
+
+    it('throws OpenClawError on timeout (AbortError)', async () => {
+      const abortError = new Error('The operation was aborted');
+      abortError.name = 'AbortError';
+      fetchMock.mockRejectedValueOnce(abortError);
+      await expect(client.snapshot()).rejects.toThrow(/timed out/);
+    });
   });
 });
