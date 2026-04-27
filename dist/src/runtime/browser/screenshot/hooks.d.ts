@@ -1,6 +1,6 @@
-import type { SweetLinkScreenshotCommand } from '@sweetlink/shared';
-import { z } from 'zod';
-import type { ScreenshotTargetInfo } from '../types.js';
+import type { SweetLinkScreenshotCommand } from "@sweetlink/shared";
+import { z } from "zod";
+import type { ScreenshotTargetInfo } from "../types.js";
 type HookRunner = (clientWindow: Window, document_: Document, target: HTMLElement) => Promise<void> | void;
 export declare const screenshotHookSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     type: z.ZodLiteral<"scrollIntoView">;

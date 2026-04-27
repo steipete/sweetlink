@@ -1,10 +1,10 @@
-import { writeFile } from 'node:fs/promises';
-import { runCodexImagePrompt, runCodexTextPrompt } from '../codex.js';
-import { fetchJson } from '../http.js';
-import { describeAppForPrompt } from '../util/app-label.js';
-import { extractEventMessage, isErrnoException } from '../util/errors.js';
-import { TRAILING_SLASH_PATTERN } from '../util/regex.js';
-import { formatConsoleArg } from './devtools.js';
+import { writeFile } from "node:fs/promises";
+import { runCodexImagePrompt, runCodexTextPrompt } from "../codex.js";
+import { fetchJson } from "../http.js";
+import { describeAppForPrompt } from "../util/app-label.js";
+import { extractEventMessage, isErrnoException } from "../util/errors.js";
+import { TRAILING_SLASH_PATTERN } from "../util/regex.js";
+import { formatConsoleArg } from "./devtools.js";
 export async function maybeDescribeScreenshot(prompt, imagePath, options = {}) {
     const question = prompt?.trim();
     if (!question) {
@@ -23,8 +23,8 @@ export async function maybeDescribeScreenshot(prompt, imagePath, options = {}) {
     }
     catch (error) {
         const message = extractEventMessage(error);
-        const missing = isErrnoException(error) && error.code === 'ENOENT';
-        const prefix = missing ? 'Codex CLI not found' : `Codex CLI failed: ${message}`;
+        const missing = isErrnoException(error) && error.code === "ENOENT";
+        const prefix = missing ? "Codex CLI not found" : `Codex CLI failed: ${message}`;
         console.warn(missing ? `${prefix}; install it or add it to $PATH to use --prompt.` : prefix);
     }
 }
@@ -36,15 +36,17 @@ export async function maybeAnalyzeConsoleWithPrompt(prompt, selector, events, op
     const lines = events.length > 0
         ? events.map((event) => {
             const timestamp = new Date(event.timestamp ?? Date.now()).toLocaleTimeString();
-            const argsText = event.args && event.args.length > 0 ? event.args.map((value) => formatConsoleArg(value)).join(' ') : '';
-            const suffix = argsText.length > 0 ? `: ${argsText}` : '';
+            const argsText = event.args && event.args.length > 0
+                ? event.args.map((value) => formatConsoleArg(value)).join(" ")
+                : "";
+            const suffix = argsText.length > 0 ? `: ${argsText}` : "";
             return `[${timestamp}] ${event.level}${suffix}`;
         })
-        : ['(no console events were captured after the click)'];
+        : ["(no console events were captured after the click)"];
     const appDescription = describeAppForPrompt(options.appLabel);
     const combinedPrompt = `You are analyzing console output from ${appDescription} immediately after triggering a click on selector "${selector}". ` +
-        'Review the log lines below (most recent last) and answer the agent’s question.\n\n' +
-        `Console output:\n${lines.join('\n')}\n\nQuestion: ${question}`;
+        "Review the log lines below (most recent last) and answer the agent’s question.\n\n" +
+        `Console output:\n${lines.join("\n")}\n\nQuestion: ${question}`;
     if (!options.silent) {
         console.log(`Asking Codex about console output after ${selector}: ${question}`);
     }
@@ -58,38 +60,41 @@ export async function maybeAnalyzeConsoleWithPrompt(prompt, selector, events, op
     }
     catch (error) {
         const message = extractEventMessage(error);
-        const missing = isErrnoException(error) && error.code === 'ENOENT';
-        const prefix = missing ? 'Codex CLI not found' : `Codex CLI failed: ${message}`;
+        const missing = isErrnoException(error) && error.code === "ENOENT";
+        const prefix = missing ? "Codex CLI not found" : `Codex CLI failed: ${message}`;
         console.warn(missing ? `${prefix}; install it or add it to $PATH to use --prompt.` : prefix);
         return false;
     }
 }
 export async function tryHtmlToImageFallback(context) {
-    const { rendererOverride, failureReason, config, token, sessionId, payload, outputPath, prompt, suppressOutput } = context;
-    console.warn(`Requested renderer "${rendererOverride}" failed: ${failureReason ?? 'Unknown error'}`);
-    console.warn('Falling back to html-to-image renderer…');
+    const { rendererOverride, failureReason, config, token, sessionId, payload, outputPath, prompt, suppressOutput, } = context;
+    console.warn(`Requested renderer "${rendererOverride}" failed: ${failureReason ?? "Unknown error"}`);
+    console.warn("Falling back to html-to-image renderer…");
     const fallbackResponse = await fetchJson(`${config.daemonBaseUrl}/sessions/${encodeURIComponent(sessionId)}/command`, {
-        method: 'POST',
+        method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...payload, renderer: 'html-to-image' }),
+        body: JSON.stringify({ ...payload, renderer: "html-to-image" }),
     });
     const fallbackResult = fallbackResponse.result;
     if (!fallbackResult.ok) {
-        console.error('Fallback html-to-image renderer also failed.');
+        console.error("Fallback html-to-image renderer also failed.");
         return { handled: false, fallbackResult };
     }
     await persistScreenshotResult(outputPath, fallbackResult, { silent: suppressOutput });
-    await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: config.appLabel });
+    await maybeDescribeScreenshot(prompt, outputPath, {
+        silent: suppressOutput,
+        appLabel: config.appLabel,
+    });
     return { handled: true };
 }
 export async function attemptDevToolsCapture(options) {
     const { devtoolsUrl, sessionUrl, selector, quality, mode, outputPath } = options;
-    const normalizedUrl = devtoolsUrl.replace(TRAILING_SLASH_PATTERN, '');
+    const normalizedUrl = devtoolsUrl.replace(TRAILING_SLASH_PATTERN, "");
     try {
-        const versionResponse = await fetch(`${normalizedUrl}/json/version`, { method: 'GET' });
+        const versionResponse = await fetch(`${normalizedUrl}/json/version`, { method: "GET" });
         if (!versionResponse.ok) {
             return null;
         }
@@ -99,13 +104,17 @@ export async function attemptDevToolsCapture(options) {
     }
     let puppeteer;
     try {
-        ({ default: puppeteer } = await import('puppeteer'));
+        ({ default: puppeteer } = await import("puppeteer"));
     }
     catch (error) {
-        console.warn('Puppeteer is unavailable:', error);
+        console.warn("Puppeteer is unavailable:", error);
         return null;
     }
-    const browser = await puppeteer.connect({ browserURL: normalizedUrl, defaultViewport: null, protocolTimeout: 5000 });
+    const browser = await puppeteer.connect({
+        browserURL: normalizedUrl,
+        defaultViewport: null,
+        protocolTimeout: 5000,
+    });
     try {
         const pages = await browser.pages();
         const sessionUrlObj = new URL(sessionUrl);
@@ -126,15 +135,18 @@ export async function attemptDevToolsCapture(options) {
                 throw new Error(`Selector ${selector} not found in target page`);
             }
             const box = await element.boundingBox();
-            const raw = (await element.screenshot({ type: 'jpeg', quality: jpegQuality }));
+            const raw = (await element.screenshot({
+                type: "jpeg",
+                quality: jpegQuality,
+            }));
             await writeFile(outputPath, raw, { mode: 0o600 });
             buffer = raw;
             width = box ? Math.round(box.width) : 0;
             height = box ? Math.round(box.height) : 0;
         }
-        else if (mode === 'full') {
+        else if (mode === "full") {
             const raw = (await target.screenshot({
-                type: 'jpeg',
+                type: "jpeg",
                 quality: jpegQuality,
                 fullPage: true,
             }));
@@ -150,12 +162,12 @@ export async function attemptDevToolsCapture(options) {
         else {
             const clip = await target.evaluate(() => {
                 const explicit = document.querySelector('[data-sweetlink-target="top-posters-card"]');
-                const cards = explicit ? [explicit] : [...document.querySelectorAll('div.col-span-1')];
-                const targetCard = cards.find((card) => [...card.querySelectorAll('span, h2, h3')].some((node) => (node.textContent || '').trim().toLowerCase() === 'top posters'));
+                const cards = explicit ? [explicit] : [...document.querySelectorAll("div.col-span-1")];
+                const targetCard = cards.find((card) => [...card.querySelectorAll("span, h2, h3")].some((node) => (node.textContent || "").trim().toLowerCase() === "top posters"));
                 if (!targetCard) {
                     return null;
                 }
-                targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
+                targetCard.scrollIntoView({ behavior: "auto", block: "center" });
                 const rect = targetCard.getBoundingClientRect();
                 return {
                     x: Math.max(0, Math.floor(rect.left) - 8),
@@ -165,9 +177,13 @@ export async function attemptDevToolsCapture(options) {
                 };
             });
             if (!clip) {
-                throw new Error('Unable to locate Top Posters card in target tab');
+                throw new Error("Unable to locate Top Posters card in target tab");
             }
-            const raw = (await target.screenshot({ type: 'jpeg', quality: jpegQuality, clip }));
+            const raw = (await target.screenshot({
+                type: "jpeg",
+                quality: jpegQuality,
+                clip,
+            }));
             await writeFile(outputPath, raw, { mode: 0o600 });
             buffer = raw;
             width = Math.round(clip.width);
@@ -177,11 +193,11 @@ export async function attemptDevToolsCapture(options) {
             width,
             height,
             sizeKb: buffer.length / 1024,
-            renderer: 'puppeteer',
+            renderer: "puppeteer",
         };
     }
     catch (error) {
-        console.warn('DevTools capture failed:', error instanceof Error ? error.message : error);
+        console.warn("DevTools capture failed:", error instanceof Error ? error.message : error);
         return null;
     }
     finally {
@@ -202,26 +218,29 @@ export async function tryDevToolsRecovery(context) {
         mode,
     });
     if (!devtoolsFallback) {
-        console.warn('Puppeteer fallback did not succeed; showing original renderer error.');
+        console.warn("Puppeteer fallback did not succeed; showing original renderer error.");
         return false;
     }
-    const reason = failureReason ?? 'unknown error';
+    const reason = failureReason ?? "unknown error";
     logInfo(`Renderer failure (${reason}) recovered via Puppeteer fallback (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB).`);
     if (!suppressOutput) {
         console.log(`Saved screenshot to ${outputPath} (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB, method: ${devtoolsFallback.renderer}).`);
     }
-    await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: context.appLabel });
+    await maybeDescribeScreenshot(prompt, outputPath, {
+        silent: suppressOutput,
+        appLabel: context.appLabel,
+    });
     return true;
 }
 export async function persistScreenshotResult(outputPath, result, options = {}) {
     if (!result.ok) {
-        throw new Error(result.error ?? 'Screenshot command failed');
+        throw new Error(result.error ?? "Screenshot command failed");
     }
     const data = result.data;
-    if (!data || typeof data.base64 !== 'string') {
-        throw new Error('Screenshot succeeded but no image payload was returned.');
+    if (!data || typeof data.base64 !== "string") {
+        throw new Error("Screenshot succeeded but no image payload was returned.");
     }
-    const buffer = Buffer.from(data.base64, 'base64');
+    const buffer = Buffer.from(data.base64, "base64");
     await writeFile(outputPath, buffer, { mode: 0o600 });
     const sizeInKb = buffer.length / 1024;
     if (!options.silent) {

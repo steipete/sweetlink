@@ -1,10 +1,10 @@
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-import { WebSocket } from 'undici';
-import { sweetLinkDebug } from './env.js';
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { WebSocket } from "undici";
+import { sweetLinkDebug } from "./env.js";
 
-const DEVTOOLS_REGISTRY_PATH = path.join(os.homedir(), '.sweetlink', 'devtools-registry.json');
+const DEVTOOLS_REGISTRY_PATH = path.join(os.homedir(), ".sweetlink", "devtools-registry.json");
 const TRAILING_SLASH_PATTERN = /\/$/;
 const OPTIONAL_TRAILING_SLASH_PATTERN = /\/?$/;
 const SWEETLINK_CHROME_DIR_PATTERN = /sweetlink-chrome-(\d+)-/;
@@ -17,20 +17,20 @@ interface ControlledChromeRecord {
 }
 
 function normalizeDevtoolsUrl(input: string): string {
-  return input.replace(TRAILING_SLASH_PATTERN, '');
+  return input.replace(TRAILING_SLASH_PATTERN, "");
 }
 
 const DEBUG_DEVTOOLS_REGISTRY = sweetLinkDebug;
 
 const parseDebuggerMessage = (raw: unknown): { id?: number } | null => {
-  if (typeof raw !== 'string') {
+  if (typeof raw !== "string") {
     return null;
   }
   try {
     return JSON.parse(raw) as { id?: number };
   } catch (error) {
     if (DEBUG_DEVTOOLS_REGISTRY) {
-      console.warn('[SweetLink CLI] Ignoring malformed DevTools message payload.', error);
+      console.warn("[SweetLink CLI] Ignoring malformed DevTools message payload.", error);
     }
   }
   return null;
@@ -38,7 +38,7 @@ const parseDebuggerMessage = (raw: unknown): { id?: number } | null => {
 
 async function loadRegistry(): Promise<ControlledChromeRecord[]> {
   try {
-    const raw = await readFile(DEVTOOLS_REGISTRY_PATH, 'utf8');
+    const raw = await readFile(DEVTOOLS_REGISTRY_PATH, "utf8");
     const parsed = JSON.parse(raw) as ControlledChromeRecord[];
     if (Array.isArray(parsed)) {
       return parsed.map((entry) => ({
@@ -48,8 +48,8 @@ async function loadRegistry(): Promise<ControlledChromeRecord[]> {
       }));
     }
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-      console.warn('[SweetLink CLI] Failed to read DevTools registry:', error);
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.warn("[SweetLink CLI] Failed to read DevTools registry:", error);
     }
   }
   return [];
@@ -58,14 +58,14 @@ async function loadRegistry(): Promise<ControlledChromeRecord[]> {
 async function saveRegistry(registry: ControlledChromeRecord[]): Promise<void> {
   const directory = path.dirname(DEVTOOLS_REGISTRY_PATH);
   await mkdir(directory, { recursive: true });
-  await writeFile(DEVTOOLS_REGISTRY_PATH, JSON.stringify(registry, null, 2), 'utf8');
+  await writeFile(DEVTOOLS_REGISTRY_PATH, JSON.stringify(registry, null, 2), "utf8");
 }
 
 export async function registerControlledChromeInstance(
   devtoolsUrl: string,
-  userDataDirectory: string | undefined
+  userDataDirectory: string | undefined,
 ): Promise<void> {
-  if (!userDataDirectory?.includes('sweetlink-chrome-')) {
+  if (!userDataDirectory?.includes("sweetlink-chrome-")) {
     return;
   }
   let portSegment: string | null = null;
@@ -73,10 +73,10 @@ export async function registerControlledChromeInstance(
     const parsed = new URL(devtoolsUrl);
     if (parsed.port) {
       portSegment = parsed.port;
-    } else if (parsed.protocol === 'http:') {
-      portSegment = '80';
-    } else if (parsed.protocol === 'https:') {
-      portSegment = '443';
+    } else if (parsed.protocol === "http:") {
+      portSegment = "80";
+    } else if (parsed.protocol === "https:") {
+      portSegment = "443";
     } else {
       portSegment = null;
     }
@@ -98,7 +98,9 @@ export async function registerControlledChromeInstance(
   await saveRegistry(registry);
 }
 
-export async function cleanupControlledChromeRegistry(activeDevtoolsUrl?: string | null): Promise<void> {
+export async function cleanupControlledChromeRegistry(
+  activeDevtoolsUrl?: string | null,
+): Promise<void> {
   const normalizedActive = activeDevtoolsUrl ? normalizeDevtoolsUrl(activeDevtoolsUrl) : null;
   const registry = await loadRegistry();
   const next: ControlledChromeRecord[] = [];
@@ -110,10 +112,10 @@ export async function cleanupControlledChromeRegistry(activeDevtoolsUrl?: string
       const parsed = new URL(normalizedEntryUrl);
       if (parsed.port) {
         portSegment = parsed.port;
-      } else if (parsed.protocol === 'http:') {
-        portSegment = '80';
-      } else if (parsed.protocol === 'https:') {
-        portSegment = '443';
+      } else if (parsed.protocol === "http:") {
+        portSegment = "80";
+      } else if (parsed.protocol === "https:") {
+        portSegment = "443";
       } else {
         portSegment = null;
       }
@@ -139,7 +141,7 @@ export async function cleanupControlledChromeRegistry(activeDevtoolsUrl?: string
       continue;
     }
 
-    if (!entry.userDataDirectory.includes('sweetlink-chrome-')) {
+    if (!entry.userDataDirectory.includes("sweetlink-chrome-")) {
       // Avoid touching DevTools instances we did not launch (e.g. manual overrides).
       next.push(entry);
       continue;
@@ -159,10 +161,10 @@ export async function cleanupControlledChromeRegistry(activeDevtoolsUrl?: string
 }
 
 async function attemptCloseControlledChrome(devtoolsUrl: string): Promise<boolean> {
-  const normalized = devtoolsUrl.replace(OPTIONAL_TRAILING_SLASH_PATTERN, '');
+  const normalized = devtoolsUrl.replace(OPTIONAL_TRAILING_SLASH_PATTERN, "");
 
   try {
-    const response = await fetch(`${normalized}/json/version`, { method: 'GET' });
+    const response = await fetch(`${normalized}/json/version`, { method: "GET" });
     if (!response.ok) {
       return false;
     }
@@ -173,22 +175,22 @@ async function attemptCloseControlledChrome(devtoolsUrl: string): Promise<boolea
     }
 
     await new Promise<void>((resolve, reject) => {
-      let settleState: 'pending' | 'done' = 'pending';
+      let settleState: "pending" | "done" = "pending";
       const finish = (error: unknown = null) => {
-        if (settleState === 'done') {
+        if (settleState === "done") {
           return;
         }
-        settleState = 'done';
+        settleState = "done";
         if (error) {
           if (error instanceof Error) {
             reject(error);
             return;
           }
-          if (typeof error === 'string') {
+          if (typeof error === "string") {
             reject(new Error(error));
             return;
           }
-          reject(new Error('Unknown DevTools close error'));
+          reject(new Error("Unknown DevTools close error"));
         } else {
           resolve();
         }
@@ -197,18 +199,18 @@ async function attemptCloseControlledChrome(devtoolsUrl: string): Promise<boolea
       const socket = new WebSocket(wsUrl);
       const timeout: ReturnType<typeof setTimeout> = setTimeout(() => {
         socket.close();
-        finish(new Error('DevTools close timeout'));
+        finish(new Error("DevTools close timeout"));
       }, 2000);
       const maybeNodeTimer = timeout as unknown as Partial<NodeJS.Timeout>;
-      if (typeof maybeNodeTimer?.unref === 'function') {
+      if (typeof maybeNodeTimer?.unref === "function") {
         maybeNodeTimer.unref();
       }
 
-      socket.addEventListener('open', () => {
-        socket.send(JSON.stringify({ id: 1, method: 'Browser.close' }));
+      socket.addEventListener("open", () => {
+        socket.send(JSON.stringify({ id: 1, method: "Browser.close" }));
       });
 
-      socket.addEventListener('message', (event) => {
+      socket.addEventListener("message", (event) => {
         const messagePayload = parseDebuggerMessage(event.data);
         if (messagePayload?.id === 1) {
           clearTimeout(timeout);
@@ -217,36 +219,44 @@ async function attemptCloseControlledChrome(devtoolsUrl: string): Promise<boolea
         }
       });
 
-      socket.addEventListener('close', () => {
+      socket.addEventListener("close", () => {
         clearTimeout(timeout);
         finish();
       });
 
-      socket.addEventListener('error', (event) => {
+      socket.addEventListener("error", (event) => {
         clearTimeout(timeout);
         const candidate = event as { message?: string; error?: unknown };
-        const message = typeof candidate.message === 'string' ? candidate.message : null;
+        const message = typeof candidate.message === "string" ? candidate.message : null;
         if (!message && candidate.error) {
           finish(candidate.error);
           return;
         }
         if (!message) {
-          console.warn('[SweetLink CLI] DevTools WebSocket reported an unknown error event.', { event });
+          console.warn("[SweetLink CLI] DevTools WebSocket reported an unknown error event.", {
+            event,
+          });
         }
-        finish(new Error(message ?? 'DevTools WebSocket reported an unknown error'));
+        finish(new Error(message ?? "DevTools WebSocket reported an unknown error"));
       });
     });
 
     return true;
   } catch (error) {
     if (error instanceof Error) {
-      const message = error.message || '';
-      if (message.includes('ECONNREFUSED') || message.includes('fetch failed')) {
+      const message = error.message || "";
+      if (message.includes("ECONNREFUSED") || message.includes("fetch failed")) {
         return false;
       }
-      console.warn(`[SweetLink CLI] Unable to close stale controlled Chrome at ${devtoolsUrl}:`, message);
+      console.warn(
+        `[SweetLink CLI] Unable to close stale controlled Chrome at ${devtoolsUrl}:`,
+        message,
+      );
     } else {
-      console.warn(`[SweetLink CLI] Unable to close stale controlled Chrome at ${devtoolsUrl}:`, error);
+      console.warn(
+        `[SweetLink CLI] Unable to close stale controlled Chrome at ${devtoolsUrl}:`,
+        error,
+      );
     }
     return false;
   }
@@ -259,10 +269,10 @@ async function closeLingeringChromeProcesses(activeDevtoolsUrl: string | null): 
       const parsed = new URL(activeDevtoolsUrl);
       if (parsed.port) {
         activePort = parsed.port;
-      } else if (parsed.protocol === 'http:') {
-        activePort = '80';
-      } else if (parsed.protocol === 'https:') {
-        activePort = '443';
+      } else if (parsed.protocol === "http:") {
+        activePort = "80";
+      } else if (parsed.protocol === "https:") {
+        activePort = "443";
       } else {
         activePort = null;
       }

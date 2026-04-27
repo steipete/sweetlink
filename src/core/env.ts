@@ -1,4 +1,4 @@
-import type { Command } from 'commander';
+import type { Command } from "commander";
 
 /**
  * Returns a shallow copy of the current process environment so child processes
@@ -13,12 +13,12 @@ export const cloneProcessEnv = (): NodeJS.ProcessEnv => {
 export const readLocalEnvString = (key: string): string | null => {
   try {
     // biome-ignore lint/style/noProcessEnv: CLI utilities fall back to raw env variables when shared config is unavailable.
-    if (typeof process === 'undefined' || !process?.env) {
+    if (typeof process === "undefined" || !process?.env) {
       return null;
     }
     // biome-ignore lint/style/noProcessEnv: CLI utilities fall back to raw env variables when shared config is unavailable.
     const raw = process.env[key];
-    if (typeof raw !== 'string') {
+    if (typeof raw !== "string") {
       return null;
     }
     const trimmed = raw.trim();
@@ -29,4 +29,5 @@ export const readLocalEnvString = (key: string): string | null => {
 };
 
 /** Extracts typed Commander options while preserving globals. */
-export const readCommandOptions = <T extends object>(command: Command): T => typeof command.optsWithGlobals === 'function' ? command.optsWithGlobals<T>() : command.opts<T>();
+export const readCommandOptions = <T extends object>(command: Command): T =>
+  typeof command.optsWithGlobals === "function" ? command.optsWithGlobals<T>() : command.opts<T>();

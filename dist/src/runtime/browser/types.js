@@ -1,5 +1,5 @@
 export const DEFAULT_STATUS_SNAPSHOT = {
-    status: 'idle',
+    status: "idle",
     reason: null,
     codename: null,
 };

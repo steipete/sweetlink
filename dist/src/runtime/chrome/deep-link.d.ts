@@ -1,4 +1,4 @@
-import type { TwitterOauthAutoAcceptResult } from '../devtools/types.js';
+import type { TwitterOauthAutoAcceptResult } from "../devtools/types.js";
 export interface DeepLinkAuthFlowResult {
     readonly signInClicked: boolean;
     readonly navigatedToTarget: boolean;

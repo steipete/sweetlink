@@ -1,5 +1,5 @@
-import type { Command } from 'commander';
-import type { CliConfig, DevBootstrapConfig } from '../types.js';
+import type { Command } from "commander";
+import type { CliConfig, DevBootstrapConfig } from "../types.js";
 interface ResolvedServerConfig {
     readonly env: string;
     readonly start: string[] | null;

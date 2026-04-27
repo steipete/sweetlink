@@ -1,23 +1,28 @@
-import type { Browser as PuppeteerBrowser, ElementHandle, Page as PuppeteerPage } from 'puppeteer';
-import { buildDevBootstrapLoginUrl } from '../../core/dev-bootstrap.js';
-import { logDebugError } from '../../util/errors.js';
-import { delay } from '../../util/time.js';
-import { attemptTwitterOauthAutoAccept } from '../devtools/oauth.js';
-import type { TwitterOauthAutoAcceptResult } from '../devtools/types.js';
-import { buildWaitCandidateUrls, urlsRoughlyMatch } from '../url.js';
-import { PUPPETEER_NAVIGATION_TIMEOUT_MS } from './constants.js';
-import { connectPuppeteerBrowser, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer.js';
+import type { Browser as PuppeteerBrowser, ElementHandle, Page as PuppeteerPage } from "puppeteer";
+import { buildDevBootstrapLoginUrl } from "../../core/dev-bootstrap.js";
+import { logDebugError } from "../../util/errors.js";
+import { delay } from "../../util/time.js";
+import { attemptTwitterOauthAutoAccept } from "../devtools/oauth.js";
+import type { TwitterOauthAutoAcceptResult } from "../devtools/types.js";
+import { buildWaitCandidateUrls, urlsRoughlyMatch } from "../url.js";
+import { PUPPETEER_NAVIGATION_TIMEOUT_MS } from "./constants.js";
+import {
+  connectPuppeteerBrowser,
+  navigatePuppeteerPage,
+  resolvePuppeteerPage,
+  waitForPageReady,
+} from "./puppeteer.js";
 
-const OAUTH_HOSTS = new Set(['x.com', 'twitter.com', 'api.twitter.com']);
+const OAUTH_HOSTS = new Set(["x.com", "twitter.com", "api.twitter.com"]);
 const OAUTH_PATH_PATTERN = /oauth|authorize/i;
-const SIGN_IN_PATHS = ['/auth/signin', '/sign-in', '/login', '/auth/login', '/api/auth/signin'];
+const SIGN_IN_PATHS = ["/auth/signin", "/sign-in", "/login", "/auth/login", "/api/auth/signin"];
 const SIGN_IN_TEXT_TARGETS = [
-  'continue with twitter',
-  'sign in with twitter',
-  'continue with x',
-  'sign in with x',
+  "continue with twitter",
+  "sign in with twitter",
+  "continue with x",
+  "sign in with x",
 ];
-const OAUTH_KICKOFF_PATH = '/api/auth/sign-in/social';
+const OAUTH_KICKOFF_PATH = "/api/auth/sign-in/social";
 
 export interface DeepLinkAuthFlowResult {
   readonly signInClicked: boolean;
@@ -36,11 +41,11 @@ export async function ensureDeepLinkAuthFlow(params: {
     return { signInClicked: false, navigatedToTarget: false, finalUrl: null };
   }
 
-  let puppeteerModule: typeof import('puppeteer') | null = null;
+  let puppeteerModule: typeof import("puppeteer") | null = null;
   try {
-    puppeteerModule = await import('puppeteer');
+    puppeteerModule = await import("puppeteer");
   } catch (error) {
-    logDebugError('Unable to load Puppeteer for deep-link auth flow', error);
+    logDebugError("Unable to load Puppeteer for deep-link auth flow", error);
     return { signInClicked: false, navigatedToTarget: false, finalUrl: null };
   }
 
@@ -54,7 +59,7 @@ export async function ensureDeepLinkAuthFlow(params: {
 
   try {
     const targetOrigin = targetUrl.origin;
-    const signInUrl = new URL('/auth/signin', targetOrigin).toString();
+    const signInUrl = new URL("/auth/signin", targetOrigin).toString();
     const existingTarget = await findMatchingPageUrl(browser, targetUrl.toString());
     if (existingTarget) {
       return { signInClicked: false, navigatedToTarget: true, finalUrl: existingTarget };
@@ -62,7 +67,10 @@ export async function ensureDeepLinkAuthFlow(params: {
     let page = await resolvePuppeteerPage(browser, targetUrl.toString());
     if (!page) {
       const pages = await browser.pages();
-      page = pages.find((candidate) => isSameOrigin(candidate?.url?.() ?? '', targetOrigin)) ?? pages[0] ?? null;
+      page =
+        pages.find((candidate) => isSameOrigin(candidate?.url?.() ?? "", targetOrigin)) ??
+        pages[0] ??
+        null;
     }
     if (!page) {
       return { signInClicked: false, navigatedToTarget: false, finalUrl: null };
@@ -79,7 +87,11 @@ export async function ensureDeepLinkAuthFlow(params: {
 
     const devLoginUrl = buildDevBootstrapLoginUrl(targetUrl.toString());
     if (devLoginUrl) {
-      const devLoginResult = await attemptDevBootstrapLogin(page, devLoginUrl, targetUrl.toString());
+      const devLoginResult = await attemptDevBootstrapLogin(
+        page,
+        devLoginUrl,
+        targetUrl.toString(),
+      );
       if (devLoginResult.attempted) {
         signInClicked = true;
       }
@@ -108,7 +120,11 @@ export async function ensureDeepLinkAuthFlow(params: {
     }
 
     if (!signInClicked) {
-      if (currentUrl && isSameOrigin(currentUrl.toString(), targetOrigin) && !isLikelySignInUrl(currentUrl)) {
+      if (
+        currentUrl &&
+        isSameOrigin(currentUrl.toString(), targetOrigin) &&
+        !isLikelySignInUrl(currentUrl)
+      ) {
         await navigatePuppeteerPage(page, signInUrl, 2);
         await delay(500);
         currentUrl = normalizeUrl(page.url());
@@ -123,7 +139,8 @@ export async function ensureDeepLinkAuthFlow(params: {
       }
     }
 
-    const hasOauthPage = currentUrl && isLikelyOauthUrl(currentUrl) ? true : await hasOauthTab(browser);
+    const hasOauthPage =
+      currentUrl && isLikelyOauthUrl(currentUrl) ? true : await hasOauthTab(browser);
     if (signInClicked || hasOauthPage) {
       oauthAttempt = await attemptTwitterOauthAutoAccept({
         devtoolsUrl: params.devtoolsUrl,
@@ -139,11 +156,13 @@ export async function ensureDeepLinkAuthFlow(params: {
     return {
       signInClicked,
       oauthAttempt,
-      navigatedToTarget: Boolean(currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl.toString())),
+      navigatedToTarget: Boolean(
+        currentUrl && urlsRoughlyMatch(currentUrl.toString(), targetUrl.toString()),
+      ),
       finalUrl: currentUrl?.toString() ?? null,
     };
   } catch (error) {
-    logDebugError('Deep-link auth flow failed', error);
+    logDebugError("Deep-link auth flow failed", error);
     return { signInClicked: false, navigatedToTarget: false, finalUrl: null, oauthAttempt };
   } finally {
     try {
@@ -158,7 +177,7 @@ async function attemptAppSignIn(page: PuppeteerPage): Promise<boolean> {
   const handle = await page.evaluateHandle((targets) => {
     const candidates = document.querySelectorAll('button, a, div[role="button"]');
     for (const candidate of candidates) {
-      const text = candidate.textContent?.trim().toLowerCase() ?? '';
+      const text = candidate.textContent?.trim().toLowerCase() ?? "";
       if (!text) {
         continue;
       }
@@ -177,9 +196,12 @@ async function attemptAppSignIn(page: PuppeteerPage): Promise<boolean> {
 
   try {
     await element.click({ delay: 25 });
-    await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS });
+    await page.waitForNavigation({
+      waitUntil: "domcontentloaded",
+      timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS,
+    });
   } catch (error) {
-    logDebugError('Sign-in click failed or navigation timed out', error);
+    logDebugError("Sign-in click failed or navigation timed out", error);
   } finally {
     await element.dispose?.();
   }
@@ -189,33 +211,40 @@ async function attemptAppSignIn(page: PuppeteerPage): Promise<boolean> {
 
 async function attemptOauthKickoff(page: PuppeteerPage, callbackUrl: string): Promise<boolean> {
   const result = await page
-    .evaluate(async ({ path, target }) => {
-      try {
-        const response = await fetch(path, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ provider: 'twitter', callbackURL: target }),
-        });
-        if (!response.ok) {
-          return { started: false, reason: `request failed (${response.status})` };
-        }
-        const payload = await response.json();
-        if (payload && typeof payload === 'object') {
-          const record = payload;
-          if (record.redirect === true && typeof record.url === 'string' && record.url.length > 0) {
-            window.location.assign(record.url);
-            return { started: true };
+    .evaluate(
+      async ({ path, target }) => {
+        try {
+          const response = await fetch(path, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ provider: "twitter", callbackURL: target }),
+          });
+          if (!response.ok) {
+            return { started: false, reason: `request failed (${response.status})` };
           }
+          const payload = await response.json();
+          if (payload && typeof payload === "object") {
+            const record = payload;
+            if (
+              record.redirect === true &&
+              typeof record.url === "string" &&
+              record.url.length > 0
+            ) {
+              window.location.assign(record.url);
+              return { started: true };
+            }
+          }
+          return { started: false, reason: "no redirect returned" };
+        } catch (error) {
+          return { started: false, reason: String(error ?? "request failed") };
         }
-        return { started: false, reason: 'no redirect returned' };
-      } catch (error) {
-        return { started: false, reason: String(error ?? 'request failed') };
-      }
-    }, { path: OAUTH_KICKOFF_PATH, target: callbackUrl })
+      },
+      { path: OAUTH_KICKOFF_PATH, target: callbackUrl },
+    )
     .catch((error) => {
-      logDebugError('OAuth kickoff failed', error);
-      return { started: false, reason: 'exception' };
+      logDebugError("OAuth kickoff failed", error);
+      return { started: false, reason: "exception" };
     });
 
   return Boolean(result?.started);
@@ -224,7 +253,7 @@ async function attemptOauthKickoff(page: PuppeteerPage, callbackUrl: string): Pr
 async function attemptDevBootstrapLogin(
   page: PuppeteerPage,
   loginUrl: string,
-  targetUrl: string
+  targetUrl: string,
 ): Promise<{ attempted: boolean; navigatedToTarget: boolean; finalUrl: string | null }> {
   try {
     await navigatePuppeteerPage(page, loginUrl, 2);
@@ -240,12 +269,12 @@ async function attemptDevBootstrapLogin(
         (matchCandidates: readonly string[]) => {
           try {
             const url = new URL(window.location.href);
-            url.hash = '';
+            url.hash = "";
             const full = url.toString();
             if (matchCandidates.includes(full)) {
               return true;
             }
-            url.search = '';
+            url.search = "";
             const withoutQuery = url.toString();
             return matchCandidates.includes(withoutQuery);
           } catch {
@@ -253,14 +282,14 @@ async function attemptDevBootstrapLogin(
           }
         },
         { polling: 250, timeout: 6 * 500 + 250 },
-        candidates
+        candidates,
       )
       .catch(() => null);
 
     currentUrl = normalizeUrl(page.url());
     return { attempted: true, navigatedToTarget: false, finalUrl: currentUrl?.toString() ?? null };
   } catch (error) {
-    logDebugError('Dev bootstrap login failed', error);
+    logDebugError("Dev bootstrap login failed", error);
     return { attempted: true, navigatedToTarget: false, finalUrl: null };
   }
 }

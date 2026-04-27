@@ -1,10 +1,10 @@
-import path from 'node:path';
-import type { Command } from 'commander';
-import { sweetLinkEnv } from '../env.js';
-import type { CliConfig, DevBootstrapConfig } from '../types.js';
-import { formatAppLabel, normalizeAppLabel } from '../util/app-label.js';
-import { loadSweetLinkFileConfig } from './config-file.js';
-import { readCommandOptions } from './env.js';
+import path from "node:path";
+import type { Command } from "commander";
+import { sweetLinkEnv } from "../env.js";
+import type { CliConfig, DevBootstrapConfig } from "../types.js";
+import { formatAppLabel, normalizeAppLabel } from "../util/app-label.js";
+import { loadSweetLinkFileConfig } from "./config-file.js";
+import { readCommandOptions } from "./env.js";
 
 interface ResolvedServerConfig {
   readonly env: string;
@@ -25,14 +25,14 @@ export interface RootProgramOptions {
 }
 
 const normalizeUrlOption = (value: unknown, fallback: string): string => {
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "string" && value.trim().length > 0) {
     return value;
   }
   return fallback;
 };
 
 const normalizeAdminKey = (value: unknown): string | null => {
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
   }
@@ -52,15 +52,15 @@ export const readRootProgramOptions = (command: Command): RootProgramOptions => 
   }>(command);
   const { config } = loadSweetLinkFileConfig();
   let optionUrl: string | undefined;
-  if (typeof rawOptions.appUrl === 'string') {
+  if (typeof rawOptions.appUrl === "string") {
     optionUrl = rawOptions.appUrl;
-  } else if (typeof rawOptions.url === 'string') {
+  } else if (typeof rawOptions.url === "string") {
     optionUrl = rawOptions.url;
   } else {
     optionUrl = undefined;
   }
   const optionPort = normalizePort(rawOptions.port);
-  const configPort = typeof config.port === 'number' ? config.port : null;
+  const configPort = typeof config.port === "number" ? config.port : null;
 
   const fallbackAppUrl = resolveDefaultAppUrl({
     optionUrl,
@@ -70,9 +70,13 @@ export const readRootProgramOptions = (command: Command): RootProgramOptions => 
   });
   const fallbackDaemonUrl = config.daemonUrl ?? sweetLinkEnv.daemonUrl;
   const fallbackAdminKey =
-    rawOptions.adminKey ?? config.adminKey ?? sweetLinkEnv.localAdminApiKey ?? sweetLinkEnv.adminApiKey ?? null;
+    rawOptions.adminKey ??
+    config.adminKey ??
+    sweetLinkEnv.localAdminApiKey ??
+    sweetLinkEnv.adminApiKey ??
+    null;
   let optionOauthScriptPath: string | null = null;
-  if (typeof rawOptions.oauthScript === 'string') {
+  if (typeof rawOptions.oauthScript === "string") {
     const trimmed = rawOptions.oauthScript.trim();
     if (trimmed.length > 0) {
       optionOauthScriptPath = resolveCliPath(trimmed);
@@ -97,7 +101,7 @@ export const readRootProgramOptions = (command: Command): RootProgramOptions => 
     start: server.start ?? null,
     check: server.check ?? null,
     cwd: server.cwd ?? null,
-    timeoutMs: typeof server.timeoutMs === 'number' ? server.timeoutMs : null,
+    timeoutMs: typeof server.timeoutMs === "number" ? server.timeoutMs : null,
   }));
 
   return {
@@ -137,14 +141,19 @@ interface ResolveAppUrlOptions {
   readonly configPort: number | null;
 }
 
-const LOCAL_DEFAULT_URL = 'http://localhost:3000';
+const LOCAL_DEFAULT_URL = "http://localhost:3000";
 
-function resolveDefaultAppUrl({ optionUrl, optionPort, configAppUrl, configPort }: ResolveAppUrlOptions): string {
+function resolveDefaultAppUrl({
+  optionUrl,
+  optionPort,
+  configAppUrl,
+  configPort,
+}: ResolveAppUrlOptions): string {
   if (optionUrl && optionUrl.trim().length > 0) {
     return optionUrl;
   }
 
-  if (typeof optionPort === 'number') {
+  if (typeof optionPort === "number") {
     return applyPortToUrl(configAppUrl ?? sweetLinkEnv.appUrl ?? LOCAL_DEFAULT_URL, optionPort);
   }
 
@@ -170,10 +179,10 @@ function applyPortToUrl(base: string, port: number): string {
 }
 
 function normalizePort(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
     return Math.floor(value);
   }
-  if (typeof value === 'string' && value.trim().length > 0) {
+  if (typeof value === "string" && value.trim().length > 0) {
     const parsed = Number.parseInt(value, 10);
     if (Number.isFinite(parsed) && parsed > 0) {
       return parsed;

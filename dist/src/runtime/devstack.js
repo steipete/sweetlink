@@ -1,22 +1,22 @@
-import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { compact } from 'es-toolkit';
-import { Agent, setGlobalDispatcher } from 'undici';
-import { cliEnv, sweetLinkDebug } from '../env.js';
-import { extractEventMessage } from '../util/errors.js';
-import { formatPathForDisplay } from '../util/path.js';
-import { delay } from '../util/time.js';
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { compact } from "es-toolkit";
+import { Agent, setGlobalDispatcher } from "undici";
+import { cliEnv, sweetLinkDebug } from "../env.js";
+import { extractEventMessage } from "../util/errors.js";
+import { formatPathForDisplay } from "../util/path.js";
+import { delay } from "../util/time.js";
 /** Registers the mkcert CA with undici so HTTPS requests succeed without NODE_TLS_REJECT_UNAUTHORIZED hacks. */
 export function maybeInstallMkcertDispatcher() {
     const overridePath = cliEnv.caPath ?? null;
-    const mkcertRoot = cliEnv.caRoot ?? path.join(os.homedir(), 'Library', 'Application Support', 'mkcert');
+    const mkcertRoot = cliEnv.caRoot ?? path.join(os.homedir(), "Library", "Application Support", "mkcert");
     const candidates = [
         overridePath,
-        path.join(mkcertRoot, 'rootCA.pem'),
-        path.join(os.homedir(), '.sweetlink', 'certs', 'localhost-cert.pem'),
-    ].filter((candidate) => typeof candidate === 'string' && candidate.length > 0);
+        path.join(mkcertRoot, "rootCA.pem"),
+        path.join(os.homedir(), ".sweetlink", "certs", "localhost-cert.pem"),
+    ].filter((candidate) => typeof candidate === "string" && candidate.length > 0);
     for (const candidate of candidates) {
         if (!existsSync(candidate)) {
             continue;
@@ -51,23 +51,23 @@ export async function ensureDevStackRunning(targetUrl, options) {
         return;
     }
     if (options.server?.start) {
-        console.log('Detected dev stack offline. Running configured start command…');
+        console.log("Detected dev stack offline. Running configured start command…");
         try {
             launchStartCommand(options.server, options.repoRoot);
         }
         catch (error) {
-            console.warn('Failed to launch dev stack automatically:', extractEventMessage(error));
+            console.warn("Failed to launch dev stack automatically:", extractEventMessage(error));
         }
     }
     else {
-        console.warn('Dev stack appears offline and no start command is configured. Start it manually.');
+        console.warn("Dev stack appears offline and no start command is configured. Start it manually.");
         return;
     }
     const deadline = Date.now() + checkTimeout;
     while (Date.now() < deadline) {
         // biome-ignore lint/performance/noAwaitInLoops: health check polling is intentionally sequential.
         if (await isHealthy()) {
-            console.log('Dev stack is online.');
+            console.log("Dev stack is online.");
             return;
         }
         await delay(1000);
@@ -77,7 +77,7 @@ export async function ensureDevStackRunning(targetUrl, options) {
 /** Performs lightweight HEAD requests to confirm the web app responds. */
 export async function isAppReachable(appBaseUrl, healthPaths) {
     const additionalTargets = compact((healthPaths ?? []).map((pathCandidate) => {
-        if (typeof pathCandidate !== 'string') {
+        if (typeof pathCandidate !== "string") {
             return null;
         }
         const trimmed = pathCandidate.trim();
@@ -85,9 +85,9 @@ export async function isAppReachable(appBaseUrl, healthPaths) {
             return null;
         }
         try {
-            const target = trimmed.startsWith('http')
+            const target = trimmed.startsWith("http")
                 ? new URL(trimmed)
-                : new URL(trimmed.startsWith('/') ? trimmed : `/${trimmed}`, appBaseUrl);
+                : new URL(trimmed.startsWith("/") ? trimmed : `/${trimmed}`, appBaseUrl);
             return target.toString();
         }
         catch {
@@ -101,7 +101,7 @@ export async function isAppReachable(appBaseUrl, healthPaths) {
             const timeout = setTimeout(() => controller.abort(), 2000);
             try {
                 // biome-ignore lint/performance/noAwaitInLoops: sequential HEAD requests avoid overwhelming the dev stack.
-                await fetch(target, { method: 'HEAD', redirect: 'manual', signal: controller.signal });
+                await fetch(target, { method: "HEAD", redirect: "manual", signal: controller.signal });
                 return true;
             }
             finally {
@@ -110,8 +110,11 @@ export async function isAppReachable(appBaseUrl, healthPaths) {
         }
         catch (error) {
             const message = extractEventMessage(error);
-            const isAbort = error.name === 'AbortError';
-            if (!(((message.includes('ECONNREFUSED') || message.includes('ENOTFOUND')) || message.includes('EHOSTUNREACH')) || isAbort)) {
+            const isAbort = error.name === "AbortError";
+            if (!(message.includes("ECONNREFUSED") ||
+                message.includes("ENOTFOUND") ||
+                message.includes("EHOSTUNREACH") ||
+                isAbort)) {
                 return false;
             }
         }
@@ -133,17 +136,17 @@ async function runCheckCommand(server, repoRoot) {
         try {
             const child = spawn(command, args, {
                 cwd,
-                stdio: 'ignore',
+                stdio: "ignore",
             });
             const timer = setTimeout(() => {
                 child.kill();
                 resolve(false);
             }, 5000);
-            child.once('error', () => {
+            child.once("error", () => {
                 clearTimeout(timer);
                 resolve(false);
             });
-            child.once('close', (code) => {
+            child.once("close", (code) => {
                 clearTimeout(timer);
                 resolve(code === 0);
             });
@@ -166,7 +169,7 @@ function launchStartCommand(server, repoRoot) {
     const cwd = server.cwd ?? repoRoot;
     const child = spawn(command, args, {
         cwd,
-        stdio: sweetLinkDebug ? 'inherit' : 'ignore',
+        stdio: sweetLinkDebug ? "inherit" : "ignore",
         detached: true,
     });
     child.unref();

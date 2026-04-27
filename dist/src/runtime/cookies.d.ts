@@ -6,7 +6,7 @@ export interface PuppeteerCookieParam {
     path?: string;
     secure?: boolean;
     httpOnly?: boolean;
-    sameSite?: 'Strict' | 'Lax' | 'None';
+    sameSite?: "Strict" | "Lax" | "None";
     expires?: number;
 }
 /** Collects cookies from the main Chrome profile matching the provided URL. */

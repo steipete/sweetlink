@@ -10,12 +10,12 @@ export const cloneProcessEnv = () => {
 export const readLocalEnvString = (key) => {
     try {
         // biome-ignore lint/style/noProcessEnv: CLI utilities fall back to raw env variables when shared config is unavailable.
-        if (typeof process === 'undefined' || !process?.env) {
+        if (typeof process === "undefined" || !process?.env) {
             return null;
         }
         // biome-ignore lint/style/noProcessEnv: CLI utilities fall back to raw env variables when shared config is unavailable.
         const raw = process.env[key];
-        if (typeof raw !== 'string') {
+        if (typeof raw !== "string") {
             return null;
         }
         const trimmed = raw.trim();
@@ -26,5 +26,5 @@ export const readLocalEnvString = (key) => {
     }
 };
 /** Extracts typed Commander options while preserving globals. */
-export const readCommandOptions = (command) => typeof command.optsWithGlobals === 'function' ? command.optsWithGlobals() : command.opts();
+export const readCommandOptions = (command) => typeof command.optsWithGlobals === "function" ? command.optsWithGlobals() : command.opts();
 //# sourceMappingURL=env.js.map

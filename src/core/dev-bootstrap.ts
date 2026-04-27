@@ -1,7 +1,7 @@
-import { fetchJson } from '../http.js';
-import type { CliConfig, DevBootstrapConfig } from '../types.js';
-import { describeAppForPrompt } from '../util/app-label.js';
-import { extractEventMessage } from '../util/errors.js';
+import { fetchJson } from "../http.js";
+import type { CliConfig, DevBootstrapConfig } from "../types.js";
+import { describeAppForPrompt } from "../util/app-label.js";
+import { extractEventMessage } from "../util/errors.js";
 
 export interface DevBootstrapResult {
   readonly adminApiKey: string | null;
@@ -13,7 +13,7 @@ let cachedBootstrap: DevBootstrapResult | null = null;
 let bootstrapPromise: Promise<DevBootstrapResult | null> | null = null;
 
 const normalizeOptionalString = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return null;
   }
   const trimmed = value.trim();
@@ -24,8 +24,8 @@ const resolveBootstrapUrl = (appBaseUrl: string, endpoint: string): string => {
   try {
     return new URL(endpoint, appBaseUrl).toString();
   } catch {
-    const base = appBaseUrl.endsWith('/') ? appBaseUrl.slice(0, -1) : appBaseUrl;
-    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const base = appBaseUrl.endsWith("/") ? appBaseUrl.slice(0, -1) : appBaseUrl;
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     return `${base}${path}`;
   }
 };
@@ -46,8 +46,11 @@ const normalizeFallback = (config: DevBootstrapConfig | null): DevBootstrapResul
   };
 };
 
-const normalizeResponse = (raw: unknown, fallback: DevBootstrapResult | null): DevBootstrapResult | null => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+const normalizeResponse = (
+  raw: unknown,
+  fallback: DevBootstrapResult | null,
+): DevBootstrapResult | null => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return fallback;
   }
   const record = raw as Record<string, unknown>;
@@ -84,13 +87,15 @@ export async function loadDevBootstrap(config: CliConfig): Promise<DevBootstrapR
     try {
       const url = resolveBootstrapUrl(config.appBaseUrl, endpoint);
       const response = await fetchJson<unknown>(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
       return normalizeResponse(response, fallback);
     } catch (error) {
       const label = describeAppForPrompt(config.appLabel);
-      console.warn(`[SweetLink CLI] Dev bootstrap request failed for ${label}: ${extractEventMessage(error)}`);
+      console.warn(
+        `[SweetLink CLI] Dev bootstrap request failed for ${label}: ${extractEventMessage(error)}`,
+      );
       return fallback;
     }
   })();
@@ -116,11 +121,11 @@ export function buildDevBootstrapLoginUrl(targetUrl: string): string | null {
     return null;
   }
   const loginUrl = new URL(cachedBootstrap.loginPath, target.origin);
-  const redirectParam = cachedBootstrap.redirectParam ?? 'redirect';
+  const redirectParam = cachedBootstrap.redirectParam ?? "redirect";
   const redirectValue = `${target.pathname}${target.search}${target.hash}`;
   loginUrl.searchParams.set(redirectParam, redirectValue);
-  if (!loginUrl.searchParams.has('sweetlink')) {
-    loginUrl.searchParams.set('sweetlink', 'auto');
+  if (!loginUrl.searchParams.has("sweetlink")) {
+    loginUrl.searchParams.set("sweetlink", "auto");
   }
   return loginUrl.toString();
 }

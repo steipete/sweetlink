@@ -1,4 +1,4 @@
-import type { SweetLinkScreenshotResultData } from '@sweetlink/shared';
+import type { SweetLinkScreenshotResultData } from "@sweetlink/shared";
 export declare function captureWithDomToImage(targetInfo: {
     base: HTMLElement;
     target: HTMLElement;

@@ -1,8 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { compact } from 'es-toolkit';
-import { TRAILING_SLASH_PATTERN } from '../util/regex.js';
-const CONFIG_BASENAMES = ['sweetlink.json', 'sweetlink.config.json'];
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { compact } from "es-toolkit";
+import { TRAILING_SLASH_PATTERN } from "../util/regex.js";
+const CONFIG_BASENAMES = ["sweetlink.json", "sweetlink.config.json"];
 let cachedConfig = null;
 export function resetSweetLinkFileConfigCache() {
     cachedConfig = null;
@@ -17,7 +17,7 @@ export function loadSweetLinkFileConfig() {
         return cachedConfig;
     }
     try {
-        const raw = readFileSync(resolvedPath, 'utf8');
+        const raw = readFileSync(resolvedPath, "utf8");
         const parsed = JSON.parse(raw);
         const baseDirectory = path.dirname(resolvedPath);
         const config = normalizeConfig(parsed, baseDirectory);
@@ -49,37 +49,37 @@ function findConfigPath(initialDirectory) {
 }
 function normalizeConfig(raw, baseDirectory) {
     const config = {};
-    if (typeof raw.appLabel === 'string') {
+    if (typeof raw.appLabel === "string") {
         const trimmed = raw.appLabel.trim();
         if (trimmed.length > 0) {
             config.appLabel = trimmed;
         }
     }
-    if (typeof raw.appUrl === 'string') {
+    if (typeof raw.appUrl === "string") {
         const trimmed = raw.appUrl.trim();
         if (trimmed.length > 0) {
             config.appUrl = trimmed;
         }
     }
-    if (typeof raw.prodUrl === 'string') {
+    if (typeof raw.prodUrl === "string") {
         const trimmed = raw.prodUrl.trim();
         if (trimmed.length > 0) {
             config.prodUrl = trimmed;
         }
     }
-    if (typeof raw.daemonUrl === 'string') {
+    if (typeof raw.daemonUrl === "string") {
         const trimmed = raw.daemonUrl.trim();
         if (trimmed.length > 0) {
             config.daemonUrl = trimmed;
         }
     }
-    if (typeof raw.adminKey === 'string') {
+    if (typeof raw.adminKey === "string") {
         const trimmed = raw.adminKey.trim();
         if (trimmed.length > 0) {
             config.adminKey = trimmed;
         }
     }
-    if (typeof raw.port === 'number' && Number.isFinite(raw.port) && raw.port > 0) {
+    if (typeof raw.port === "number" && Number.isFinite(raw.port) && raw.port > 0) {
         config.port = Math.floor(raw.port);
     }
     const cookieMappings = normalizeCookieMappingsSection(raw.cookieMappings);
@@ -106,7 +106,7 @@ function normalizeConfig(raw, baseDirectory) {
     if (servers.length > 0) {
         config.servers = servers;
     }
-    if (typeof raw.oauthScript === 'string') {
+    if (typeof raw.oauthScript === "string") {
         const trimmed = raw.oauthScript.trim();
         if (trimmed.length > 0) {
             const resolved = resolveConfigPath(trimmed, baseDirectory);
@@ -123,7 +123,7 @@ function resolveConfigPath(candidate, baseDirectory) {
     return path.resolve(base, candidate);
 }
 function normalizeStringArray(value) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         const trimmed = value.trim();
         return trimmed.length > 0 ? [trimmed] : [];
     }
@@ -131,7 +131,7 @@ function normalizeStringArray(value) {
         return [];
     }
     return compact(value.map((item) => {
-        if (typeof item !== 'string') {
+        if (typeof item !== "string") {
             return null;
         }
         const trimmed = item.trim();
@@ -139,14 +139,14 @@ function normalizeStringArray(value) {
     }));
 }
 function normalizeOptionalString(value) {
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
         return null;
     }
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
 }
 function normalizeDevBootstrapSection(value) {
-    if (!value || typeof value !== 'object') {
+    if (!value || typeof value !== "object") {
         return null;
     }
     if (Array.isArray(value)) {
@@ -159,18 +159,24 @@ function normalizeDevBootstrapSection(value) {
     if (!(endpoint || loginPath)) {
         return null;
     }
-    return { endpoint: endpoint ?? undefined, loginPath: loginPath ?? undefined, redirectParam: redirectParam ?? undefined };
+    return {
+        endpoint: endpoint ?? undefined,
+        loginPath: loginPath ?? undefined,
+        redirectParam: redirectParam ?? undefined,
+    };
 }
 function normalizeCookieMappingsSection(value) {
     if (!Array.isArray(value)) {
         return [];
     }
     return compact(value.map((entry) => {
-        if (!entry || typeof entry !== 'object') {
+        if (!entry || typeof entry !== "object") {
             return null;
         }
-        const hostsRaw = normalizeStringArray(entry.hosts ?? entry.match);
-        const originsRaw = normalizeStringArray(entry.origins ?? entry.include);
+        const hostsRaw = normalizeStringArray(entry.hosts ??
+            entry.match);
+        const originsRaw = normalizeStringArray(entry.origins ??
+            entry.include);
         if (hostsRaw.length === 0 || originsRaw.length === 0) {
             return null;
         }
@@ -181,19 +187,19 @@ function normalizeCookieMappingsSection(value) {
     }));
 }
 function normalizeHealthChecksSection(value) {
-    if (!value || typeof value !== 'object') {
+    if (!value || typeof value !== "object") {
         return null;
     }
     const paths = normalizeStringArray(value.paths ?? value.path);
     return paths.length > 0 ? { paths } : null;
 }
 function normalizeSmokeRoutesSection(value) {
-    if (!value || typeof value !== 'object') {
+    if (!value || typeof value !== "object") {
         return null;
     }
     const defaults = normalizeStringArray(value.defaults);
     const rawPresets = value.presets;
-    const normalizedPresets = rawPresets && typeof rawPresets === 'object'
+    const normalizedPresets = rawPresets && typeof rawPresets === "object"
         ? Object.fromEntries(compact(Object.entries(rawPresets).map(([key, routeList]) => {
             const routes = normalizeStringArray(routeList);
             return routes.length > 0 ? [key, routes] : null;
@@ -215,25 +221,27 @@ function normalizeServersSection(value, baseDirectory) {
         return [];
     }
     return compact(value.map((entry) => {
-        if (!entry || typeof entry !== 'object') {
+        if (!entry || typeof entry !== "object") {
             return null;
         }
         const record = entry;
-        const envCandidate = typeof record.env === 'string' ? record.env.trim() : '';
+        const envCandidate = typeof record.env === "string" ? record.env.trim() : "";
         if (!envCandidate) {
             return null;
         }
         const startCommand = normalizeCommandArray(record.start);
         const checkCommand = normalizeCommandArray(record.check);
         const timeoutMs = normalizeTimeout(record.timeoutMs);
-        const cwdRaw = typeof record.cwd === 'string' ? record.cwd.trim() : '';
-        const cwdResolved = cwdRaw.length > 0 ? resolveConfigPath(cwdRaw, baseDirectory) : (baseDirectory ?? process.cwd());
+        const cwdRaw = typeof record.cwd === "string" ? record.cwd.trim() : "";
+        const cwdResolved = cwdRaw.length > 0
+            ? resolveConfigPath(cwdRaw, baseDirectory)
+            : (baseDirectory ?? process.cwd());
         return {
             env: envCandidate,
             ...(startCommand ? { start: startCommand } : {}),
             ...(checkCommand ? { check: checkCommand } : {}),
             ...(cwdResolved ? { cwd: cwdResolved } : {}),
-            ...(typeof timeoutMs === 'number' ? { timeoutMs } : {}),
+            ...(typeof timeoutMs === "number" ? { timeoutMs } : {}),
         };
     }));
 }
@@ -241,18 +249,18 @@ function normalizeCommandArray(value) {
     if (!value) {
         return null;
     }
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         const trimmed = value.trim();
         if (trimmed.length === 0) {
             return null;
         }
-        return ['sh', '-c', trimmed];
+        return ["sh", "-c", trimmed];
     }
     if (!Array.isArray(value)) {
         return null;
     }
     const command = compact(value.map((item) => {
-        if (typeof item !== 'string') {
+        if (typeof item !== "string") {
             return null;
         }
         const trimmed = item.trim();
@@ -261,10 +269,10 @@ function normalizeCommandArray(value) {
     return command.length > 0 ? command : null;
 }
 function normalizeTimeout(value) {
-    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
         return Math.floor(value);
     }
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         const parsed = Number.parseInt(value, 10);
         if (Number.isFinite(parsed) && parsed > 0) {
             return parsed;
@@ -273,21 +281,21 @@ function normalizeTimeout(value) {
     return null;
 }
 function canonicalizeRedirectPath(value) {
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
         return null;
     }
     let normalized = value.trim();
-    if (!normalized.startsWith('/')) {
+    if (!normalized.startsWith("/")) {
         normalized = `/${normalized}`;
     }
-    normalized = normalized.replace(TRAILING_SLASH_PATTERN, '');
+    normalized = normalized.replace(TRAILING_SLASH_PATTERN, "");
     if (!normalized) {
-        return '/';
+        return "/";
     }
-    return normalized || '/';
+    return normalized || "/";
 }
 function normalizeRedirectsSection(value) {
-    if (!value || typeof value !== 'object') {
+    if (!value || typeof value !== "object") {
         return;
     }
     const entries = Object.entries(value);
@@ -296,7 +304,7 @@ function normalizeRedirectsSection(value) {
     }
     const redirects = {};
     for (const [rawSource, rawTarget] of entries) {
-        if (typeof rawSource !== 'string' || typeof rawTarget !== 'string') {
+        if (typeof rawSource !== "string" || typeof rawTarget !== "string") {
             continue;
         }
         const sourcePath = canonicalizeRedirectPath(rawSource);

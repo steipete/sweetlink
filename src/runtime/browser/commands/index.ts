@@ -7,14 +7,14 @@ import type {
   SweetLinkConsoleLevel,
   SweetLinkScreenshotCommand,
   SweetLinkSelectorDiscoveryCommand,
-} from '@sweetlink/shared';
-import { loadDefaultExportFromUrl } from '../module-loader.js';
-import { discoverSelectorCandidates } from '../selector-discovery.js';
-import type { SweetLinkScreenshotHooks } from '../types.js';
-import { CONSOLE_LEVELS, getConsoleMethod, setConsoleMethod } from '../utils/console.js';
-import { getBrowserWindow } from '../utils/environment.js';
-import { toError } from '../utils/errors.js';
-import { sanitizeResult } from '../utils/sanitize.js';
+} from "@sweetlink/shared";
+import { loadDefaultExportFromUrl } from "../module-loader.js";
+import { discoverSelectorCandidates } from "../selector-discovery.js";
+import type { SweetLinkScreenshotHooks } from "../types.js";
+import { CONSOLE_LEVELS, getConsoleMethod, setConsoleMethod } from "../utils/console.js";
+import { getBrowserWindow } from "../utils/environment.js";
+import { toError } from "../utils/errors.js";
+import { sanitizeResult } from "../utils/sanitize.js";
 
 type ConsoleLevel = (typeof CONSOLE_LEVELS)[number];
 
@@ -34,27 +34,27 @@ export function createCommandExecutor(context: CommandExecutorContext): CommandE
 
 function executeCommand(
   command: SweetLinkCommand,
-  context: CommandExecutorContext
+  context: CommandExecutorContext,
 ): Promise<SweetLinkCommandResult> {
   const started = performance.now();
   try {
     switch (command.type) {
-      case 'runScript': {
+      case "runScript": {
         return runScriptCommand(command, started);
       }
-      case 'getDom': {
+      case "getDom": {
         return runGetDomCommand(command, started);
       }
-      case 'navigate': {
+      case "navigate": {
         return runNavigateCommand(command, started);
       }
-      case 'ping': {
+      case "ping": {
         return runPingCommand(command, started);
       }
-      case 'screenshot': {
+      case "screenshot": {
         return runScreenshotCommand(command, started, context);
       }
-      case 'discoverSelectors': {
+      case "discoverSelectors": {
         return runSelectorDiscoveryCommand(command, started);
       }
       default: {
@@ -76,8 +76,8 @@ function executeCommand(
 }
 
 async function runScriptCommand(
-  command: Extract<SweetLinkCommand, { type: 'runScript' }>,
-  started: number
+  command: Extract<SweetLinkCommand, { type: "runScript" }>,
+  started: number,
 ): Promise<SweetLinkCommandResult> {
   const events: SweetLinkConsoleEvent[] = [];
   const restore = command.captureConsole ? interceptConsole(events) : null;
@@ -88,7 +88,7 @@ async function runScriptCommand(
         ${command.code}
       }
     `;
-    const blob = new Blob([moduleSource], { type: 'text/javascript' });
+    const blob = new Blob([moduleSource], { type: "text/javascript" });
     const moduleUrl = URL.createObjectURL(blob);
     let runner: unknown;
     try {
@@ -97,11 +97,15 @@ async function runScriptCommand(
       URL.revokeObjectURL(moduleUrl);
     }
 
-    if (typeof runner !== 'function') {
-      throw new TypeError('Injected script did not export a runnable function');
+    if (typeof runner !== "function") {
+      throw new TypeError("Injected script did not export a runnable function");
     }
 
-    const execute = runner as (wnd: Window, document_: Document, console: Console) => Promise<unknown>;
+    const execute = runner as (
+      wnd: Window,
+      document_: Document,
+      console: Console,
+    ) => Promise<unknown>;
     const resultValue = await execute(getBrowserWindow() ?? window, document, console);
     const durationMs = performance.now() - started;
     const response: SweetLinkCommandResultSuccess = {
@@ -132,8 +136,8 @@ async function runScriptCommand(
 }
 
 function runGetDomCommand(
-  command: Extract<SweetLinkCommand, { type: 'getDom' }>,
-  started: number
+  command: Extract<SweetLinkCommand, { type: "getDom" }>,
+  started: number,
 ): Promise<SweetLinkCommandResult> {
   let data: unknown;
   if (command.selector) {
@@ -152,8 +156,8 @@ function runGetDomCommand(
 }
 
 function runNavigateCommand(
-  command: Extract<SweetLinkCommand, { type: 'navigate' }>,
-  started: number
+  command: Extract<SweetLinkCommand, { type: "navigate" }>,
+  started: number,
 ): Promise<SweetLinkCommandResult> {
   (getBrowserWindow() ?? window).location.assign(command.url);
   const durationMs = performance.now() - started;
@@ -166,8 +170,8 @@ function runNavigateCommand(
 }
 
 function runPingCommand(
-  command: Extract<SweetLinkCommand, { type: 'ping' }>,
-  started: number
+  command: Extract<SweetLinkCommand, { type: "ping" }>,
+  started: number,
 ): Promise<SweetLinkCommandResult> {
   const durationMs = performance.now() - started;
   return Promise.resolve({
@@ -180,9 +184,10 @@ function runPingCommand(
 
 function runSelectorDiscoveryCommand(
   command: SweetLinkSelectorDiscoveryCommand,
-  started: number
+  started: number,
 ): Promise<SweetLinkCommandResult> {
-  const limit = Number.isFinite(command.limit) && command.limit ? Math.max(1, Math.floor(command.limit)) : 20;
+  const limit =
+    Number.isFinite(command.limit) && command.limit ? Math.max(1, Math.floor(command.limit)) : 20;
   const includeHidden = command.includeHidden === true;
   const candidates = discoverSelectorCandidates({
     scopeSelector: command.scopeSelector ?? null,
@@ -204,13 +209,13 @@ function runSelectorDiscoveryCommand(
 async function runScreenshotCommand(
   command: SweetLinkScreenshotCommand,
   started: number,
-  context: CommandExecutorContext
+  context: CommandExecutorContext,
 ): Promise<SweetLinkCommandResult> {
   const durationStart = started;
   let targetInfo = context.screenshotHooks.resolveTarget(command);
   try {
     await context.screenshotHooks.applyPreHooks(command, targetInfo);
-    if (command.mode === 'element') {
+    if (command.mode === "element") {
       targetInfo = context.screenshotHooks.resolveTarget(command);
     }
     const data = await context.screenshotHooks.captureScreenshot(command, targetInfo);
@@ -240,7 +245,7 @@ function interceptConsole(buffer: SweetLinkConsoleEvent[]) {
 
   for (const level of CONSOLE_LEVELS) {
     const originalFunction = getConsoleMethod(consoleWithLevels, level);
-    if (typeof originalFunction !== 'function') {
+    if (typeof originalFunction !== "function") {
       continue;
     }
     original.set(level, originalFunction);

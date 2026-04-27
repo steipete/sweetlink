@@ -1,12 +1,15 @@
-import { logDebugError } from '../../util/errors.js';
-import { connectPuppeteerBrowser, resolvePuppeteerPage } from './puppeteer.js';
+import { logDebugError } from "../../util/errors.js";
+import { connectPuppeteerBrowser, resolvePuppeteerPage } from "./puppeteer.js";
 
-export async function focusControlledChromePage(devtoolsUrl: string, targetUrl: string): Promise<boolean> {
-  let puppeteer: typeof import('puppeteer').default;
+export async function focusControlledChromePage(
+  devtoolsUrl: string,
+  targetUrl: string,
+): Promise<boolean> {
+  let puppeteer: typeof import("puppeteer").default;
   try {
-    ({ default: puppeteer } = await import('puppeteer'));
+    ({ default: puppeteer } = await import("puppeteer"));
   } catch (error) {
-    logDebugError('Unable to load Puppeteer while attempting to focus controlled Chrome', error);
+    logDebugError("Unable to load Puppeteer while attempting to focus controlled Chrome", error);
     return false;
   }
 
@@ -27,7 +30,7 @@ export async function focusControlledChromePage(devtoolsUrl: string, targetUrl: 
     await page.bringToFront();
     return true;
   } catch (error) {
-    logDebugError('Failed to focus controlled Chrome page', error);
+    logDebugError("Failed to focus controlled Chrome page", error);
     return false;
   } finally {
     try {

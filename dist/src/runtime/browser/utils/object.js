@@ -1,6 +1,6 @@
-export const isRecord = (value) => Boolean(value && typeof value === 'object' && !Array.isArray(value));
+export const isRecord = (value) => Boolean(value && typeof value === "object" && !Array.isArray(value));
 export const toTrimmedNonEmptyString = (value) => {
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
         return null;
     }
     const trimmed = value.trim();

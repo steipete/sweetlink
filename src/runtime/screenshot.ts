@@ -1,26 +1,28 @@
-import { writeFile } from 'node:fs/promises';
-import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '../../shared/src/index.js';
-import { runCodexImagePrompt, runCodexTextPrompt } from '../codex.js';
-import { fetchJson } from '../http.js';
-import type { CliConfig } from '../types.js';
-import { describeAppForPrompt } from '../util/app-label.js';
-import { extractEventMessage, isErrnoException } from '../util/errors.js';
-import { TRAILING_SLASH_PATTERN } from '../util/regex.js';
-import { formatConsoleArg } from './devtools.js';
-import type { SweetLinkConsoleDump } from './session.js';
-
+import { writeFile } from "node:fs/promises";
+import type {
+  SweetLinkCommandResult,
+  SweetLinkScreenshotRenderer,
+} from "../../shared/src/index.js";
+import { runCodexImagePrompt, runCodexTextPrompt } from "../codex.js";
+import { fetchJson } from "../http.js";
+import type { CliConfig } from "../types.js";
+import { describeAppForPrompt } from "../util/app-label.js";
+import { extractEventMessage, isErrnoException } from "../util/errors.js";
+import { TRAILING_SLASH_PATTERN } from "../util/regex.js";
+import { formatConsoleArg } from "./devtools.js";
+import type { SweetLinkConsoleDump } from "./session.js";
 
 export interface DevToolsCaptureOptions {
   readonly devtoolsUrl: string;
   readonly sessionUrl: string;
   readonly selector?: string;
   readonly quality: number;
-  readonly mode: 'full' | 'element';
+  readonly mode: "full" | "element";
   readonly outputPath: string;
 }
 
 export interface SweetLinkScreenshotResultPayload {
-  readonly mimeType: 'image/jpeg';
+  readonly mimeType: "image/jpeg";
   readonly base64: string;
   readonly width: number;
   readonly height: number;
@@ -32,9 +34,9 @@ export type ScreenshotFallbackContext = {
   readonly token: string;
   readonly sessionId: string;
   readonly payload: {
-    readonly type: 'screenshot';
+    readonly type: "screenshot";
     readonly id: string;
-    readonly mode: 'full' | 'element';
+    readonly mode: "full" | "element";
     readonly selector?: string;
     readonly quality: number;
     readonly timeoutMs: number;
@@ -55,7 +57,7 @@ export type DevToolsRecoveryContext = {
   readonly devtoolsUrl: string;
   readonly selector?: string;
   readonly quality: number;
-  readonly mode: 'full' | 'element';
+  readonly mode: "full" | "element";
   readonly outputPath: string;
   readonly prompt: string | undefined;
   readonly suppressOutput: boolean;
@@ -67,7 +69,7 @@ export type DevToolsRecoveryContext = {
 export async function maybeDescribeScreenshot(
   prompt: string | undefined,
   imagePath: string,
-  options: { silent?: boolean; appLabel?: string } = {}
+  options: { silent?: boolean; appLabel?: string } = {},
 ): Promise<void> {
   const question = prompt?.trim();
   if (!question) {
@@ -85,8 +87,8 @@ export async function maybeDescribeScreenshot(
     }
   } catch (error) {
     const message = extractEventMessage(error);
-    const missing = isErrnoException(error) && error.code === 'ENOENT';
-    const prefix = missing ? 'Codex CLI not found' : `Codex CLI failed: ${message}`;
+    const missing = isErrnoException(error) && error.code === "ENOENT";
+    const prefix = missing ? "Codex CLI not found" : `Codex CLI failed: ${message}`;
     console.warn(missing ? `${prefix}; install it or add it to $PATH to use --prompt.` : prefix);
   }
 }
@@ -95,7 +97,7 @@ export async function maybeAnalyzeConsoleWithPrompt(
   prompt: string | undefined,
   selector: string,
   events: SweetLinkConsoleDump[],
-  options: { silent?: boolean; appLabel?: string } = {}
+  options: { silent?: boolean; appLabel?: string } = {},
 ): Promise<boolean> {
   const question = prompt?.trim();
   if (!question) {
@@ -106,17 +108,19 @@ export async function maybeAnalyzeConsoleWithPrompt(
       ? events.map((event) => {
           const timestamp = new Date(event.timestamp ?? Date.now()).toLocaleTimeString();
           const argsText =
-            event.args && event.args.length > 0 ? event.args.map((value) => formatConsoleArg(value)).join(' ') : '';
-          const suffix = argsText.length > 0 ? `: ${argsText}` : '';
+            event.args && event.args.length > 0
+              ? event.args.map((value) => formatConsoleArg(value)).join(" ")
+              : "";
+          const suffix = argsText.length > 0 ? `: ${argsText}` : "";
           return `[${timestamp}] ${event.level}${suffix}`;
         })
-      : ['(no console events were captured after the click)'];
+      : ["(no console events were captured after the click)"];
 
   const appDescription = describeAppForPrompt(options.appLabel);
   const combinedPrompt =
     `You are analyzing console output from ${appDescription} immediately after triggering a click on selector "${selector}". ` +
-    'Review the log lines below (most recent last) and answer the agent’s question.\n\n' +
-    `Console output:\n${lines.join('\n')}\n\nQuestion: ${question}`;
+    "Review the log lines below (most recent last) and answer the agent’s question.\n\n" +
+    `Console output:\n${lines.join("\n")}\n\nQuestion: ${question}`;
 
   if (!options.silent) {
     console.log(`Asking Codex about console output after ${selector}: ${question}`);
@@ -131,8 +135,8 @@ export async function maybeAnalyzeConsoleWithPrompt(
     return true;
   } catch (error) {
     const message = extractEventMessage(error);
-    const missing = isErrnoException(error) && error.code === 'ENOENT';
-    const prefix = missing ? 'Codex CLI not found' : `Codex CLI failed: ${message}`;
+    const missing = isErrnoException(error) && error.code === "ENOENT";
+    const prefix = missing ? "Codex CLI not found" : `Codex CLI failed: ${message}`;
     console.warn(missing ? `${prefix}; install it or add it to $PATH to use --prompt.` : prefix);
     return false;
   }
@@ -142,44 +146,58 @@ export async function tryHtmlToImageFallback(
   context: ScreenshotFallbackContext & {
     readonly rendererOverride: SweetLinkScreenshotRenderer;
     readonly failureReason?: string | null;
-  }
+  },
 ): Promise<HtmlToImageFallbackOutcome> {
-  const { rendererOverride, failureReason, config, token, sessionId, payload, outputPath, prompt, suppressOutput } =
-    context;
+  const {
+    rendererOverride,
+    failureReason,
+    config,
+    token,
+    sessionId,
+    payload,
+    outputPath,
+    prompt,
+    suppressOutput,
+  } = context;
 
-  console.warn(`Requested renderer "${rendererOverride}" failed: ${failureReason ?? 'Unknown error'}`);
-  console.warn('Falling back to html-to-image renderer…');
+  console.warn(
+    `Requested renderer "${rendererOverride}" failed: ${failureReason ?? "Unknown error"}`,
+  );
+  console.warn("Falling back to html-to-image renderer…");
 
   const fallbackResponse = await fetchJson<{ result: SweetLinkCommandResult }>(
     `${config.daemonBaseUrl}/sessions/${encodeURIComponent(sessionId)}/command`,
     {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...payload, renderer: 'html-to-image' as const }),
-    }
+      body: JSON.stringify({ ...payload, renderer: "html-to-image" as const }),
+    },
   );
   const fallbackResult = fallbackResponse.result;
   if (!fallbackResult.ok) {
-    console.error('Fallback html-to-image renderer also failed.');
+    console.error("Fallback html-to-image renderer also failed.");
     return { handled: false, fallbackResult };
   }
 
   await persistScreenshotResult(outputPath, fallbackResult, { silent: suppressOutput });
-  await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: config.appLabel });
+  await maybeDescribeScreenshot(prompt, outputPath, {
+    silent: suppressOutput,
+    appLabel: config.appLabel,
+  });
   return { handled: true };
 }
 
 export async function attemptDevToolsCapture(
-  options: DevToolsCaptureOptions
-): Promise<{ width: number; height: number; sizeKb: number; renderer: 'puppeteer' } | null> {
+  options: DevToolsCaptureOptions,
+): Promise<{ width: number; height: number; sizeKb: number; renderer: "puppeteer" } | null> {
   const { devtoolsUrl, sessionUrl, selector, quality, mode, outputPath } = options;
-  const normalizedUrl = devtoolsUrl.replace(TRAILING_SLASH_PATTERN, '');
+  const normalizedUrl = devtoolsUrl.replace(TRAILING_SLASH_PATTERN, "");
 
   try {
-    const versionResponse = await fetch(`${normalizedUrl}/json/version`, { method: 'GET' });
+    const versionResponse = await fetch(`${normalizedUrl}/json/version`, { method: "GET" });
     if (!versionResponse.ok) {
       return null;
     }
@@ -187,15 +205,19 @@ export async function attemptDevToolsCapture(
     return null;
   }
 
-  let puppeteer: typeof import('puppeteer').default;
+  let puppeteer: typeof import("puppeteer").default;
   try {
-    ({ default: puppeteer } = await import('puppeteer'));
+    ({ default: puppeteer } = await import("puppeteer"));
   } catch (error) {
-    console.warn('Puppeteer is unavailable:', error);
+    console.warn("Puppeteer is unavailable:", error);
     return null;
   }
 
-  const browser = await puppeteer.connect({ browserURL: normalizedUrl, defaultViewport: null, protocolTimeout: 5000 });
+  const browser = await puppeteer.connect({
+    browserURL: normalizedUrl,
+    defaultViewport: null,
+    protocolTimeout: 5000,
+  });
   try {
     const pages = await browser.pages();
     const sessionUrlObj = new URL(sessionUrl);
@@ -220,14 +242,17 @@ export async function attemptDevToolsCapture(
         throw new Error(`Selector ${selector} not found in target page`);
       }
       const box = await element.boundingBox();
-      const raw = (await element.screenshot({ type: 'jpeg', quality: jpegQuality })) as unknown as Buffer;
+      const raw = (await element.screenshot({
+        type: "jpeg",
+        quality: jpegQuality,
+      })) as unknown as Buffer;
       await writeFile(outputPath, raw, { mode: 0o600 });
       buffer = raw;
       width = box ? Math.round(box.width) : 0;
       height = box ? Math.round(box.height) : 0;
-    } else if (mode === 'full') {
+    } else if (mode === "full") {
       const raw = (await target.screenshot({
-        type: 'jpeg',
+        type: "jpeg",
         quality: jpegQuality,
         fullPage: true,
       })) as unknown as Buffer;
@@ -242,16 +267,16 @@ export async function attemptDevToolsCapture(
     } else {
       const clip = await target.evaluate(() => {
         const explicit = document.querySelector('[data-sweetlink-target="top-posters-card"]');
-        const cards = explicit ? [explicit] : [...document.querySelectorAll('div.col-span-1')];
+        const cards = explicit ? [explicit] : [...document.querySelectorAll("div.col-span-1")];
         const targetCard = cards.find((card) =>
-          [...card.querySelectorAll('span, h2, h3')].some(
-            (node) => (node.textContent || '').trim().toLowerCase() === 'top posters'
-          )
+          [...card.querySelectorAll("span, h2, h3")].some(
+            (node) => (node.textContent || "").trim().toLowerCase() === "top posters",
+          ),
         );
         if (!targetCard) {
           return null;
         }
-        targetCard.scrollIntoView({ behavior: 'auto', block: 'center' });
+        targetCard.scrollIntoView({ behavior: "auto", block: "center" });
         const rect = targetCard.getBoundingClientRect();
         return {
           x: Math.max(0, Math.floor(rect.left) - 8),
@@ -262,10 +287,14 @@ export async function attemptDevToolsCapture(
       });
 
       if (!clip) {
-        throw new Error('Unable to locate Top Posters card in target tab');
+        throw new Error("Unable to locate Top Posters card in target tab");
       }
 
-      const raw = (await target.screenshot({ type: 'jpeg', quality: jpegQuality, clip })) as unknown as Buffer;
+      const raw = (await target.screenshot({
+        type: "jpeg",
+        quality: jpegQuality,
+        clip,
+      })) as unknown as Buffer;
       await writeFile(outputPath, raw, { mode: 0o600 });
       buffer = raw;
       width = Math.round(clip.width);
@@ -275,10 +304,10 @@ export async function attemptDevToolsCapture(
       width,
       height,
       sizeKb: buffer.length / 1024,
-      renderer: 'puppeteer',
+      renderer: "puppeteer",
     };
   } catch (error) {
-    console.warn('DevTools capture failed:', error instanceof Error ? error.message : error);
+    console.warn("DevTools capture failed:", error instanceof Error ? error.message : error);
     return null;
   } finally {
     await browser.disconnect();
@@ -311,44 +340,47 @@ export async function tryDevToolsRecovery(context: DevToolsRecoveryContext): Pro
     mode,
   });
   if (!devtoolsFallback) {
-    console.warn('Puppeteer fallback did not succeed; showing original renderer error.');
+    console.warn("Puppeteer fallback did not succeed; showing original renderer error.");
     return false;
   }
 
-  const reason = failureReason ?? 'unknown error';
+  const reason = failureReason ?? "unknown error";
   logInfo(
-    `Renderer failure (${reason}) recovered via Puppeteer fallback (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB).`
+    `Renderer failure (${reason}) recovered via Puppeteer fallback (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB).`,
   );
 
   if (!suppressOutput) {
     console.log(
-      `Saved screenshot to ${outputPath} (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB, method: ${devtoolsFallback.renderer}).`
+      `Saved screenshot to ${outputPath} (${devtoolsFallback.width}x${devtoolsFallback.height}, ${devtoolsFallback.sizeKb.toFixed(1)} KB, method: ${devtoolsFallback.renderer}).`,
     );
   }
 
-  await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: context.appLabel });
+  await maybeDescribeScreenshot(prompt, outputPath, {
+    silent: suppressOutput,
+    appLabel: context.appLabel,
+  });
   return true;
 }
 
 export async function persistScreenshotResult(
   outputPath: string,
   result: SweetLinkCommandResult,
-  options: { silent?: boolean } = {}
+  options: { silent?: boolean } = {},
 ): Promise<SweetLinkScreenshotResultPayload> {
   if (!result.ok) {
-    throw new Error(result.error ?? 'Screenshot command failed');
+    throw new Error(result.error ?? "Screenshot command failed");
   }
   const data = result.data as SweetLinkScreenshotResultPayload | undefined;
-  if (!data || typeof data.base64 !== 'string') {
-    throw new Error('Screenshot succeeded but no image payload was returned.');
+  if (!data || typeof data.base64 !== "string") {
+    throw new Error("Screenshot succeeded but no image payload was returned.");
   }
 
-  const buffer = Buffer.from(data.base64, 'base64');
+  const buffer = Buffer.from(data.base64, "base64");
   await writeFile(outputPath, buffer, { mode: 0o600 });
   const sizeInKb = buffer.length / 1024;
   if (!options.silent) {
     console.log(
-      `Saved screenshot to ${outputPath} (${data.width}x${data.height}, ${sizeInKb.toFixed(1)} KB, method: ${data.renderer}).`
+      `Saved screenshot to ${outputPath} (${data.width}x${data.height}, ${sizeInKb.toFixed(1)} KB, method: ${data.renderer}).`,
     );
   }
   return data;

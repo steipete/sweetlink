@@ -1,7 +1,7 @@
-import { logDebugError } from '../../util/errors.js';
-import { delay } from '../../util/time.js';
-import { urlsRoughlyMatch } from '../url.js';
-import { PAGE_READY_PRIMARY_TIMEOUT_MS, PAGE_READY_SECONDARY_TIMEOUT_MS, PUPPETEER_NAVIGATION_TIMEOUT_MS, PUPPETEER_PROTOCOL_TIMEOUT_MS, } from './constants.js';
+import { logDebugError } from "../../util/errors.js";
+import { delay } from "../../util/time.js";
+import { urlsRoughlyMatch } from "../url.js";
+import { PAGE_READY_PRIMARY_TIMEOUT_MS, PAGE_READY_SECONDARY_TIMEOUT_MS, PUPPETEER_NAVIGATION_TIMEOUT_MS, PUPPETEER_PROTOCOL_TIMEOUT_MS, } from "./constants.js";
 export async function connectPuppeteerBrowser(puppeteer, browserURL, attempts) {
     let lastError;
     const totalAttempts = Math.max(1, attempts);
@@ -21,7 +21,7 @@ export async function connectPuppeteerBrowser(puppeteer, browserURL, attempts) {
             }
         }
     }
-    console.warn('Unable to connect to DevTools endpoint at', browserURL, lastError ?? 'unknown error');
+    console.warn("Unable to connect to DevTools endpoint at", browserURL, lastError ?? "unknown error");
     return null;
 }
 export async function resolvePuppeteerPage(browser, targetUrl) {
@@ -49,11 +49,14 @@ export async function navigatePuppeteerPage(page, targetUrl, attempts = 2) {
     for (let attempt = 0; attempt < Math.max(1, attempts); attempt += 1) {
         try {
             // biome-ignore lint/performance/noAwaitInLoops: navigation retries must happen sequentially.
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS });
+            await page.goto(targetUrl, {
+                waitUntil: "domcontentloaded",
+                timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS,
+            });
             return true;
         }
         catch (error) {
-            logDebugError('Unable to navigate controlled Chrome tab to target', error);
+            logDebugError("Unable to navigate controlled Chrome tab to target", error);
             if (attempt < attempts - 1) {
                 await delay(300 * (attempt + 1));
             }
@@ -63,11 +66,13 @@ export async function navigatePuppeteerPage(page, targetUrl, attempts = 2) {
 }
 export async function waitForPageReady(page) {
     try {
-        await page.waitForFunction(() => document.readyState === 'complete', { timeout: PAGE_READY_PRIMARY_TIMEOUT_MS });
+        await page.waitForFunction(() => document.readyState === "complete", {
+            timeout: PAGE_READY_PRIMARY_TIMEOUT_MS,
+        });
     }
     catch {
         try {
-            await page.waitForFunction(() => document.readyState === 'interactive', {
+            await page.waitForFunction(() => document.readyState === "interactive", {
                 timeout: PAGE_READY_SECONDARY_TIMEOUT_MS,
             });
         }
@@ -78,10 +83,10 @@ export async function waitForPageReady(page) {
 }
 export async function attemptPuppeteerReload(page) {
     try {
-        await page.reload({ waitUntil: 'domcontentloaded', timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS });
+        await page.reload({ waitUntil: "domcontentloaded", timeout: PUPPETEER_NAVIGATION_TIMEOUT_MS });
     }
     catch (error) {
-        logDebugError('Reloading the controlled tab failed', error);
+        logDebugError("Reloading the controlled tab failed", error);
     }
 }
 //# sourceMappingURL=puppeteer.js.map

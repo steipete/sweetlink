@@ -1,4 +1,4 @@
-import type { Command } from 'commander';
+import type { Command } from "commander";
 /**
  * Returns a shallow copy of the current process environment so child processes
  * can inherit without mutating the global map.

@@ -1,20 +1,20 @@
-export const CONSOLE_LEVELS = ['log', 'info', 'warn', 'error', 'debug'];
+export const CONSOLE_LEVELS = ["log", "info", "warn", "error", "debug"];
 export function getConsoleMethod(target, level) {
     switch (level) {
-        case 'log': {
-            return typeof target.log === 'function' ? target.log : undefined;
+        case "log": {
+            return typeof target.log === "function" ? target.log : undefined;
         }
-        case 'info': {
-            return typeof target.info === 'function' ? target.info : undefined;
+        case "info": {
+            return typeof target.info === "function" ? target.info : undefined;
         }
-        case 'warn': {
-            return typeof target.warn === 'function' ? target.warn : undefined;
+        case "warn": {
+            return typeof target.warn === "function" ? target.warn : undefined;
         }
-        case 'error': {
-            return typeof target.error === 'function' ? target.error : undefined;
+        case "error": {
+            return typeof target.error === "function" ? target.error : undefined;
         }
-        case 'debug': {
-            return typeof target.debug === 'function' ? target.debug : undefined;
+        case "debug": {
+            return typeof target.debug === "function" ? target.debug : undefined;
         }
         default: {
             return;
@@ -26,23 +26,23 @@ export function setConsoleMethod(target, level, function_) {
         return;
     }
     switch (level) {
-        case 'log': {
+        case "log": {
             target.log = function_;
             return;
         }
-        case 'info': {
+        case "info": {
             target.info = function_;
             return;
         }
-        case 'warn': {
+        case "warn": {
             target.warn = function_;
             return;
         }
-        case 'error': {
+        case "error": {
             target.error = function_;
             return;
         }
-        case 'debug': {
+        case "debug": {
             target.debug = function_;
             return;
         }

@@ -1,23 +1,23 @@
 #!/usr/bin/env node
-import 'dotenv/config';
-import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { createServer as createHttpsServer, request as httpsRequest } from 'node:https';
-import os from 'node:os';
-import path from 'node:path';
-import { URL } from 'node:url';
-import { createSweetLinkCommandId, SWEETLINK_DEFAULT_PORT, SWEETLINK_HEARTBEAT_INTERVAL_MS, SWEETLINK_HEARTBEAT_TOLERANCE_MS, SWEETLINK_WS_PATH, verifySweetLinkToken, } from '../../shared/src/index.js';
-import { readSweetLinkEnv } from '../../shared/src/env.js';
-import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from '../../shared/src/node.js';
-import WebSocket, { WebSocketServer } from 'ws';
-import { z } from 'zod';
-import { generateSessionCodename } from './codename.js';
+import "dotenv/config";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { createServer as createHttpsServer, request as httpsRequest } from "node:https";
+import os from "node:os";
+import path from "node:path";
+import { URL } from "node:url";
+import { createSweetLinkCommandId, SWEETLINK_DEFAULT_PORT, SWEETLINK_HEARTBEAT_INTERVAL_MS, SWEETLINK_HEARTBEAT_TOLERANCE_MS, SWEETLINK_WS_PATH, verifySweetLinkToken, } from "../../shared/src/index.js";
+import { readSweetLinkEnv } from "../../shared/src/env.js";
+import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from "../../shared/src/node.js";
+import WebSocket, { WebSocketServer } from "ws";
+import { z } from "zod";
+import { generateSessionCodename } from "./codename.js";
 const SHUTDOWN_GRACE_MS = 1000;
 const unrefTimer = (handle) => {
     const candidate = handle;
-    if (typeof candidate === 'object' && candidate !== null && 'unref' in candidate) {
+    if (typeof candidate === "object" && candidate !== null && "unref" in candidate) {
         const unref = candidate.unref;
-        if (typeof unref === 'function') {
+        if (typeof unref === "function") {
             unref.call(candidate);
         }
     }
@@ -26,31 +26,31 @@ const toError = (value) => {
     if (value instanceof Error) {
         return value;
     }
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         return Object.assign(new Error(value), { cause: value });
     }
-    if (value && typeof value === 'object' && 'message' in value) {
+    if (value && typeof value === "object" && "message" in value) {
         const candidate = value.message;
-        if (typeof candidate === 'string' && candidate.trim().length > 0) {
+        if (typeof candidate === "string" && candidate.trim().length > 0) {
             return Object.assign(new Error(candidate.trim()), { cause: value });
         }
     }
-    return Object.assign(new Error('Unknown error'), { cause: value });
+    return Object.assign(new Error("Unknown error"), { cause: value });
 };
 const getErrorMessage = (value) => {
     const error = toError(value);
-    return error.message || 'Unknown error';
+    return error.message || "Unknown error";
 };
-const CERT_DIR = path.join(os.homedir(), '.sweetlink', 'certs');
-const CERT_PATH = path.join(CERT_DIR, 'localhost-cert.pem');
-const KEY_PATH = path.join(CERT_DIR, 'localhost-key.pem');
+const CERT_DIR = path.join(os.homedir(), ".sweetlink", "certs");
+const CERT_PATH = path.join(CERT_DIR, "localhost-cert.pem");
+const KEY_PATH = path.join(CERT_DIR, "localhost-key.pem");
 const SOCKET_STATE_LABEL = {
-    0: 'connecting',
-    1: 'open',
-    2: 'closing',
-    3: 'closed',
+    0: "connecting",
+    1: "open",
+    2: "closing",
+    3: "closed",
 };
-const SweetLinkConsoleLevelSchema = z.enum(['log', 'info', 'warn', 'error', 'debug']);
+const SweetLinkConsoleLevelSchema = z.enum(["log", "info", "warn", "error", "debug"]);
 const consoleEventSchema = z
     .object({
     id: z.string(),
@@ -59,7 +59,7 @@ const consoleEventSchema = z
     args: z.array(z.unknown()),
 })
     .passthrough();
-const commandResultSchema = z.discriminatedUnion('ok', [
+const commandResultSchema = z.discriminatedUnion("ok", [
     z
         .object({
         ok: z.literal(true),
@@ -82,7 +82,7 @@ const commandResultSchema = z.discriminatedUnion('ok', [
 ]);
 const registerMessageSchema = z
     .object({
-    kind: z.literal('register'),
+    kind: z.literal("register"),
     token: z.string(),
     sessionId: z.string(),
     url: z.string(),
@@ -93,25 +93,25 @@ const registerMessageSchema = z
     .passthrough();
 const heartbeatMessageSchema = z
     .object({
-    kind: z.literal('heartbeat'),
+    kind: z.literal("heartbeat"),
     sessionId: z.string(),
 })
     .passthrough();
 const commandResultMessageSchema = z
     .object({
-    kind: z.literal('commandResult'),
+    kind: z.literal("commandResult"),
     sessionId: z.string(),
     result: commandResultSchema,
 })
     .passthrough();
 const consoleMessageSchema = z
     .object({
-    kind: z.literal('console'),
+    kind: z.literal("console"),
     sessionId: z.string(),
     events: z.array(consoleEventSchema),
 })
     .passthrough();
-const clientMessageSchema = z.discriminatedUnion('kind', [
+const clientMessageSchema = z.discriminatedUnion("kind", [
     registerMessageSchema,
     heartbeatMessageSchema,
     commandResultMessageSchema,
@@ -119,7 +119,7 @@ const clientMessageSchema = z.discriminatedUnion('kind', [
 ]);
 const runScriptCommandSchema = z
     .object({
-    type: z.literal('runScript'),
+    type: z.literal("runScript"),
     code: z.string(),
     timeoutMs: z.number().finite().positive().optional(),
     captureConsole: z.boolean().optional(),
@@ -127,44 +127,49 @@ const runScriptCommandSchema = z
     .passthrough();
 const getDomCommandSchema = z
     .object({
-    type: z.literal('getDom'),
+    type: z.literal("getDom"),
     selector: z.string().optional(),
     includeShadowDom: z.boolean().optional(),
 })
     .passthrough();
 const navigateCommandSchema = z
     .object({
-    type: z.literal('navigate'),
+    type: z.literal("navigate"),
     url: z.string(),
 })
     .passthrough();
 const pingCommandSchema = z
     .object({
-    type: z.literal('ping'),
+    type: z.literal("ping"),
 })
     .passthrough();
 const screenshotCommandSchema = z
     .object({
-    type: z.literal('screenshot'),
-    mode: z.union([z.literal('full'), z.literal('element')]).default('full'),
+    type: z.literal("screenshot"),
+    mode: z.union([z.literal("full"), z.literal("element")]).default("full"),
     selector: z.union([z.string(), z.null()]).optional(),
     quality: z.number().finite().min(0).max(100).optional(),
     timeoutMs: z.number().finite().positive().optional(),
     renderer: z
-        .union([z.literal('auto'), z.literal('puppeteer'), z.literal('html2canvas'), z.literal('html-to-image')])
+        .union([
+        z.literal("auto"),
+        z.literal("puppeteer"),
+        z.literal("html2canvas"),
+        z.literal("html-to-image"),
+    ])
         .optional(),
     hooks: z.array(z.unknown()).optional(),
 })
     .passthrough();
 const discoverSelectorsCommandSchema = z
     .object({
-    type: z.literal('discoverSelectors'),
+    type: z.literal("discoverSelectors"),
     scopeSelector: z.union([z.string(), z.null()]).optional(),
     limit: z.number().int().positive().optional(),
     includeHidden: z.boolean().optional(),
 })
     .passthrough();
-const commandSchema = z.discriminatedUnion('type', [
+const commandSchema = z.discriminatedUnion("type", [
     runScriptCommandSchema,
     getDomCommandSchema,
     navigateCommandSchema,
@@ -174,33 +179,35 @@ const commandSchema = z.discriminatedUnion('type', [
 ]);
 const timeoutOverrideSchema = z.number().finite().positive().optional();
 const resolveDaemonPort = (value) => {
-    if (value && typeof value === 'object' && value !== null) {
+    if (value && typeof value === "object" && value !== null) {
         const portCandidate = value.port;
-        if (typeof portCandidate === 'number' && Number.isFinite(portCandidate) && portCandidate > 0) {
+        if (typeof portCandidate === "number" && Number.isFinite(portCandidate) && portCandidate > 0) {
             return portCandidate;
         }
     }
     return SWEETLINK_DEFAULT_PORT;
 };
 const isSecretResolution = (value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
         return false;
     }
     const candidate = value;
-    if (typeof candidate.secret !== 'string' || candidate.secret.length === 0) {
+    if (typeof candidate.secret !== "string" || candidate.secret.length === 0) {
         return false;
     }
-    if (candidate.source !== 'env' && candidate.source !== 'file' && candidate.source !== 'generated') {
+    if (candidate.source !== "env" &&
+        candidate.source !== "file" &&
+        candidate.source !== "generated") {
         return false;
     }
-    if (candidate.path !== undefined && typeof candidate.path !== 'string') {
+    if (candidate.path !== undefined && typeof candidate.path !== "string") {
         return false;
     }
     return true;
 };
 const assertSecretResolution = (value) => {
     if (!isSecretResolution(value)) {
-        throw new TypeError('SweetLink secret resolution payload is invalid');
+        throw new TypeError("SweetLink secret resolution payload is invalid");
     }
     return value;
 };
@@ -213,24 +220,24 @@ async function main() {
         }
         const rawSecretResolution = await resolveSweetLinkSecret({ autoCreate: true });
         const { secret, source, path: secretPath } = assertSecretResolution(rawSecretResolution);
-        log(`SweetLink secret source: ${source}${secretPath ? ` (${secretPath})` : ''}`);
+        log(`SweetLink secret source: ${source}${secretPath ? ` (${secretPath})` : ""}`);
         ensureCertificates();
         const { cert, key } = loadCertificates();
         const state = new SweetLinkState(secret);
         const server = createHttpsServer({ key, cert }, (req, res) => {
             handleHttpRequest(state, req, res).catch((error) => {
-                console.warn('SweetLink daemon request handler failed:', getErrorMessage(error));
+                console.warn("SweetLink daemon request handler failed:", getErrorMessage(error));
             });
         });
         const wsServer = new WebSocketServer({ server, path: SWEETLINK_WS_PATH });
-        wsServer.on('connection', (socket) => state.handleSocket(socket));
-        server.listen(daemonPort, '127.0.0.1', () => {
+        wsServer.on("connection", (socket) => state.handleSocket(socket));
+        server.listen(daemonPort, "127.0.0.1", () => {
             log(`SweetLink daemon listening on https://localhost:${daemonPort}`);
             log(`WebSocket endpoint ready at wss://localhost:${daemonPort}${SWEETLINK_WS_PATH}`);
-            log('Press Ctrl+C to stop.');
+            log("Press Ctrl+C to stop.");
         });
-        process.on('SIGINT', () => shutdown('SIGINT'));
-        process.on('SIGTERM', () => shutdown('SIGTERM'));
+        process.on("SIGINT", () => shutdown("SIGINT"));
+        process.on("SIGTERM", () => shutdown("SIGTERM"));
         function shutdown(signal) {
             log(`Received ${signal}, shutting down SweetLink daemon...`);
             wsServer.close();
@@ -248,18 +255,18 @@ async function main() {
 async function isDaemonAlreadyRunning(port) {
     return await new Promise((resolve) => {
         const request = httpsRequest({
-            hostname: '127.0.0.1',
+            hostname: "127.0.0.1",
             port,
-            path: '/healthz',
-            method: 'GET',
+            path: "/healthz",
+            method: "GET",
             rejectUnauthorized: false,
             timeout: 750,
         }, (response) => {
             response.resume();
             resolve(response.statusCode === 200);
         });
-        request.on('error', () => resolve(false));
-        request.on('timeout', () => {
+        request.on("error", () => resolve(false));
+        request.on("timeout", () => {
             request.destroy();
             resolve(false);
         });
@@ -275,29 +282,29 @@ class SweetLinkState {
         unrefTimer(expiryInterval);
     }
     verifyCliToken(token) {
-        return verifySweetLinkToken({ secret: this.#secret, token, expectedScope: 'cli' });
+        return verifySweetLinkToken({ secret: this.#secret, token, expectedScope: "cli" });
     }
     handleSocket(socket) {
         let sessionId = null;
-        socket.on('message', (data) => {
+        socket.on("message", (data) => {
             try {
                 const raw = decodeSocketPayload(data);
                 const parsedMessage = parseClientMessage(JSON.parse(raw));
                 const message = parsedMessage;
                 switch (message.kind) {
-                    case 'register': {
+                    case "register": {
                         sessionId = this.#handleRegister(socket, message);
                         break;
                     }
-                    case 'heartbeat': {
+                    case "heartbeat": {
                         this.#touchSession(message.sessionId);
                         break;
                     }
-                    case 'commandResult': {
+                    case "commandResult": {
                         this.#handleCommandResult(message.sessionId, message.result);
                         break;
                     }
-                    case 'console': {
+                    case "console": {
                         this.#handleConsoleEvents(message.sessionId, message.events);
                         break;
                     }
@@ -314,10 +321,12 @@ class SweetLinkState {
                 console.warn(`SweetLink socket error: ${errorMessage}`);
             }
         });
-        socket.once('close', (code, reasonBuffer) => {
+        socket.once("close", (code, reasonBuffer) => {
             if (sessionId) {
-                const reasonText = reasonBuffer?.toString?.('utf8') ?? '';
-                const closeDetail = reasonText && reasonText.length > 0 ? `socket closed (${code}: ${reasonText})` : `socket closed (${code})`;
+                const reasonText = reasonBuffer?.toString?.("utf8") ?? "";
+                const closeDetail = reasonText && reasonText.length > 0
+                    ? `socket closed (${code}: ${reasonText})`
+                    : `socket closed (${code})`;
                 this.#removeSession(sessionId, closeDetail);
             }
         });
@@ -328,7 +337,7 @@ class SweetLinkState {
             const consoleEventsBuffered = entry.consoleBuffer.length;
             let consoleErrorsBuffered = 0;
             for (const event of entry.consoleBuffer) {
-                if (event.level === 'error') {
+                if (event.level === "error") {
                     consoleErrorsBuffered += 1;
                 }
             }
@@ -354,15 +363,15 @@ class SweetLinkState {
     sendCommand(sessionId, rawCommand, timeoutMs = 15_000) {
         const session = this.#sessions.get(sessionId);
         if (!session) {
-            throw new Error('Session not found or offline');
+            throw new Error("Session not found or offline");
         }
         if (session.socket.readyState !== WebSocket.OPEN) {
-            throw new Error('Session socket is not open');
+            throw new Error("Session socket is not open");
         }
         const commandId = createSweetLinkCommandId();
         const command = { ...rawCommand, id: commandId };
         const payload = {
-            kind: 'command',
+            kind: "command",
             sessionId: session.metadata.sessionId,
             command,
         };
@@ -370,7 +379,7 @@ class SweetLinkState {
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 session.pending.delete(commandId);
-                reject(new Error('Command timed out'));
+                reject(new Error("Command timed out"));
             }, timeoutMs);
             session.pending.set(commandId, {
                 commandId,
@@ -400,9 +409,9 @@ class SweetLinkState {
     #handleRegister(socket, message) {
         const token = message.token;
         const sessionId = message.sessionId;
-        const payload = verifySweetLinkToken({ secret: this.#secret, token, expectedScope: 'session' });
+        const payload = verifySweetLinkToken({ secret: this.#secret, token, expectedScope: "session" });
         if (!payload.sessionId || payload.sessionId !== sessionId) {
-            throw new Error('Session token mismatch');
+            throw new Error("Session token mismatch");
         }
         const metadata = {
             sessionId,
@@ -429,7 +438,7 @@ class SweetLinkState {
         this.#sessions.set(sessionId, entry);
         try {
             const metadataMessage = {
-                kind: 'metadata',
+                kind: "metadata",
                 sessionId,
                 codename: metadata.codename,
             };
@@ -476,7 +485,7 @@ class SweetLinkState {
         }
     }
     #socketStateToString(readyState) {
-        return SOCKET_STATE_LABEL[readyState] ?? 'unknown';
+        return SOCKET_STATE_LABEL[readyState] ?? "unknown";
     }
     #removeSession(sessionId, reason) {
         const session = this.#sessions.get(sessionId);
@@ -505,24 +514,24 @@ async function handleHttpRequest(state, req, res) {
     const basePort = daemonPort;
     const requestUrl = req.url ? new URL(req.url, `https://localhost:${basePort}`) : null;
     if (!requestUrl) {
-        respondJson(res, 400, { error: 'Invalid request URL' });
+        respondJson(res, 400, { error: "Invalid request URL" });
         return;
     }
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
         respondCors(res);
         return;
     }
-    if (requestUrl.pathname === '/healthz') {
-        respondJson(res, 200, { status: 'ok' });
+    if (requestUrl.pathname === "/healthz") {
+        respondJson(res, 200, { status: "ok" });
         return;
     }
     const authorization = req.headers.authorization;
-    if (!authorization?.startsWith('Bearer ')) {
-        respondJson(res, 401, { error: 'Missing SweetLink token' });
+    if (!authorization?.startsWith("Bearer ")) {
+        respondJson(res, 401, { error: "Missing SweetLink token" });
         return;
     }
     try {
-        const token = authorization.slice('Bearer '.length).trim();
+        const token = authorization.slice("Bearer ".length).trim();
         state.verifyCliToken(token);
     }
     catch (error) {
@@ -530,29 +539,29 @@ async function handleHttpRequest(state, req, res) {
         respondJson(res, 401, { error: message });
         return;
     }
-    if (req.method === 'GET' && requestUrl.pathname === '/sessions') {
+    if (req.method === "GET" && requestUrl.pathname === "/sessions") {
         const sessions = state.listSessions();
         respondJson(res, 200, { sessions });
         return;
     }
-    if (req.method === 'GET' &&
-        requestUrl.pathname.startsWith('/sessions/') &&
-        requestUrl.pathname.endsWith('/console')) {
-        const sessionId = requestUrl.pathname.split('/')[2];
+    if (req.method === "GET" &&
+        requestUrl.pathname.startsWith("/sessions/") &&
+        requestUrl.pathname.endsWith("/console")) {
+        const sessionId = requestUrl.pathname.split("/")[2];
         if (sessionId == null) {
-            respondJson(res, 400, { error: 'Session id missing' });
+            respondJson(res, 400, { error: "Session id missing" });
             return;
         }
         const events = state.getSessionConsole(sessionId);
         respondJson(res, 200, { sessionId, events });
         return;
     }
-    if (req.method === 'POST' &&
-        requestUrl.pathname.startsWith('/sessions/') &&
-        requestUrl.pathname.endsWith('/command')) {
-        const sessionId = requestUrl.pathname.split('/')[2];
+    if (req.method === "POST" &&
+        requestUrl.pathname.startsWith("/sessions/") &&
+        requestUrl.pathname.endsWith("/command")) {
+        const sessionId = requestUrl.pathname.split("/")[2];
         if (sessionId == null) {
-            respondJson(res, 400, { error: 'Session id missing' });
+            respondJson(res, 400, { error: "Session id missing" });
             return;
         }
         try {
@@ -567,18 +576,18 @@ async function handleHttpRequest(state, req, res) {
         }
         return;
     }
-    respondJson(res, 404, { error: 'Not Found' });
+    respondJson(res, 404, { error: "Not Found" });
 }
 async function readJson(req) {
     const chunks = [];
     for await (const chunk of req) {
-        const bufferChunk = typeof chunk === 'string' ? Buffer.from(chunk, 'utf8') : chunk;
+        const bufferChunk = typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk;
         chunks.push(bufferChunk);
     }
     if (chunks.length === 0) {
         return {};
     }
-    const text = Buffer.concat(chunks).toString('utf8');
+    const text = Buffer.concat(chunks).toString("utf8");
     if (!text) {
         return {};
     }
@@ -587,38 +596,38 @@ async function readJson(req) {
 function respondJson(res, status, body) {
     const payload = JSON.stringify(body ?? {}, null, 2);
     res.statusCode = status;
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "authorization, content-type");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.end(payload);
 }
 function respondCors(res) {
     res.statusCode = 204;
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'authorization, content-type');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "authorization, content-type");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.end();
 }
 function decodeSocketPayload(data) {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
         return data;
     }
     if (Buffer.isBuffer(data)) {
-        return data.toString('utf8');
+        return data.toString("utf8");
     }
     if (Array.isArray(data)) {
         const buffers = data.map((chunk) => (Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-        return Buffer.concat(buffers).toString('utf8');
+        return Buffer.concat(buffers).toString("utf8");
     }
     if (ArrayBuffer.isView(data)) {
         const view = data;
-        return Buffer.from(view.buffer, view.byteOffset, view.byteLength).toString('utf8');
+        return Buffer.from(view.buffer, view.byteOffset, view.byteLength).toString("utf8");
     }
     if (data instanceof ArrayBuffer) {
-        return Buffer.from(data).toString('utf8');
+        return Buffer.from(data).toString("utf8");
     }
-    return Buffer.from([]).toString('utf8');
+    return Buffer.from([]).toString("utf8");
 }
 function parseClientMessage(raw) {
     return clientMessageSchema.parse(raw);
@@ -630,8 +639,8 @@ function parseCommandRequest(raw) {
     return { command, timeoutMs };
 }
 function ensureObject(value) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        throw new Error('Request body must be a JSON object');
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error("Request body must be a JSON object");
     }
     return value;
 }
@@ -639,21 +648,21 @@ function ensureCertificates() {
     if (existsSync(CERT_PATH) && existsSync(KEY_PATH)) {
         return;
     }
-    log('Generating SweetLink TLS certificates via mkcert...');
+    log("Generating SweetLink TLS certificates via mkcert...");
     mkdirSync(CERT_DIR, { recursive: true });
-    const mkcertLookup = spawnSync('which', ['mkcert'], { stdio: 'pipe' });
+    const mkcertLookup = spawnSync("which", ["mkcert"], { stdio: "pipe" });
     if (mkcertLookup.status !== 0) {
         const secretPath = getDefaultSweetLinkSecretPath();
         throw new Error('mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink. ' +
             `Generated SweetLink secret saved at ${secretPath}.`);
     }
-    const install = spawnSync('mkcert', ['-install'], { stdio: 'inherit' });
+    const install = spawnSync("mkcert", ["-install"], { stdio: "inherit" });
     if (install.status !== 0) {
-        throw new Error('Failed to run mkcert -install');
+        throw new Error("Failed to run mkcert -install");
     }
-    const create = spawnSync('mkcert', ['-cert-file', CERT_PATH, '-key-file', KEY_PATH, 'localhost', '127.0.0.1', '::1'], { stdio: 'inherit' });
+    const create = spawnSync("mkcert", ["-cert-file", CERT_PATH, "-key-file", KEY_PATH, "localhost", "127.0.0.1", "::1"], { stdio: "inherit" });
     if (create.status !== 0) {
-        throw new Error('Failed to generate mkcert certificates');
+        throw new Error("Failed to generate mkcert certificates");
     }
 }
 function loadCertificates() {

@@ -1,16 +1,16 @@
-import path from 'node:path';
-import { sweetLinkEnv } from '../env.js';
-import { formatAppLabel, normalizeAppLabel } from '../util/app-label.js';
-import { loadSweetLinkFileConfig } from './config-file.js';
-import { readCommandOptions } from './env.js';
+import path from "node:path";
+import { sweetLinkEnv } from "../env.js";
+import { formatAppLabel, normalizeAppLabel } from "../util/app-label.js";
+import { loadSweetLinkFileConfig } from "./config-file.js";
+import { readCommandOptions } from "./env.js";
 const normalizeUrlOption = (value, fallback) => {
-    if (typeof value === 'string' && value.trim().length > 0) {
+    if (typeof value === "string" && value.trim().length > 0) {
         return value;
     }
     return fallback;
 };
 const normalizeAdminKey = (value) => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         const trimmed = value.trim();
         return trimmed.length > 0 ? trimmed : null;
     }
@@ -21,17 +21,17 @@ export const readRootProgramOptions = (command) => {
     const rawOptions = readCommandOptions(command);
     const { config } = loadSweetLinkFileConfig();
     let optionUrl;
-    if (typeof rawOptions.appUrl === 'string') {
+    if (typeof rawOptions.appUrl === "string") {
         optionUrl = rawOptions.appUrl;
     }
-    else if (typeof rawOptions.url === 'string') {
+    else if (typeof rawOptions.url === "string") {
         optionUrl = rawOptions.url;
     }
     else {
         optionUrl = undefined;
     }
     const optionPort = normalizePort(rawOptions.port);
-    const configPort = typeof config.port === 'number' ? config.port : null;
+    const configPort = typeof config.port === "number" ? config.port : null;
     const fallbackAppUrl = resolveDefaultAppUrl({
         optionUrl,
         optionPort,
@@ -39,9 +39,13 @@ export const readRootProgramOptions = (command) => {
         configPort,
     });
     const fallbackDaemonUrl = config.daemonUrl ?? sweetLinkEnv.daemonUrl;
-    const fallbackAdminKey = rawOptions.adminKey ?? config.adminKey ?? sweetLinkEnv.localAdminApiKey ?? sweetLinkEnv.adminApiKey ?? null;
+    const fallbackAdminKey = rawOptions.adminKey ??
+        config.adminKey ??
+        sweetLinkEnv.localAdminApiKey ??
+        sweetLinkEnv.adminApiKey ??
+        null;
     let optionOauthScriptPath = null;
-    if (typeof rawOptions.oauthScript === 'string') {
+    if (typeof rawOptions.oauthScript === "string") {
         const trimmed = rawOptions.oauthScript.trim();
         if (trimmed.length > 0) {
             optionOauthScriptPath = resolveCliPath(trimmed);
@@ -64,7 +68,7 @@ export const readRootProgramOptions = (command) => {
         start: server.start ?? null,
         check: server.check ?? null,
         cwd: server.cwd ?? null,
-        timeoutMs: typeof server.timeoutMs === 'number' ? server.timeoutMs : null,
+        timeoutMs: typeof server.timeoutMs === "number" ? server.timeoutMs : null,
     }));
     return {
         appUrl: normalizeUrlOption(optionUrl, fallbackAppUrl),
@@ -94,12 +98,12 @@ export function resolveConfig(command) {
         servers: serversByEnv,
     };
 }
-const LOCAL_DEFAULT_URL = 'http://localhost:3000';
-function resolveDefaultAppUrl({ optionUrl, optionPort, configAppUrl, configPort }) {
+const LOCAL_DEFAULT_URL = "http://localhost:3000";
+function resolveDefaultAppUrl({ optionUrl, optionPort, configAppUrl, configPort, }) {
     if (optionUrl && optionUrl.trim().length > 0) {
         return optionUrl;
     }
-    if (typeof optionPort === 'number') {
+    if (typeof optionPort === "number") {
         return applyPortToUrl(configAppUrl ?? sweetLinkEnv.appUrl ?? LOCAL_DEFAULT_URL, optionPort);
     }
     if (configAppUrl) {
@@ -121,10 +125,10 @@ function applyPortToUrl(base, port) {
     }
 }
 function normalizePort(value) {
-    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
         return Math.floor(value);
     }
-    if (typeof value === 'string' && value.trim().length > 0) {
+    if (typeof value === "string" && value.trim().length > 0) {
         const parsed = Number.parseInt(value, 10);
         if (Number.isFinite(parsed) && parsed > 0) {
             return parsed;

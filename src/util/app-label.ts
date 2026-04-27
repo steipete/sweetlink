@@ -1,10 +1,10 @@
-import { regex } from 'arkregex';
+import { regex } from "arkregex";
 
-export const DEFAULT_APP_LABEL = 'your application';
-const LEADING_ARTICLE_PATTERN = regex.as(String.raw`^(?:the|a|an|your)\b`, 'i');
+export const DEFAULT_APP_LABEL = "your application";
+const LEADING_ARTICLE_PATTERN = regex.as(String.raw`^(?:the|a|an|your)\b`, "i");
 
 export function normalizeAppLabel(value: unknown): string | null {
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return null;
   }
   const trimmed = value.trim();

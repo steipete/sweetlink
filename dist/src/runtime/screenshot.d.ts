@@ -1,16 +1,16 @@
-import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from '../../shared/src/index.js';
-import type { CliConfig } from '../types.js';
-import type { SweetLinkConsoleDump } from './session.js';
+import type { SweetLinkCommandResult, SweetLinkScreenshotRenderer } from "../../shared/src/index.js";
+import type { CliConfig } from "../types.js";
+import type { SweetLinkConsoleDump } from "./session.js";
 export interface DevToolsCaptureOptions {
     readonly devtoolsUrl: string;
     readonly sessionUrl: string;
     readonly selector?: string;
     readonly quality: number;
-    readonly mode: 'full' | 'element';
+    readonly mode: "full" | "element";
     readonly outputPath: string;
 }
 export interface SweetLinkScreenshotResultPayload {
-    readonly mimeType: 'image/jpeg';
+    readonly mimeType: "image/jpeg";
     readonly base64: string;
     readonly width: number;
     readonly height: number;
@@ -21,9 +21,9 @@ export type ScreenshotFallbackContext = {
     readonly token: string;
     readonly sessionId: string;
     readonly payload: {
-        readonly type: 'screenshot';
+        readonly type: "screenshot";
         readonly id: string;
-        readonly mode: 'full' | 'element';
+        readonly mode: "full" | "element";
         readonly selector?: string;
         readonly quality: number;
         readonly timeoutMs: number;
@@ -45,7 +45,7 @@ export type DevToolsRecoveryContext = {
     readonly devtoolsUrl: string;
     readonly selector?: string;
     readonly quality: number;
-    readonly mode: 'full' | 'element';
+    readonly mode: "full" | "element";
     readonly outputPath: string;
     readonly prompt: string | undefined;
     readonly suppressOutput: boolean;
@@ -69,7 +69,7 @@ export declare function attemptDevToolsCapture(options: DevToolsCaptureOptions):
     width: number;
     height: number;
     sizeKb: number;
-    renderer: 'puppeteer';
+    renderer: "puppeteer";
 } | null>;
 export declare function tryDevToolsRecovery(context: DevToolsRecoveryContext): Promise<boolean>;
 export declare function persistScreenshotResult(outputPath: string, result: SweetLinkCommandResult, options?: {

@@ -1,13 +1,13 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 export const SWEETLINK_DEFAULT_PORT = 4455;
-export const SWEETLINK_WS_PATH = '/bridge';
+export const SWEETLINK_WS_PATH = "/bridge";
 export const SWEETLINK_SESSION_EXP_SECONDS = 60 * 5; // 5 minutes
 export const SWEETLINK_CLI_EXP_SECONDS = 60 * 60; // 1 hour
 export const SWEETLINK_HEARTBEAT_INTERVAL_MS = 15_000;
 export const SWEETLINK_HEARTBEAT_TOLERANCE_MS = 45_000;
 
-export type SweetLinkTokenScope = 'session' | 'cli';
+export type SweetLinkTokenScope = "session" | "cli";
 
 export interface SweetLinkTokenPayload {
   readonly tokenId: string;
@@ -26,11 +26,17 @@ export interface SignTokenOptions {
   readonly sessionId?: string;
 }
 
-export function signSweetLinkToken({ secret, scope, subject, ttlSeconds, sessionId }: SignTokenOptions): string {
+export function signSweetLinkToken({
+  secret,
+  scope,
+  subject,
+  ttlSeconds,
+  sessionId,
+}: SignTokenOptions): string {
   // We encode the payload ourselves (instead of relying on a JWT lib) so both daemon and browser
   // can verify tokens without pulling in heavyweight dependencies.
   if (!secret) {
-    throw new Error('SweetLink secret is not configured');
+    throw new Error("SweetLink secret is not configured");
   }
   const issuedAt = Math.floor(Date.now() / 1000);
   const payload: SweetLinkTokenPayload = {
@@ -41,7 +47,7 @@ export function signSweetLinkToken({ secret, scope, subject, ttlSeconds, session
     issuedAt,
     expiresAt: issuedAt + ttlSeconds,
   };
-  const encodedPayload = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   const signature = signEncodedPayload(secret, encodedPayload);
   return `${encodedPayload}.${signature}`;
 }
@@ -52,34 +58,45 @@ export interface VerifyTokenOptions {
   readonly expectedScope?: SweetLinkTokenScope;
 }
 
-export function verifySweetLinkToken({ secret, token, expectedScope }: VerifyTokenOptions): SweetLinkTokenPayload {
+export function verifySweetLinkToken({
+  secret,
+  token,
+  expectedScope,
+}: VerifyTokenOptions): SweetLinkTokenPayload {
   if (!secret) {
-    throw new Error('SweetLink secret is not configured');
+    throw new Error("SweetLink secret is not configured");
   }
-  const [encodedPayload, providedSignature] = token.split('.', 2);
+  const [encodedPayload, providedSignature] = token.split(".", 2);
   if (!(encodedPayload && providedSignature)) {
-    throw new Error('Malformed SweetLink token');
+    throw new Error("Malformed SweetLink token");
   }
   const expectedSignature = signEncodedPayload(secret, encodedPayload);
-  if (!timingSafeCompare(Buffer.from(providedSignature, 'base64url'), Buffer.from(expectedSignature, 'base64url'))) {
-    throw new Error('Invalid SweetLink token signature');
+  if (
+    !timingSafeCompare(
+      Buffer.from(providedSignature, "base64url"),
+      Buffer.from(expectedSignature, "base64url"),
+    )
+  ) {
+    throw new Error("Invalid SweetLink token signature");
   }
-  const decoded = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8')) as SweetLinkTokenPayload;
-  if (!decoded || typeof decoded !== 'object') {
-    throw new Error('Invalid SweetLink token payload');
+  const decoded = JSON.parse(
+    Buffer.from(encodedPayload, "base64url").toString("utf8"),
+  ) as SweetLinkTokenPayload;
+  if (!decoded || typeof decoded !== "object") {
+    throw new Error("Invalid SweetLink token payload");
   }
   const now = Math.floor(Date.now() / 1000);
   if (decoded.expiresAt < now) {
-    throw new Error('SweetLink token expired');
+    throw new Error("SweetLink token expired");
   }
   if (expectedScope && decoded.scope !== expectedScope) {
-    throw new Error('SweetLink token scope mismatch');
+    throw new Error("SweetLink token scope mismatch");
   }
   return decoded;
 }
 
 function signEncodedPayload(secret: string, encodedPayload: string): string {
-  return createHmac('sha256', secret).update(encodedPayload).digest('base64url');
+  return createHmac("sha256", secret).update(encodedPayload).digest("base64url");
 }
 
 function timingSafeCompare(a: Buffer, b: Buffer): boolean {
@@ -111,7 +128,7 @@ export type SweetLinkCommand =
   | SweetLinkSelectorDiscoveryCommand;
 
 export interface SweetLinkRunScriptCommand {
-  readonly type: 'runScript';
+  readonly type: "runScript";
   readonly id: string;
   readonly code: string;
   readonly timeoutMs?: number;
@@ -119,27 +136,27 @@ export interface SweetLinkRunScriptCommand {
 }
 
 export interface SweetLinkGetDomCommand {
-  readonly type: 'getDom';
+  readonly type: "getDom";
   readonly id: string;
   readonly selector?: string;
   readonly includeShadowDom?: boolean;
 }
 
 export interface SweetLinkNavigateCommand {
-  readonly type: 'navigate';
+  readonly type: "navigate";
   readonly id: string;
   readonly url: string;
 }
 
 export interface SweetLinkPingCommand {
-  readonly type: 'ping';
+  readonly type: "ping";
   readonly id: string;
 }
 
 export interface SweetLinkScreenshotCommand {
-  readonly type: 'screenshot';
+  readonly type: "screenshot";
   readonly id: string;
-  readonly mode: 'full' | 'element';
+  readonly mode: "full" | "element";
   readonly selector?: string | null;
   readonly quality?: number;
   readonly timeoutMs?: number;
@@ -148,7 +165,7 @@ export interface SweetLinkScreenshotCommand {
 }
 
 export interface SweetLinkSelectorDiscoveryCommand {
-  readonly type: 'discoverSelectors';
+  readonly type: "discoverSelectors";
   readonly id: string;
   readonly scopeSelector?: string | null;
   readonly limit?: number;
@@ -156,46 +173,46 @@ export interface SweetLinkSelectorDiscoveryCommand {
 }
 
 export interface SweetLinkScreenshotResultData {
-  readonly mimeType: 'image/jpeg';
+  readonly mimeType: "image/jpeg";
   readonly base64: string;
   readonly width: number;
   readonly height: number;
   readonly renderer: SweetLinkScreenshotRenderer;
 }
 
-export type SweetLinkScreenshotRenderer = 'auto' | 'puppeteer' | 'html2canvas' | 'html-to-image';
+export type SweetLinkScreenshotRenderer = "auto" | "puppeteer" | "html2canvas" | "html-to-image";
 
 export type SweetLinkScreenshotHook =
   | {
-      readonly type: 'scrollIntoView';
+      readonly type: "scrollIntoView";
       readonly selector?: string | null;
-      readonly behavior?: 'auto' | 'smooth';
-      readonly block?: 'start' | 'center' | 'end' | 'nearest';
+      readonly behavior?: "auto" | "smooth";
+      readonly block?: "start" | "center" | "end" | "nearest";
     }
   | {
-      readonly type: 'waitForSelector';
+      readonly type: "waitForSelector";
       readonly selector: string;
-      readonly visibility?: 'any' | 'visible';
+      readonly visibility?: "any" | "visible";
       readonly timeoutMs?: number;
     }
   | {
-      readonly type: 'waitForIdle';
+      readonly type: "waitForIdle";
       readonly timeoutMs?: number;
       readonly frameCount?: number;
     }
   | {
-      readonly type: 'wait';
+      readonly type: "wait";
       readonly ms: number;
     }
   | {
-      readonly type: 'script';
+      readonly type: "script";
       readonly code: string;
     };
 
 export interface SweetLinkSelectorCandidate {
   readonly selector: string;
   readonly tagName: string;
-  readonly hook: 'data-target' | 'id' | 'aria' | 'role' | 'structure' | 'testid';
+  readonly hook: "data-target" | "id" | "aria" | "role" | "structure" | "testid";
   readonly textSnippet: string;
   readonly score: number;
   readonly visible: boolean;
@@ -236,7 +253,7 @@ export interface SweetLinkCommandResultError {
 
 export type SweetLinkCommandResult = SweetLinkCommandResultSuccess | SweetLinkCommandResultError;
 
-export type SweetLinkConsoleLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
+export type SweetLinkConsoleLevel = "log" | "info" | "warn" | "error" | "debug";
 
 export interface SweetLinkConsoleEvent {
   readonly id: string;
@@ -262,7 +279,7 @@ export type SweetLinkClientMessage =
   | SweetLinkConsoleStreamMessage;
 
 export interface SweetLinkRegisterMessage {
-  readonly kind: 'register';
+  readonly kind: "register";
   readonly token: string;
   readonly sessionId: string;
   readonly url: string;
@@ -272,18 +289,18 @@ export interface SweetLinkRegisterMessage {
 }
 
 export interface SweetLinkHeartbeatMessage {
-  readonly kind: 'heartbeat';
+  readonly kind: "heartbeat";
   readonly sessionId: string;
 }
 
 export interface SweetLinkCommandResultMessage {
-  readonly kind: 'commandResult';
+  readonly kind: "commandResult";
   readonly sessionId: string;
   readonly result: SweetLinkCommandResult;
 }
 
 export interface SweetLinkConsoleStreamMessage {
-  readonly kind: 'console';
+  readonly kind: "console";
   readonly sessionId: string;
   readonly events: readonly SweetLinkConsoleEvent[];
 }
@@ -294,19 +311,19 @@ export type SweetLinkServerMessage =
   | SweetLinkServerDisconnectMessage;
 
 export interface SweetLinkServerCommandMessage {
-  readonly kind: 'command';
+  readonly kind: "command";
   readonly sessionId: string;
   readonly command: SweetLinkCommand;
 }
 
 export interface SweetLinkServerMetadataMessage {
-  readonly kind: 'metadata';
+  readonly kind: "metadata";
   readonly sessionId: string;
   readonly codename: string;
 }
 
 export interface SweetLinkServerDisconnectMessage {
-  readonly kind: 'disconnect';
+  readonly kind: "disconnect";
   readonly reason: string;
 }
 
@@ -322,7 +339,7 @@ export interface SweetLinkSessionSummary {
   readonly consoleEventsBuffered: number;
   readonly consoleErrorsBuffered: number;
   readonly pendingCommandCount: number;
-  readonly socketState: 'open' | 'closing' | 'closed' | 'connecting' | 'unknown';
+  readonly socketState: "open" | "closing" | "closed" | "connecting" | "unknown";
   readonly userAgent: string;
   readonly lastConsoleEventAt: number | null;
 }

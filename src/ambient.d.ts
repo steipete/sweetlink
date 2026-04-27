@@ -1,1 +1,1 @@
-declare module 'tldjs';
+declare module "tldjs";

@@ -1,13 +1,18 @@
-import { regex } from 'arkregex';
-import { uniq } from 'es-toolkit';
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer';
-import { sweetLinkDebug } from '../../env.js';
-import { delay } from '../../util/time.js';
-import { buildCookieOrigins, collectChromeCookies, type PuppeteerCookieParam } from '../cookies.js';
-import { PUPPETEER_PROTOCOL_TIMEOUT_MS } from './constants.js';
-import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer.js';
+import { regex } from "arkregex";
+import { uniq } from "es-toolkit";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
+import { sweetLinkDebug } from "../../env.js";
+import { delay } from "../../util/time.js";
+import { buildCookieOrigins, collectChromeCookies, type PuppeteerCookieParam } from "../cookies.js";
+import { PUPPETEER_PROTOCOL_TIMEOUT_MS } from "./constants.js";
+import {
+  attemptPuppeteerReload,
+  navigatePuppeteerPage,
+  resolvePuppeteerPage,
+  waitForPageReady,
+} from "./puppeteer.js";
 
-const AUTH_COOKIE_PATTERN = regex.as('auth|session|token', 'i');
+const AUTH_COOKIE_PATTERN = regex.as("auth|session|token", "i");
 
 type PrimeChromeCookiesDeps = {
   collectChromeCookies: typeof collectChromeCookies;
@@ -24,9 +29,9 @@ export async function primeControlledChromeCookies(
     devtoolsUrl: string;
     targetUrl: string;
     reload: boolean;
-    context: 'new-window' | 'existing-tab' | 'new-tab';
+    context: "new-window" | "existing-tab" | "new-tab";
   },
-  deps: Partial<PrimeChromeCookiesDeps> = {}
+  deps: Partial<PrimeChromeCookiesDeps> = {},
 ): Promise<void> {
   const {
     collectChromeCookies: collectCookies = collectChromeCookies,
@@ -40,15 +45,17 @@ export async function primeControlledChromeCookies(
 
   const cookies = await collectCookies(options.targetUrl);
   if (cookies.length === 0) {
-    console.log('No Chrome cookies found for this origin; continuing without priming the controlled window.');
+    console.log(
+      "No Chrome cookies found for this origin; continuing without priming the controlled window.",
+    );
     return;
   }
 
-  let puppeteer: typeof import('puppeteer').default | null = null;
+  let puppeteer: typeof import("puppeteer").default | null = null;
   try {
-    ({ default: puppeteer } = await import('puppeteer'));
+    ({ default: puppeteer } = await import("puppeteer"));
   } catch (error) {
-    console.warn('Unable to load Puppeteer while priming cookies:', error);
+    console.warn("Unable to load Puppeteer while priming cookies:", error);
     return;
   }
 
@@ -68,7 +75,7 @@ export async function primeControlledChromeCookies(
       break;
     } catch (error) {
       if (attempt === 9) {
-        console.warn('Unable to attach to controlled Chrome for cookie priming:', error);
+        console.warn("Unable to attach to controlled Chrome for cookie priming:", error);
         return;
       }
       await delayFn(200);
@@ -76,7 +83,7 @@ export async function primeControlledChromeCookies(
   }
 
   if (!browser) {
-    console.warn('Unable to attach to controlled Chrome for cookie priming: unknown error');
+    console.warn("Unable to attach to controlled Chrome for cookie priming: unknown error");
     return;
   }
 
@@ -86,7 +93,7 @@ export async function primeControlledChromeCookies(
       const fallbackPage = await browser.newPage();
       const navigated = await navigatePage(fallbackPage, options.targetUrl, 3);
       if (!navigated) {
-        console.warn('Unable to locate or recreate the controlled tab while priming cookies.');
+        console.warn("Unable to locate or recreate the controlled tab while priming cookies.");
         await fallbackPage.close().catch(() => {
           /* ignored */
         });
@@ -103,41 +110,43 @@ export async function primeControlledChromeCookies(
       await reloadPage(page);
     }
 
-    let contextLabel = 'controlled window';
-    if (options.context === 'existing-tab') {
-      contextLabel = 'existing controlled tab';
-    } else if (options.context === 'new-tab') {
-      contextLabel = 'controlled tab';
+    let contextLabel = "controlled window";
+    if (options.context === "existing-tab") {
+      contextLabel = "existing controlled tab";
+    } else if (options.context === "new-tab") {
+      contextLabel = "controlled tab";
     }
     console.log(
-      `Copied ${cookies.length} cookie${cookies.length === 1 ? '' : 's'} from your main Chrome profile into the ${contextLabel}${options.reload ? ' and refreshed the tab to apply the session.' : '.'}`
+      `Copied ${cookies.length} cookie${cookies.length === 1 ? "" : "s"} from your main Chrome profile into the ${contextLabel}${options.reload ? " and refreshed the tab to apply the session." : "."}`,
     );
     const cookieNames = cookies
-      .map((cookie) => (typeof cookie.name === 'string' ? cookie.name : null))
-      .filter((name): name is string => typeof name === 'string' && name.trim().length > 0);
+      .map((cookie) => (typeof cookie.name === "string" ? cookie.name : null))
+      .filter((name): name is string => typeof name === "string" && name.trim().length > 0);
     if (cookieNames.length > 0) {
       const authCookies = uniq(cookieNames.filter((name) => AUTH_COOKIE_PATTERN.test(name)));
       if (authCookies.length > 0) {
-        console.log(`Detected likely auth cookies: ${authCookies.join(', ')}.`);
+        console.log(`Detected likely auth cookies: ${authCookies.join(", ")}.`);
       } else {
-        console.log('No obvious auth/session cookies detected—expect to re-authenticate in the controlled window.');
+        console.log(
+          "No obvious auth/session cookies detected—expect to re-authenticate in the controlled window.",
+        );
       }
       const hasHttpOnly = cookies.some((cookie) => Boolean(cookie.httpOnly));
       console.log(
-        `HttpOnly cookies present: ${hasHttpOnly ? 'yes' : 'no'} (Chrome may restrict visibility inside the page).`
+        `HttpOnly cookies present: ${hasHttpOnly ? "yes" : "no"} (Chrome may restrict visibility inside the page).`,
       );
     }
-    if (!options.reload && options.context === 'existing-tab') {
-      console.log('Hint: reload the tab if the session has not updated yet.');
+    if (!options.reload && options.context === "existing-tab") {
+      console.log("Hint: reload the tab if the session has not updated yet.");
     }
   } catch (error) {
-    console.warn('Failed to apply Chrome cookies to the controlled window:', error);
+    console.warn("Failed to apply Chrome cookies to the controlled window:", error);
   } finally {
     try {
       await browser.disconnect();
     } catch (disconnectError) {
       if (sweetLinkDebug) {
-        console.warn('Unable to disconnect Puppeteer browser after cookie sync.', disconnectError);
+        console.warn("Unable to disconnect Puppeteer browser after cookie sync.", disconnectError);
       }
     }
   }
@@ -147,7 +156,7 @@ async function verifyCookieSync(
   page: PuppeteerPage,
   targetUrl: string,
   attempted: PuppeteerCookieParam[],
-  buildOrigins: typeof buildCookieOrigins = buildCookieOrigins
+  buildOrigins: typeof buildCookieOrigins = buildCookieOrigins,
 ): Promise<void> {
   if (attempted.length === 0) {
     return;
@@ -168,10 +177,12 @@ async function verifyCookieSync(
     }
     const missing = attempted.filter((cookie) => !appliedNames.has(cookie.name));
     if (missing.length > 0) {
-      const missingNames = missing.map((cookie) => cookie.name).join(', ');
-      console.warn(`Warning: the controlled window is missing ${missing.length} cookie(s) (${missingNames}).`);
+      const missingNames = missing.map((cookie) => cookie.name).join(", ");
+      console.warn(
+        `Warning: the controlled window is missing ${missing.length} cookie(s) (${missingNames}).`,
+      );
     }
   } catch (error) {
-    console.warn('Unable to verify cookie sync in the controlled window:', error);
+    console.warn("Unable to verify cookie sync in the controlled window:", error);
   }
 }

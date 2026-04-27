@@ -1,7 +1,7 @@
 const cssGlobal = globalThis.CSS;
-const cssEscapeFunction = cssGlobal && typeof cssGlobal.escape === 'function' ? cssGlobal.escape.bind(cssGlobal) : null;
+const cssEscapeFunction = cssGlobal && typeof cssGlobal.escape === "function" ? cssGlobal.escape.bind(cssGlobal) : null;
 export function discoverSelectorCandidates(options) {
-    if (typeof document === 'undefined') {
+    if (typeof document === "undefined") {
         return [];
     }
     const { scopeSelector, includeHidden } = options;
@@ -22,7 +22,7 @@ export function discoverSelectorCandidates(options) {
             return null;
         }
         const snippet = createTextSnippet(element);
-        const normalizedSnippet = snippet ?? '';
+        const normalizedSnippet = snippet ?? "";
         const dataTarget = element.dataset.sweetlinkTarget ?? null;
         const dataTestId = element.dataset.testid ?? null;
         const result = {
@@ -63,7 +63,7 @@ function resolveDiscoveryRoot(scopeSelector) {
             return scoped;
         }
     }
-    const main = document.querySelector('main');
+    const main = document.querySelector("main");
     if (main) {
         return main;
     }
@@ -86,33 +86,33 @@ function collectCandidateShapes(root) {
         seen.add(element);
         shapes.push({ element, hook, baseScore, selector });
     };
-    for (const element of root.querySelectorAll('[data-sweetlink-target]')) {
+    for (const element of root.querySelectorAll("[data-sweetlink-target]")) {
         const target = element.dataset.sweetlinkTarget;
         if (target) {
             const selector = `[data-sweetlink-target="${escapeCss(target)}"]`;
-            push(element, 'data-target', 100, selector);
+            push(element, "data-target", 100, selector);
         }
     }
-    for (const element of root.querySelectorAll('[id]')) {
+    for (const element of root.querySelectorAll("[id]")) {
         if (!element.id) {
             continue;
         }
         const selector = `#${escapeCss(element.id)}`;
-        push(element, 'id', 85, selector);
+        push(element, "id", 85, selector);
     }
     for (const element of root.querySelectorAll('[role="region"], [role="article"], [role="group"], [aria-label]')) {
-        const aria = element.getAttribute('aria-label');
-        const hook = aria ? 'aria' : 'role';
+        const aria = element.getAttribute("aria-label");
+        const hook = aria ? "aria" : "role";
         const selector = createStructuralSelector(element);
         push(element, hook, 70, selector);
     }
     const structuralSelector = 'main > section, main > article, main > div, main > aside, main > header, main > footer, [data-dashboard-card], [data-card], [data-testid*="card" i]';
     for (const element of root.querySelectorAll(structuralSelector)) {
         const selector = createStructuralSelector(element);
-        push(element, 'structure', 55, selector);
+        push(element, "structure", 55, selector);
     }
     if (root instanceof HTMLElement) {
-        push(root, Object.hasOwn(root.dataset, 'sweetlinkTarget') ? 'data-target' : 'structure', 50, createStructuralSelector(root));
+        push(root, Object.hasOwn(root.dataset, "sweetlinkTarget") ? "data-target" : "structure", 50, createStructuralSelector(root));
     }
     return shapes;
 }
@@ -133,7 +133,7 @@ function escapeCss(value) {
     return value.replaceAll(/[^a-zA-Z0-9_-]/g, (char) => {
         const codePoint = char.codePointAt(0);
         if (codePoint === undefined) {
-            return '';
+            return "";
         }
         return `\\${codePoint.toString(16)} `;
     });
@@ -163,14 +163,14 @@ function createStructuralSelector(element) {
                 index += 1;
             }
         }
-        const nth = index > 0 ? `:nth-of-type(${index + 1})` : '';
+        const nth = index > 0 ? `:nth-of-type(${index + 1})` : "";
         segments.unshift(`${tag}${nth}`);
         if (currentElement.parentElement) {
             visit(currentElement.parentElement, depth + 1);
         }
     };
     visit(element, 0);
-    return segments.join(' > ');
+    return segments.join(" > ");
 }
 function calculateScore(base, snippet, visible) {
     let score = base;
@@ -183,8 +183,8 @@ function calculateScore(base, snippet, visible) {
     return score;
 }
 function createTextSnippet(element) {
-    const text = element.innerText ?? element.textContent ?? '';
-    const trimmed = text.trim().replaceAll(/\s+/g, ' ');
+    const text = element.innerText ?? element.textContent ?? "";
+    const trimmed = text.trim().replaceAll(/\s+/g, " ");
     if (!trimmed) {
         return null;
     }
@@ -197,7 +197,9 @@ function isVisible(rect, computed) {
     if (rect.width <= 1 || rect.height <= 1) {
         return false;
     }
-    if (computed.visibility === 'hidden' || computed.display === 'none' || Number.parseFloat(computed.opacity) < 0.05) {
+    if (computed.visibility === "hidden" ||
+        computed.display === "none" ||
+        Number.parseFloat(computed.opacity) < 0.05) {
         return false;
     }
     return true;
@@ -206,13 +208,13 @@ function buildDomPath(element) {
     const segments = [];
     let current = element;
     while (current) {
-        const id = current.id ? `#${current.id}` : '';
+        const id = current.id ? `#${current.id}` : "";
         const classes = current.classList.length > 0
-            ? `.${[...current.classList].map((className) => className.replaceAll(/\s+/g, '-')).join('.')}`
-            : '';
+            ? `.${[...current.classList].map((className) => className.replaceAll(/\s+/g, "-")).join(".")}`
+            : "";
         segments.unshift(`${current.tagName.toLowerCase()}${id}${classes}`.trim());
         current = current.parentElement;
     }
-    return segments.join(' > ');
+    return segments.join(" > ");
 }
 //# sourceMappingURL=selector-discovery.js.map

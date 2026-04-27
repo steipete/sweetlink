@@ -1,5 +1,5 @@
-import { regex } from 'arkregex';
-import { compact } from 'es-toolkit';
+import { regex } from "arkregex";
+import { compact } from "es-toolkit";
 import {
   type Browser,
   type BrowserContext,
@@ -7,46 +7,43 @@ import {
   chromium,
   type JSHandle,
   type Page,
-} from 'playwright-core';
-import { WebSocket } from 'undici';
-import { sweetLinkDebug } from '../../env.js';
-import { describeUnknown, extractEventMessage } from '../../util/errors.js';
-import { delay } from '../../util/time.js';
-import { DEVTOOLS_PORT_SCAN_END, DEVTOOLS_PORT_SCAN_START } from '../chrome/reuse/constants.js';
-import { urlsRoughlyMatch } from '../url.js';
-import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsState } from './config.js';
-import type {
-  DevToolsTabEntry,
-  SweetLinkBootstrapDiagnostics,
-} from './types.js';
+} from "playwright-core";
+import { WebSocket } from "undici";
+import { sweetLinkDebug } from "../../env.js";
+import { describeUnknown, extractEventMessage } from "../../util/errors.js";
+import { delay } from "../../util/time.js";
+import { DEVTOOLS_PORT_SCAN_END, DEVTOOLS_PORT_SCAN_START } from "../chrome/reuse/constants.js";
+import { urlsRoughlyMatch } from "../url.js";
+import type { DevToolsConfig, DevToolsConsoleEntry, DevToolsState } from "./config.js";
+import type { DevToolsTabEntry, SweetLinkBootstrapDiagnostics } from "./types.js";
 
 type DevToolsResponse = { id?: number; result?: unknown; error?: { message?: string } };
 
 const isDevToolsResponse = (value: unknown): value is DevToolsResponse => {
-  if (typeof value !== 'object' || value === null) {
+  if (typeof value !== "object" || value === null) {
     return false;
   }
   const record = value as Record<string, unknown>;
-  if (record.id !== undefined && typeof record.id !== 'number') {
+  if (record.id !== undefined && typeof record.id !== "number") {
     return false;
   }
   if (record.error !== undefined) {
-    if (typeof record.error !== 'object' || record.error === null) {
+    if (typeof record.error !== "object" || record.error === null) {
       return false;
     }
     const errorRecord = record.error as Record<string, unknown>;
-    if (errorRecord.message !== undefined && typeof errorRecord.message !== 'string') {
+    if (errorRecord.message !== undefined && typeof errorRecord.message !== "string") {
       return false;
     }
   }
   return true;
 };
 
-const ECONNREFUSED_PATTERN = regex.as('ECONNREFUSED');
+const ECONNREFUSED_PATTERN = regex.as("ECONNREFUSED");
 
 export async function collectBootstrapDiagnostics(
   devtoolsUrl: string,
-  candidates: readonly string[]
+  candidates: readonly string[],
 ): Promise<SweetLinkBootstrapDiagnostics | null> {
   for (const candidate of candidates) {
     try {
@@ -108,9 +105,9 @@ export async function collectBootstrapDiagnostics(
           }
 
           return summary;
-        })()`
+        })()`,
       );
-      if (result && typeof result === 'object') {
+      if (result && typeof result === "object") {
         return result as SweetLinkBootstrapDiagnostics;
       }
     } catch {
@@ -129,7 +126,7 @@ export async function discoverDevToolsEndpoints(): Promise<string[]> {
     ports.map(async (port) => {
       const baseUrl = `http://127.0.0.1:${port}`;
       try {
-        const response = await fetch(`${baseUrl}/json/version`, { method: 'GET' });
+        const response = await fetch(`${baseUrl}/json/version`, { method: "GET" });
         if (response.ok) {
           return baseUrl;
         }
@@ -137,41 +134,44 @@ export async function discoverDevToolsEndpoints(): Promise<string[]> {
         /* ignore */
       }
       return null;
-    })
+    }),
   );
-  return results.filter((url): url is string => typeof url === 'string');
+  return results.filter((url): url is string => typeof url === "string");
 }
 
 export async function fetchDevToolsTabs(devtoolsUrl: string): Promise<DevToolsTabEntry[]> {
-  const response = await fetch(`${devtoolsUrl}/json/list`, { method: 'GET' });
+  const response = await fetch(`${devtoolsUrl}/json/list`, { method: "GET" });
   if (!response.ok) {
     throw new Error(`DevTools endpoint responded with ${response.status}`);
   }
   const payload = (await response.json()) as unknown;
   if (!Array.isArray(payload)) {
-    throw new TypeError('DevTools endpoint returned unexpected payload');
+    throw new TypeError("DevTools endpoint returned unexpected payload");
   }
   return compact(
     payload.map((entry) => {
-      if (!entry || typeof entry !== 'object') {
+      if (!entry || typeof entry !== "object") {
         return null;
       }
       const record = entry as Record<string, unknown>;
-      const id = typeof record.id === 'string' ? record.id : null;
-      const title = typeof record.title === 'string' ? record.title : '';
-      const url = typeof record.url === 'string' ? record.url : '';
-      const type = typeof record.type === 'string' ? record.type : undefined;
+      const id = typeof record.id === "string" ? record.id : null;
+      const title = typeof record.title === "string" ? record.title : "";
+      const url = typeof record.url === "string" ? record.url : "";
+      const type = typeof record.type === "string" ? record.type : undefined;
       const webSocketDebuggerUrl =
-        typeof record.webSocketDebuggerUrl === 'string' ? record.webSocketDebuggerUrl : undefined;
+        typeof record.webSocketDebuggerUrl === "string" ? record.webSocketDebuggerUrl : undefined;
       if (!(id && url)) {
         return null;
       }
       return { id, title, url, type, webSocketDebuggerUrl };
-    })
+    }),
   );
 }
 
-export async function fetchDevToolsTabsWithRetry(devtoolsUrl: string, attempts = 5): Promise<DevToolsTabEntry[]> {
+export async function fetchDevToolsTabsWithRetry(
+  devtoolsUrl: string,
+  attempts = 5,
+): Promise<DevToolsTabEntry[]> {
   const delayMs = 200;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
@@ -194,11 +194,11 @@ export async function fetchDevToolsTabsWithRetry(devtoolsUrl: string, attempts =
 export async function evaluateInDevToolsTab(
   devtoolsUrl: string,
   targetUrl: string,
-  expression: string
+  expression: string,
 ): Promise<unknown> {
   const tabs = await fetchDevToolsTabsWithRetry(devtoolsUrl);
   if (tabs.length === 0) {
-    throw new Error('No DevTools tabs available');
+    throw new Error("No DevTools tabs available");
   }
 
   const candidate =
@@ -207,7 +207,7 @@ export async function evaluateInDevToolsTab(
     tabs.find((tab) => tab.webSocketDebuggerUrl);
 
   if (!candidate?.webSocketDebuggerUrl) {
-    throw new Error('DevTools tab does not expose a debugger WebSocket URL');
+    throw new Error("DevTools tab does not expose a debugger WebSocket URL");
   }
 
   type EvaluateResponse = {
@@ -239,16 +239,16 @@ export async function evaluateInDevToolsTab(
     for (let attempt = 0; attempt < 50; attempt += 1) {
       try {
         // biome-ignore lint/performance/noAwaitInLoops: document readiness must be polled sequentially.
-        const result = await sendCommand<EvaluateResponse>('Runtime.evaluate', {
-          expression: 'document.readyState',
+        const result = await sendCommand<EvaluateResponse>("Runtime.evaluate", {
+          expression: "document.readyState",
           returnByValue: true,
         });
         const state =
           result.result?.value ??
-          (typeof result.result?.result === 'object' && result.result?.result !== null
+          (typeof result.result?.result === "object" && result.result?.result !== null
             ? (result.result.result as { value?: unknown }).value
             : undefined);
-        if (state === 'complete' || state === 'interactive') {
+        if (state === "complete" || state === "interactive") {
           return;
         }
       } catch {
@@ -264,7 +264,7 @@ export async function evaluateInDevToolsTab(
       socket.close();
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('DevTools socket close failed during cleanup.', error);
+        console.warn("DevTools socket close failed during cleanup.", error);
       }
     }
   };
@@ -272,9 +272,9 @@ export async function evaluateInDevToolsTab(
   return await new Promise<unknown>((resolve, reject) => {
     const handleOpen = async () => {
       try {
-        await sendCommand('Runtime.enable');
+        await sendCommand("Runtime.enable");
         await awaitDocumentReady();
-        const evalResult = await sendCommand<EvaluateResponse>('Runtime.evaluate', {
+        const evalResult = await sendCommand<EvaluateResponse>("Runtime.evaluate", {
           expression,
           awaitPromise: true,
           returnByValue: true,
@@ -282,55 +282,59 @@ export async function evaluateInDevToolsTab(
         cleanup();
         resolve(
           evalResult.result?.value ??
-            (typeof evalResult.result?.result === 'object' && evalResult.result?.result !== null
+            (typeof evalResult.result?.result === "object" && evalResult.result?.result !== null
               ? (evalResult.result.result as { value?: unknown }).value
-              : null)
+              : null),
         );
       } catch (error) {
         cleanup();
         const rejection =
-          error instanceof Error ? error : new Error(describeUnknown(error, 'DevTools evaluation failed'));
+          error instanceof Error
+            ? error
+            : new Error(describeUnknown(error, "DevTools evaluation failed"));
         reject(rejection);
       }
     };
 
-    socket.addEventListener('open', () => {
+    socket.addEventListener("open", () => {
       handleOpen().catch((error) => {
         if (sweetLinkDebug) {
-          console.warn('DevTools open handler failed before evaluation began.', error);
+          console.warn("DevTools open handler failed before evaluation began.", error);
         }
       });
     });
 
-    socket.addEventListener('message', (event) => {
+    socket.addEventListener("message", (event) => {
       let data: { id?: number; result?: unknown; error?: { message?: string } } | null = null;
-      if (typeof event.data === 'string') {
+      if (typeof event.data === "string") {
         try {
           const parsed: unknown = JSON.parse(event.data);
           if (isDevToolsResponse(parsed)) {
             data = parsed;
           } else if (sweetLinkDebug) {
-            console.warn('Received DevTools payload with unexpected shape.', parsed);
+            console.warn("Received DevTools payload with unexpected shape.", parsed);
           }
         } catch (parseError) {
           if (sweetLinkDebug) {
-            console.warn('Received malformed DevTools response.', parseError);
+            console.warn("Received malformed DevTools response.", parseError);
           }
         }
       } else if (sweetLinkDebug) {
         const payloadSummary =
-          typeof event.data === 'string' || typeof event.data === 'number' || typeof event.data === 'boolean'
+          typeof event.data === "string" ||
+          typeof event.data === "number" ||
+          typeof event.data === "boolean"
             ? event.data
             : (() => {
                 try {
                   return JSON.stringify(event.data);
                 } catch {
-                  return '[unserializable payload]';
+                  return "[unserializable payload]";
                 }
               })();
-        console.warn('Received non-string DevTools response.', { data: payloadSummary });
+        console.warn("Received non-string DevTools response.", { data: payloadSummary });
       }
-      if (!data || typeof data.id !== 'number') {
+      if (!data || typeof data.id !== "number") {
         return;
       }
       const handlers = pending.get(data.id);
@@ -339,27 +343,29 @@ export async function evaluateInDevToolsTab(
       }
       pending.delete(data.id);
       if (data.error) {
-        handlers.reject(new Error(data.error.message ?? 'DevTools command failed'));
+        handlers.reject(new Error(data.error.message ?? "DevTools command failed"));
       } else {
         handlers.resolve(data.result);
       }
     });
 
-    socket.addEventListener('error', (event) => {
+    socket.addEventListener("error", (event) => {
       cleanup();
-      const message = extractEventMessage(event, 'DevTools socket error');
+      const message = extractEventMessage(event, "DevTools socket error");
       reject(new Error(message));
     });
 
-    socket.addEventListener('close', () => {
+    socket.addEventListener("close", () => {
       if (pending.size > 0) {
-        reject(new Error('DevTools socket closed before command completed'));
+        reject(new Error("DevTools socket closed before command completed"));
       }
     });
   });
 }
 
-export async function connectToDevTools(config: DevToolsConfig): Promise<{ browser: Browser; page: Page }> {
+export async function connectToDevTools(
+  config: DevToolsConfig,
+): Promise<{ browser: Browser; page: Page }> {
   try {
     const browser = await chromium.connectOverCDP(config.devtoolsUrl, { timeout: 10_000 });
     const page = resolveDevToolsPage(browser, config);
@@ -385,10 +391,12 @@ export function resolveDevToolsPage(browser: Browser, config: DevToolsConfig): P
       return firstPage;
     }
   }
-  throw new Error('No pages found in controlled Chrome window');
+  throw new Error("No pages found in controlled Chrome window");
 }
 
-export async function serializeConsoleMessage(message: ConsoleMessage): Promise<DevToolsConsoleEntry> {
+export async function serializeConsoleMessage(
+  message: ConsoleMessage,
+): Promise<DevToolsConsoleEntry> {
   const args = await Promise.all(
     message.args().map(async (handle: JSHandle<unknown>) => {
       try {
@@ -396,10 +404,10 @@ export async function serializeConsoleMessage(message: ConsoleMessage): Promise<
       } catch {
         try {
           return await handle.evaluate((value) => {
-            if (typeof value === 'string') {
+            if (typeof value === "string") {
               return value;
             }
-            if (typeof value === 'number' || typeof value === 'boolean' || value === null) {
+            if (typeof value === "number" || typeof value === "boolean" || value === null) {
               return String(value);
             }
             try {
@@ -409,10 +417,10 @@ export async function serializeConsoleMessage(message: ConsoleMessage): Promise<
             }
           });
         } catch {
-          return '[unserializable]';
+          return "[unserializable]";
         }
       }
-    })
+    }),
   );
 
   const location = message.location();

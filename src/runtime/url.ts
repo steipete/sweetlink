@@ -1,7 +1,7 @@
-import { URL } from 'node:url';
-import { LEADING_SLASH_PATTERN, TRAILING_SLASH_PATTERN } from '../util/regex.js';
+import { URL } from "node:url";
+import { LEADING_SLASH_PATTERN, TRAILING_SLASH_PATTERN } from "../util/regex.js";
 
-export const LOOSE_PATH_SUFFIXES = ['index', 'overview'] as const;
+export const LOOSE_PATH_SUFFIXES = ["index", "overview"] as const;
 
 let pathRedirects: Record<string, string> = {};
 
@@ -30,28 +30,30 @@ export function normalizeUrlForMatch(input?: string | null): URL | null {
 
 export function trimTrailingSlash(path: string): string {
   if (!path) {
-    return '/';
+    return "/";
   }
-  const trimmed = path.replace(TRAILING_SLASH_PATTERN, '');
+  const trimmed = path.replace(TRAILING_SLASH_PATTERN, "");
   if (!trimmed) {
-    return '/';
+    return "/";
   }
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 }
 
 export function extractPathSegments(path: string): string[] {
   const normalized = trimTrailingSlash(path);
-  if (normalized === '/' || normalized.length === 0) {
+  if (normalized === "/" || normalized.length === 0) {
     return [];
   }
-  return normalized.replace(LEADING_SLASH_PATTERN, '').split('/');
+  return normalized.replace(LEADING_SLASH_PATTERN, "").split("/");
 }
 
 export function suffixSegmentsAllowed(segments: string[]): boolean {
   if (segments.length === 0) {
     return true;
   }
-  return segments.every((segment) => LOOSE_PATH_SUFFIXES.includes(segment as (typeof LOOSE_PATH_SUFFIXES)[number]));
+  return segments.every((segment) =>
+    LOOSE_PATH_SUFFIXES.includes(segment as (typeof LOOSE_PATH_SUFFIXES)[number]),
+  );
 }
 
 export function urlsRoughlyMatch(a: string, b: string): boolean {
@@ -87,11 +89,11 @@ export function buildWaitCandidateUrls(targetUrl: string, aliases?: readonly str
   const normalized = normalizeUrlForMatch(targetUrl);
   if (normalized) {
     const withoutQuery = new URL(normalized.toString());
-    withoutQuery.search = '';
+    withoutQuery.search = "";
     candidates.add(withoutQuery.toString());
 
     const trimmedPath = trimTrailingSlash(withoutQuery.pathname);
-    if (trimmedPath && trimmedPath !== '/') {
+    if (trimmedPath && trimmedPath !== "/") {
       for (const suffix of LOOSE_PATH_SUFFIXES) {
         if (trimmedPath.endsWith(`/${suffix}`)) {
           continue;
@@ -101,13 +103,13 @@ export function buildWaitCandidateUrls(targetUrl: string, aliases?: readonly str
         candidates.add(alternative.toString());
       }
 
-      if (trimmedPath === '/auth') {
+      if (trimmedPath === "/auth") {
         const signinVariant = new URL(withoutQuery.toString());
-        signinVariant.pathname = '/auth/signin';
+        signinVariant.pathname = "/auth/signin";
         candidates.add(signinVariant.toString());
-      } else if (trimmedPath === '/login') {
+      } else if (trimmedPath === "/login") {
         const signinVariant = new URL(withoutQuery.toString());
-        signinVariant.pathname = '/auth/signin';
+        signinVariant.pathname = "/auth/signin";
         candidates.add(signinVariant.toString());
       }
       const redirectedPath = pathRedirects[trimmedPath];
@@ -116,11 +118,11 @@ export function buildWaitCandidateUrls(targetUrl: string, aliases?: readonly str
         redirectUrl.pathname = redirectedPath;
         candidates.add(redirectUrl.toString());
       }
-    } else if (trimmedPath === '/') {
+    } else if (trimmedPath === "/") {
       // Marketing shell redirects "/" launches to the timeline; seed common timeline paths so
       // the CLI keeps waiting for the redirected session instead of timing out.
       const timelineBase = new URL(withoutQuery.toString());
-      timelineBase.pathname = '/timeline';
+      timelineBase.pathname = "/timeline";
       candidates.add(timelineBase.toString());
       for (const suffix of LOOSE_PATH_SUFFIXES) {
         const alternative = new URL(timelineBase.toString());
@@ -129,11 +131,11 @@ export function buildWaitCandidateUrls(targetUrl: string, aliases?: readonly str
       }
 
       const authSignin = new URL(withoutQuery.toString());
-      authSignin.pathname = '/auth/signin';
+      authSignin.pathname = "/auth/signin";
       candidates.add(authSignin.toString());
 
-      const redirectedPath = pathRedirects['/'];
-      if (redirectedPath && redirectedPath !== '/') {
+      const redirectedPath = pathRedirects["/"];
+      if (redirectedPath && redirectedPath !== "/") {
         const redirectUrl = new URL(withoutQuery.toString());
         redirectUrl.pathname = redirectedPath;
         candidates.add(redirectUrl.toString());

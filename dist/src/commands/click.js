@@ -1,27 +1,27 @@
-import { analyzeConsoleWithCodex } from '../codex.js';
-import { resolveConfig } from '../core/config.js';
-import { readCommandOptions } from '../core/env.js';
-import { sweetLinkDebug } from '../env.js';
-import { renderCommandResult } from '../runtime/scripts.js';
-import { buildClickScript, executeRunScriptCommand, fetchConsoleEvents, resolvePromptOption, resolveSessionIdFromHint, } from '../runtime/session.js';
-import { extractEventMessage } from '../util/errors.js';
-import { delay } from '../util/time.js';
+import { analyzeConsoleWithCodex } from "../codex.js";
+import { resolveConfig } from "../core/config.js";
+import { readCommandOptions } from "../core/env.js";
+import { sweetLinkDebug } from "../env.js";
+import { renderCommandResult } from "../runtime/scripts.js";
+import { buildClickScript, executeRunScriptCommand, fetchConsoleEvents, resolvePromptOption, resolveSessionIdFromHint, } from "../runtime/session.js";
+import { extractEventMessage } from "../util/errors.js";
+import { delay } from "../util/time.js";
 const POST_CLICK_CONSOLE_LIMIT = 20;
 export function registerClickCommand(program) {
     program
-        .command('click <sessionId>')
-        .description('Dispatch a click event on a selector inside a SweetLink session')
-        .requiredOption('-s, --selector <selector>', 'CSS selector to click')
-        .option('--no-scroll', 'Skip scrolling the element into view before clicking', false)
-        .option('--no-bubbles', 'Dispatch the click event without bubbling', false)
-        .option('-t, --timeout <ms>', 'Command timeout in milliseconds (default 15_000)', Number, 15_000)
-        .option('--prompt <prompt>', 'Send console output after the click to Codex for analysis')
-        .addOption(program.createOption('--question <prompt>').hideHelp())
+        .command("click <sessionId>")
+        .description("Dispatch a click event on a selector inside a SweetLink session")
+        .requiredOption("-s, --selector <selector>", "CSS selector to click")
+        .option("--no-scroll", "Skip scrolling the element into view before clicking", false)
+        .option("--no-bubbles", "Dispatch the click event without bubbling", false)
+        .option("-t, --timeout <ms>", "Command timeout in milliseconds (default 15_000)", Number, 15_000)
+        .option("--prompt <prompt>", "Send console output after the click to Codex for analysis")
+        .addOption(program.createOption("--question <prompt>").hideHelp())
         .action(async function (sessionId) {
         const options = readCommandOptions(this);
         const selector = options.selector?.trim();
         if (!selector) {
-            throw new Error('A --selector value is required for sweetlink click');
+            throw new Error("A --selector value is required for sweetlink click");
         }
         const prompt = resolvePromptOption(options);
         const config = resolveConfig(this);
@@ -32,7 +32,9 @@ export function registerClickCommand(program) {
             scrollIntoView: options.scroll !== false,
             bubbles: options.bubbles !== false,
         });
-        const timeoutMs = typeof options.timeout === 'number' && Number.isFinite(options.timeout) ? options.timeout : 15_000;
+        const timeoutMs = typeof options.timeout === "number" && Number.isFinite(options.timeout)
+            ? options.timeout
+            : 15_000;
         const result = await executeRunScriptCommand(config, {
             sessionId: resolvedSessionId,
             code: script,
@@ -40,7 +42,13 @@ export function registerClickCommand(program) {
         });
         renderCommandResult(result);
         await delay(250);
-        await reportConsoleAfterClick({ config, sessionId: resolvedSessionId, baselineIds, prompt, selector });
+        await reportConsoleAfterClick({
+            config,
+            sessionId: resolvedSessionId,
+            baselineIds,
+            prompt,
+            selector,
+        });
     });
 }
 async function fetchBaselineConsoleIds(config, sessionId) {
@@ -50,7 +58,7 @@ async function fetchBaselineConsoleIds(config, sessionId) {
     }
     catch (error) {
         if (sweetLinkDebug) {
-            console.warn('Failed to fetch baseline console events before click.', error);
+            console.warn("Failed to fetch baseline console events before click.", error);
         }
         return null;
     }
@@ -72,22 +80,22 @@ async function reportConsoleAfterClick(params) {
             }
         }
         if (recent.length > 0) {
-            console.log(`Console after click (${recent.length} event${recent.length === 1 ? '' : 's'}):`);
+            console.log(`Console after click (${recent.length} event${recent.length === 1 ? "" : "s"}):`);
             for (const event of recent) {
                 const timestamp = new Date(event.timestamp ?? Date.now()).toLocaleTimeString();
                 console.log(`  [${timestamp}] ${event.level}:`, ...event.args);
             }
             const dropped = newEvents.length - recent.length;
             if (dropped > 0) {
-                console.log(`  … ${dropped} more event${dropped === 1 ? '' : 's'} omitted`);
+                console.log(`  … ${dropped} more event${dropped === 1 ? "" : "s"} omitted`);
             }
         }
         else if (params.prompt) {
-            console.log('Console after click: no new events captured.');
+            console.log("Console after click: no new events captured.");
         }
     }
     catch (error) {
-        console.warn('Unable to fetch console events after click:', extractEventMessage(error));
+        console.warn("Unable to fetch console events after click:", extractEventMessage(error));
     }
 }
 //# sourceMappingURL=click.js.map

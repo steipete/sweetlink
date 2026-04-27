@@ -1,5 +1,5 @@
-import type { Browser, Page } from 'playwright-core';
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer';
+import type { Browser, Page } from "playwright-core";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
 export interface SweetLinkBootstrapDiagnostics {
     readyState?: string;
     autoFlag?: boolean;
@@ -21,7 +21,7 @@ export interface SweetLinkBootstrapDiagnostics {
         digest?: string | null;
     } | null;
 }
-export type BootstrapDiagnosticError = NonNullable<SweetLinkBootstrapDiagnostics['errors']>[number];
+export type BootstrapDiagnosticError = NonNullable<SweetLinkBootstrapDiagnostics["errors"]>[number];
 export interface DevToolsTabEntry {
     id: string;
     title: string;

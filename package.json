@@ -1,47 +1,28 @@
 {
   "name": "sweetlink",
   "version": "0.2.0",
-  "license": "MIT",
   "private": false,
-  "type": "module",
   "description": "Controlled-browser automation CLI for SweetLink sessions.",
+  "keywords": [
+    "automation",
+    "browser",
+    "cli",
+    "devtools",
+    "sweetlink"
+  ],
   "homepage": "https://github.com/steipete/sweetlink",
+  "bugs": {
+    "url": "https://github.com/steipete/sweetlink/issues"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/steipete/sweetlink.git",
     "directory": "apps/sweetlink"
   },
-  "bugs": {
-    "url": "https://github.com/steipete/sweetlink/issues"
-  },
-  "keywords": [
-    "sweetlink",
-    "automation",
-    "browser",
-    "devtools",
-    "cli"
-  ],
   "bin": {
     "sweetlink": "./dist/src/index.js",
     "sweetlinkd": "./dist/daemon/src/index.js"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.10",
-    "@types/node": "^25.0.3",
-    "@types/ws": "^8.18.1",
-    "jsdom": "^27.4.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "ultracite": "^6.5.0",
-    "vitest": "^4.0.16"
-  },
-  "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "tsc --project tsconfig.build.json",
-    "test": "vitest run --config vitest.config.ts",
-    "lint": "biome lint ./src ./shared/src ./daemon/src ./tests",
-    "standalone:post-sync": "tsx scripts/post-sync.ts",
-    "prepublishOnly": "pnpm run build"
   },
   "files": [
     "dist",
@@ -49,6 +30,7 @@
     "LICENSE",
     "CHANGELOG.md"
   ],
+  "type": "module",
   "main": "./dist/src/index.js",
   "module": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -67,24 +49,47 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsgo --project tsconfig.json --noEmit",
+    "format": "oxfmt --write ./src ./shared/src ./daemon/src ./tests package.json tsconfig.json tsconfig.build.json tsconfig.base.json vitest.config.ts",
+    "format:check": "oxfmt --check ./src ./shared/src ./daemon/src ./tests package.json tsconfig.json tsconfig.build.json tsconfig.base.json vitest.config.ts",
+    "lint": "pnpm format:check && oxlint --deny-warnings ./src ./shared/src ./daemon/src ./tests",
+    "lint:fix": "pnpm format && oxlint --fix ./src ./shared/src ./daemon/src ./tests",
+    "standalone:post-sync": "tsx scripts/post-sync.ts",
+    "prepublishOnly": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "dependencies": {
+    "@steipete/sweet-cookie": "0.2.0",
+    "arkregex": "^0.0.5",
+    "commander": "^14.0.3",
+    "dotenv": "^17.4.2",
+    "es-toolkit": "^1.46.0",
+    "html2canvas": "^1.4.1",
+    "playwright-core": "^1.59.1",
+    "puppeteer": "^24.42.0",
+    "random-word-slugs": "^0.1.7",
+    "tldjs": "^2.3.2",
+    "undici": "^8.1.0",
+    "ws": "^8.20.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/ws": "^8.18.1",
+    "jsdom": "^29.1.0",
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "ultracite": "^7.6.2",
+    "vitest": "^4.1.5"
+  },
   "engines": {
     "node": ">=22.0.0",
     "pnpm": ">=10.16.0"
-  },
-  "dependencies": {
-    "@steipete/sweet-cookie": "0.1.0",
-    "arkregex": "^0.0.5",
-    "commander": "^14.0.2",
-    "dotenv": "^17.2.3",
-    "es-toolkit": "^1.43.0",
-    "html2canvas": "^1.4.1",
-    "playwright-core": "^1.57.0",
-    "puppeteer": "^24.34.0",
-    "random-word-slugs": "^0.1.7",
-    "tldjs": "^2.3.2",
-    "undici": "^7.16.0",
-    "ws": "^8.18.3",
-    "zod": "^4.2.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

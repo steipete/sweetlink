@@ -1,18 +1,18 @@
-import { regex } from 'arkregex';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-import { compact, uniq } from 'es-toolkit';
-import { loadSweetLinkFileConfig } from '../core/config-file.js';
-import { sweetLinkDebug } from '../env.js';
-import { describeUnknown, isErrnoException } from '../util/errors.js';
-import { delay } from '../util/time.js';
-import { collectBootstrapDiagnostics, diagnosticsContainBlockingIssues, evaluateInDevToolsTab, } from './devtools.js';
-import { executeRunScriptCommand, fetchSessionSummaries, getSessionSummaryById } from './session.js';
-import { buildWaitCandidateUrls, configurePathRedirects, urlsRoughlyMatch } from './url.js';
-const ABSOLUTE_URL_PATTERN = regex.as('^https?:', 'i');
+import { regex } from "arkregex";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { compact, uniq } from "es-toolkit";
+import { loadSweetLinkFileConfig } from "../core/config-file.js";
+import { sweetLinkDebug } from "../env.js";
+import { describeUnknown, isErrnoException } from "../util/errors.js";
+import { delay } from "../util/time.js";
+import { collectBootstrapDiagnostics, diagnosticsContainBlockingIssues, evaluateInDevToolsTab, } from "./devtools.js";
+import { executeRunScriptCommand, fetchSessionSummaries, getSessionSummaryById, } from "./session.js";
+import { buildWaitCandidateUrls, configurePathRedirects, urlsRoughlyMatch } from "./url.js";
+const ABSOLUTE_URL_PATTERN = regex.as("^https?:", "i");
 const normalizeRouteList = (input) => {
-    if (typeof input === 'string') {
+    if (typeof input === "string") {
         const trimmed = input.trim();
         return trimmed.length > 0 ? [trimmed] : [];
     }
@@ -20,7 +20,7 @@ const normalizeRouteList = (input) => {
         return [];
     }
     return compact(input.map((route) => {
-        if (typeof route !== 'string') {
+        if (typeof route !== "string") {
             return null;
         }
         const trimmed = route.trim();
@@ -28,7 +28,7 @@ const normalizeRouteList = (input) => {
     }));
 };
 const normalizeSmokePresets = (presets) => {
-    if (!presets || typeof presets !== 'object') {
+    if (!presets || typeof presets !== "object") {
         return {};
     }
     const result = {};
@@ -40,22 +40,22 @@ const normalizeSmokePresets = (presets) => {
     }
     return result;
 };
-const SMOKE_PROGRESS_PATH = path.join(os.homedir(), '.sweetlink', 'smoke-progress.json');
+const SMOKE_PROGRESS_PATH = path.join(os.homedir(), ".sweetlink", "smoke-progress.json");
 const builtinSmokePresets = {
-    main: ['timeline', 'insights', 'search', 'pulse'],
+    main: ["timeline", "insights", "search", "pulse"],
     settings: [
-        'settings/account',
-        'settings/activity',
-        'settings/billing',
-        'settings/notifications',
-        'settings/social',
-        'settings/sync',
-        'settings/import',
-        'settings/extension',
-        'settings/beta',
+        "settings/account",
+        "settings/activity",
+        "settings/billing",
+        "settings/notifications",
+        "settings/social",
+        "settings/sync",
+        "settings/import",
+        "settings/extension",
+        "settings/beta",
     ],
-    'billing-only': ['settings/billing'],
-    'pulse-only': ['pulse'],
+    "billing-only": ["settings/billing"],
+    "pulse-only": ["pulse"],
 };
 const { config: fileConfig } = loadSweetLinkFileConfig();
 configurePathRedirects(fileConfig.redirects);
@@ -66,8 +66,8 @@ export const SMOKE_ROUTE_PRESETS = {
 };
 const getPresetRoutes = (name) => normalizeRouteList(SMOKE_ROUTE_PRESETS[name]);
 const configuredDefaults = normalizeRouteList(fileConfig.smokeRoutes?.defaults ?? []);
-const mainPresetRoutes = getPresetRoutes('main');
-const settingsPresetRoutes = getPresetRoutes('settings');
+const mainPresetRoutes = getPresetRoutes("main");
+const settingsPresetRoutes = getPresetRoutes("settings");
 const fallbackDefaults = [];
 if (mainPresetRoutes.length > 0) {
     fallbackDefaults.push(...mainPresetRoutes);
@@ -86,7 +86,7 @@ export const deriveSmokeRoutes = (raw, defaults) => {
     if (!raw || raw.trim().length === 0) {
         return [...defaults];
     }
-    const segments = compact(raw.split(',').map((segment) => segment.trim()));
+    const segments = compact(raw.split(",").map((segment) => segment.trim()));
     if (segments.length === 0) {
         return [...defaults];
     }
@@ -98,48 +98,48 @@ export const deriveSmokeRoutes = (raw, defaults) => {
     return uniqueRoutes.length > 0 ? uniqueRoutes : [...defaults];
 };
 const normalizeRoutePath = (route) => {
-    const routeValue = typeof route === 'string' ? route : String(route ?? '');
+    const routeValue = typeof route === "string" ? route : String(route ?? "");
     if (!routeValue) {
-        return '/';
+        return "/";
     }
     if (ABSOLUTE_URL_PATTERN.test(routeValue)) {
         try {
             const parsed = new URL(routeValue);
-            return parsed.pathname || '/';
+            return parsed.pathname || "/";
         }
         catch {
-            return '/';
+            return "/";
         }
     }
     const trimmed = String.prototype.trim.call(routeValue);
     if (!trimmed) {
-        return '/';
+        return "/";
     }
-    const withSlash = String.prototype.startsWith.call(trimmed, '/') ? trimmed : `/${trimmed}`;
-    return withSlash.replaceAll(/\/{2,}/g, '/');
+    const withSlash = String.prototype.startsWith.call(trimmed, "/") ? trimmed : `/${trimmed}`;
+    return withSlash.replaceAll(/\/{2,}/g, "/");
 };
 export const buildSmokeRouteUrl = (base, route) => {
     if (ABSOLUTE_URL_PATTERN.test(route)) {
         try {
             const parsed = new URL(route);
-            parsed.searchParams.set('sweetlink', 'auto');
+            parsed.searchParams.set("sweetlink", "auto");
             return parsed;
         }
         catch {
             // Fall back to treating as relative path.
         }
     }
-    const [pathPart, searchPart] = route.split('?', 2);
+    const [pathPart, searchPart] = route.split("?", 2);
     const next = new URL(base.toString());
-    next.search = '';
-    next.pathname = normalizeRoutePath(pathPart ?? '/');
+    next.search = "";
+    next.pathname = normalizeRoutePath(pathPart ?? "/");
     if (searchPart) {
         const extra = new URLSearchParams(searchPart);
         for (const [key, value] of extra.entries()) {
             next.searchParams.set(key, value);
         }
     }
-    next.searchParams.set('sweetlink', 'auto');
+    next.searchParams.set("sweetlink", "auto");
     return next;
 };
 export const navigateSweetLinkSession = async (params) => {
@@ -194,7 +194,7 @@ export const triggerSweetLinkCliAuto = async (devtoolsUrl, candidateUrl) => {
         }
         catch (error) {
             if (sweetLinkDebug) {
-                console.warn('Failed to trigger SweetLink CLI auto bootstrap:', error);
+                console.warn("Failed to trigger SweetLink CLI auto bootstrap:", error);
             }
         }
     }
@@ -210,7 +210,7 @@ export const ensureSweetLinkSessionConnected = async (params) => {
         try {
             // biome-ignore lint/performance/noAwaitInLoops: polling for a session must remain sequential.
             const summary = await getSessionSummaryById(params.config, params.token, activeSessionId);
-            if (summary && summary.socketState === 'open') {
+            if (summary && summary.socketState === "open") {
                 return true;
             }
             if (!summary) {
@@ -224,7 +224,7 @@ export const ensureSweetLinkSessionConnected = async (params) => {
                 if (replacement) {
                     activeSessionId = replacement.sessionId;
                     params.onSessionIdChanged?.(replacement.sessionId);
-                    if (replacement.socketState === 'open') {
+                    if (replacement.socketState === "open") {
                         return true;
                     }
                 }
@@ -257,14 +257,14 @@ export const waitForSmokeRouteReady = async (params) => {
                 if (diagnostics.locationHref &&
                     urlsRoughlyMatch(diagnostics.locationHref, params.targetUrl.toString()) &&
                     diagnostics.readyState &&
-                    (diagnostics.readyState === 'complete' || diagnostics.readyState === 'interactive')) {
+                    (diagnostics.readyState === "complete" || diagnostics.readyState === "interactive")) {
                     return diagnostics;
                 }
             }
         }
         catch (error) {
             if (sweetLinkDebug) {
-                console.warn('Smoke wait diagnostics error:', error);
+                console.warn("Smoke wait diagnostics error:", error);
             }
         }
         await delay(500);
@@ -276,7 +276,7 @@ function routesSignatureKey(routes) {
 }
 async function readSmokeProgressFile() {
     try {
-        const raw = await readFile(SMOKE_PROGRESS_PATH, 'utf8');
+        const raw = await readFile(SMOKE_PROGRESS_PATH, "utf8");
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.entries)) {
             return {
@@ -287,13 +287,13 @@ async function readSmokeProgressFile() {
                     nextIndex: entry.nextIndex ?? 0,
                     updatedAt: entry.updatedAt ?? Date.now(),
                 }))
-                    .filter((entry) => typeof entry.baseOrigin === 'string' && typeof entry.routesSignature === 'string'),
+                    .filter((entry) => typeof entry.baseOrigin === "string" && typeof entry.routesSignature === "string"),
             };
         }
     }
     catch (error) {
-        if (!isErrnoException(error) || error.code !== 'ENOENT') {
-            console.warn('Failed to read SweetLink smoke progress file:', error);
+        if (!isErrnoException(error) || error.code !== "ENOENT") {
+            console.warn("Failed to read SweetLink smoke progress file:", error);
         }
     }
     return { entries: [] };
@@ -302,7 +302,7 @@ async function writeSmokeProgressFile(file) {
     const directory = path.dirname(SMOKE_PROGRESS_PATH);
     await mkdir(directory, { recursive: true });
     const payload = JSON.stringify({ entries: file.entries }, null, 2);
-    await writeFile(SMOKE_PROGRESS_PATH, payload, 'utf8');
+    await writeFile(SMOKE_PROGRESS_PATH, payload, "utf8");
 }
 export function computeSmokeRouteSignature(routes) {
     return routesSignatureKey(routes);
@@ -344,62 +344,66 @@ export async function clearSmokeProgress(baseOrigin, routes) {
     await writeSmokeProgressFile({ entries: filtered });
 }
 export const consoleEventIndicatesAuthIssue = (event) => {
-    const level = typeof event?.level === 'string' ? event.level.toLowerCase() : '';
-    if (level && level !== 'error' && level !== 'warn' && level !== 'assert') {
+    const level = typeof event?.level === "string" ? event.level.toLowerCase() : "";
+    if (level && level !== "error" && level !== "warn" && level !== "assert") {
         return false;
     }
     if (!(event && Array.isArray(event.args))) {
         return false;
     }
     for (const value of event.args) {
-        const text = describeUnknown(value, '').toLowerCase();
+        const text = describeUnknown(value, "").toLowerCase();
         if (!text) {
             continue;
         }
-        if (text.includes('authentication required') || text.includes('unauthorized') || text.includes('401')) {
+        if (text.includes("authentication required") ||
+            text.includes("unauthorized") ||
+            text.includes("401")) {
             return true;
         }
     }
     return false;
 };
 export const consoleEventIndicatesRuntimeError = (event) => {
-    const level = typeof event?.level === 'string' ? event.level.toLowerCase() : '';
-    const isErrorLevel = level === 'error' || level === 'assert';
+    const level = typeof event?.level === "string" ? event.level.toLowerCase() : "";
+    const isErrorLevel = level === "error" || level === "assert";
     const args = Array.isArray(event?.args) ? event.args : [];
     const renderedArgs = args
-        .map((value) => describeUnknown(value, ''))
-        .filter((value) => typeof value === 'string' && value.trim().length > 0);
+        .map((value) => describeUnknown(value, ""))
+        .filter((value) => typeof value === "string" && value.trim().length > 0);
     if (renderedArgs.length === 0) {
         return isErrorLevel;
     }
-    const combined = renderedArgs.join(' ').toLowerCase();
-    if (combined.includes('[fast refresh]')) {
+    const combined = renderedArgs.join(" ").toLowerCase();
+    if (combined.includes("[fast refresh]")) {
         return false;
     }
-    const isTrpcMetadataLog = combined.includes('[trpc]') && combined.includes('trpcclienterror');
+    const isTrpcMetadataLog = combined.includes("[trpc]") && combined.includes("trpcclienterror");
     if (isTrpcMetadataLog) {
         return false;
     }
     if (isErrorLevel) {
         return true;
     }
-    if (level === 'warn') {
-        if (combined.includes('[trpc]')) {
+    if (level === "warn") {
+        if (combined.includes("[trpc]")) {
             return false;
         }
-        return (combined.includes('uncaught') ||
-            combined.includes('unhandled') ||
-            combined.includes('sweetlink auto-activation failed') ||
-            (combined.includes('error:') && !combined.includes('trpcclienterror')));
+        return (combined.includes("uncaught") ||
+            combined.includes("unhandled") ||
+            combined.includes("sweetlink auto-activation failed") ||
+            (combined.includes("error:") && !combined.includes("trpcclienterror")));
     }
-    if (!level || level === 'log' || level === 'info' || level === 'debug') {
-        if (combined.includes('sweetlink auto-activation failed')) {
+    if (!level || level === "log" || level === "info" || level === "debug") {
+        if (combined.includes("sweetlink auto-activation failed")) {
             return true;
         }
-        if (combined.includes('uncaught') || combined.includes('unhandled')) {
+        if (combined.includes("uncaught") || combined.includes("unhandled")) {
             return true;
         }
-        if (combined.includes('error:') && !combined.includes('trpcclienterror') && !combined.includes('[trpc]')) {
+        if (combined.includes("error:") &&
+            !combined.includes("trpcclienterror") &&
+            !combined.includes("[trpc]")) {
             return true;
         }
         return false;
@@ -407,11 +411,13 @@ export const consoleEventIndicatesRuntimeError = (event) => {
     return false;
 };
 export const formatConsoleEventSummary = (event) => {
-    const timestamp = Number.isFinite(event.timestamp) ? new Date(event.timestamp).toISOString() : 'unknown-time';
+    const timestamp = Number.isFinite(event.timestamp)
+        ? new Date(event.timestamp).toISOString()
+        : "unknown-time";
     const message = event.args
-        .map((value) => describeUnknown(value, ''))
-        .join(' ')
+        .map((value) => describeUnknown(value, ""))
+        .join(" ")
         .trim();
-    return `[${timestamp}] ${event.level ?? 'log'} ${message}`;
+    return `[${timestamp}] ${event.level ?? "log"} ${message}`;
 };
 //# sourceMappingURL=smoke.js.map

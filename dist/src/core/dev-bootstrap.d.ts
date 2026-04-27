@@ -1,4 +1,4 @@
-import type { CliConfig } from '../types.js';
+import type { CliConfig } from "../types.js";
 export interface DevBootstrapResult {
     readonly adminApiKey: string | null;
     readonly loginPath: string | null;

@@ -1,18 +1,23 @@
-import type { Command } from 'commander';
-import { resolveConfig } from '../core/config.js';
-import { readCommandOptions } from '../core/env.js';
-import { type RunJsOptions, renderCommandResult, resolveScript } from '../runtime/scripts.js';
-import { executeRunScriptCommand, resolveSessionIdFromHint } from '../runtime/session.js';
+import type { Command } from "commander";
+import { resolveConfig } from "../core/config.js";
+import { readCommandOptions } from "../core/env.js";
+import { type RunJsOptions, renderCommandResult, resolveScript } from "../runtime/scripts.js";
+import { executeRunScriptCommand, resolveSessionIdFromHint } from "../runtime/session.js";
 
 /** Registers the `sweetlink run-js` command. */
 export function registerRunJsCommand(program: Command): void {
   program
-    .command('run-js <sessionId> [inline...]')
-    .description('Execute JavaScript inside a SweetLink session')
-    .option('-c, --code <code...>', 'Inline JavaScript to execute')
-    .option('-f, --file <path>', 'Path to a file containing JavaScript')
-    .option('--capture-console', 'Return console output from the page context', false)
-    .option('-t, --timeout <ms>', 'Command timeout in milliseconds (default 15_000)', Number, 15_000)
+    .command("run-js <sessionId> [inline...]")
+    .description("Execute JavaScript inside a SweetLink session")
+    .option("-c, --code <code...>", "Inline JavaScript to execute")
+    .option("-f, --file <path>", "Path to a file containing JavaScript")
+    .option("--capture-console", "Return console output from the page context", false)
+    .option(
+      "-t, --timeout <ms>",
+      "Command timeout in milliseconds (default 15_000)",
+      Number,
+      15_000,
+    )
     .action(async function (this: Command, sessionId: string, inline: string[] | undefined) {
       const options = readCommandOptions<RunJsOptions>(this);
       const code = await resolveScript(options, inline);

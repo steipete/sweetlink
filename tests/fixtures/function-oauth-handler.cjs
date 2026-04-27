@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 function authorize() {
-  return { handled: true, action: 'function-export' };
+  return { handled: true, action: "function-export" };
 }
 
 module.exports = authorize;

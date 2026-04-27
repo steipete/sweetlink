@@ -2,7 +2,7 @@ export const toError = (error: unknown): Error => {
   if (error instanceof Error) {
     return error;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return new Error(error);
   }
   return new Error(describeUnknown(error));
@@ -12,26 +12,26 @@ export const describeUnknown = (value: unknown): string => {
   if (value instanceof Error) {
     return value.message;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value.toString() : 'NaN';
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value.toString() : "NaN";
   }
-  if (typeof value === 'boolean') {
-    return value ? 'true' : 'false';
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
   }
-  if (typeof value === 'bigint') {
+  if (typeof value === "bigint") {
     return value.toString();
   }
-  if (typeof value === 'symbol') {
-    return value.description ?? 'Symbol';
+  if (typeof value === "symbol") {
+    return value.description ?? "Symbol";
   }
   if (value === null) {
-    return 'null';
+    return "null";
   }
   if (value === undefined) {
-    return 'undefined';
+    return "undefined";
   }
   try {
     return JSON.stringify(value);

@@ -1,3 +1,3 @@
 export function authorize() {
-  throw new Error('boom');
+  throw new Error("boom");
 }

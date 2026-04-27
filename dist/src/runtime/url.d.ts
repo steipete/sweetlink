@@ -1,4 +1,4 @@
-import { URL } from 'node:url';
+import { URL } from "node:url";
 export declare const LOOSE_PATH_SUFFIXES: readonly ["index", "overview"];
 export declare function configurePathRedirects(map: Record<string, string> | undefined): void;
 export declare function normalizeUrlForMatch(input?: string | null): URL | null;

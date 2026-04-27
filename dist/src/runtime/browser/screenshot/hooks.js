@@ -1,44 +1,44 @@
-import { z } from 'zod';
-import { loadDefaultExportFromUrl } from '../module-loader.js';
-import { getBrowserWindow } from '../utils/environment.js';
-import { clamp } from '../utils/number.js';
-import { isRecord, toTrimmedNonEmptyString } from '../utils/object.js';
+import { z } from "zod";
+import { loadDefaultExportFromUrl } from "../module-loader.js";
+import { getBrowserWindow } from "../utils/environment.js";
+import { clamp } from "../utils/number.js";
+import { isRecord, toTrimmedNonEmptyString } from "../utils/object.js";
 const scrollIntoViewHookSchema = z
     .object({
-    type: z.literal('scrollIntoView'),
+    type: z.literal("scrollIntoView"),
     selector: z.union([z.string(), z.null()]).optional(),
-    behavior: z.enum(['auto', 'smooth', 'instant']).optional(),
-    block: z.enum(['start', 'center', 'end', 'nearest']).optional(),
+    behavior: z.enum(["auto", "smooth", "instant"]).optional(),
+    block: z.enum(["start", "center", "end", "nearest"]).optional(),
 })
     .passthrough();
 const waitForSelectorHookSchema = z
     .object({
-    type: z.literal('waitForSelector'),
+    type: z.literal("waitForSelector"),
     selector: z.string().min(1),
-    visibility: z.enum(['any', 'visible']).optional(),
+    visibility: z.enum(["any", "visible"]).optional(),
     timeoutMs: z.number().finite().optional(),
 })
     .passthrough();
 const waitForIdleHookSchema = z
     .object({
-    type: z.literal('waitForIdle'),
+    type: z.literal("waitForIdle"),
     timeoutMs: z.number().finite().optional(),
     frameCount: z.number().finite().optional(),
 })
     .passthrough();
 const waitHookSchema = z
     .object({
-    type: z.literal('wait'),
+    type: z.literal("wait"),
     ms: z.number().finite(),
 })
     .passthrough();
 const scriptHookSchema = z
     .object({
-    type: z.literal('script'),
+    type: z.literal("script"),
     code: z.string().min(1),
 })
     .passthrough();
-export const screenshotHookSchema = z.discriminatedUnion('type', [
+export const screenshotHookSchema = z.discriminatedUnion("type", [
     scrollIntoViewHookSchema,
     waitForSelectorHookSchema,
     waitForIdleHookSchema,
@@ -46,8 +46,8 @@ export const screenshotHookSchema = z.discriminatedUnion('type', [
     scriptHookSchema,
 ]);
 export const createHookRunner = (source) => {
-    const blob = new Blob(['"use strict"; export default async (window, document, target) => {\n', source, '\n};'], {
-        type: 'text/javascript',
+    const blob = new Blob(['"use strict"; export default async (window, document, target) => {\n', source, "\n};"], {
+        type: "text/javascript",
     });
     const blobUrl = URL.createObjectURL(blob);
     let compiledRunnerPromise = null;
@@ -72,7 +72,7 @@ const isPromiseLike = (value) => {
     if (!isRecord(value)) {
         return false;
     }
-    return typeof value.then === 'function';
+    return typeof value.then === "function";
 };
 export async function applyScreenshotPreHooks(command, initialTarget) {
     const hooks = parseScreenshotHooks(command.hooks);
@@ -81,34 +81,34 @@ export async function applyScreenshotPreHooks(command, initialTarget) {
     }
     const runHook = async (hook) => {
         switch (hook.type) {
-            case 'scrollIntoView': {
+            case "scrollIntoView": {
                 const target = resolveHookTarget(hook.selector, command.selector, initialTarget.target);
                 target.scrollIntoView({
-                    behavior: hook.behavior ?? 'auto',
-                    block: hook.block ?? 'center',
+                    behavior: hook.behavior ?? "auto",
+                    block: hook.block ?? "center",
                 });
                 await waitForIdle({ frameCount: 1, timeoutMs: 2000 });
                 return;
             }
-            case 'waitForSelector': {
+            case "waitForSelector": {
                 await waitForSelectorHook(hook.selector, {
-                    visibility: hook.visibility ?? 'any',
+                    visibility: hook.visibility ?? "any",
                     timeoutMs: hook.timeoutMs ?? 10_000,
                 });
                 return;
             }
-            case 'waitForIdle': {
+            case "waitForIdle": {
                 await waitForIdle({
                     frameCount: hook.frameCount ?? 1,
                     timeoutMs: hook.timeoutMs ?? 3000,
                 });
                 return;
             }
-            case 'wait': {
+            case "wait": {
                 await delay(Math.max(0, hook.ms));
                 return;
             }
-            case 'script': {
+            case "script": {
                 await runHookScript(hook.code, initialTarget.target);
                 return;
             }
@@ -156,10 +156,13 @@ function waitForSelectorHook(selector, options) {
     const poll = async () => {
         const match = document.querySelector(selector);
         if (match instanceof HTMLElement) {
-            if (options.visibility === 'visible') {
+            if (options.visibility === "visible") {
                 const rect = match.getBoundingClientRect();
                 const style = getComputedStyle(match);
-                if (rect.width > 1 && rect.height > 1 && style.visibility !== 'hidden' && style.display !== 'none') {
+                if (rect.width > 1 &&
+                    rect.height > 1 &&
+                    style.visibility !== "hidden" &&
+                    style.display !== "none") {
                     return match;
                 }
             }
@@ -183,7 +186,7 @@ async function waitForIdle(options) {
         }
         await waitForAnimationFrame();
         if (performance.now() > deadline) {
-            console.warn('[SweetLink] waitForIdle timed out before reaching the requested frame count; proceeding with current frame.');
+            console.warn("[SweetLink] waitForIdle timed out before reaching the requested frame count; proceeding with current frame.");
             return;
         }
         await waitFrames(remaining - 1);
@@ -193,7 +196,7 @@ async function waitForIdle(options) {
 function waitForAnimationFrame() {
     return new Promise((resolve) => {
         const browserWindow = getBrowserWindow();
-        if (!browserWindow || typeof browserWindow.requestAnimationFrame !== 'function') {
+        if (!browserWindow || typeof browserWindow.requestAnimationFrame !== "function") {
             setTimeout(() => {
                 resolve();
             }, 16);

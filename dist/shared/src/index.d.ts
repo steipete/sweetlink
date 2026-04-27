@@ -4,7 +4,7 @@ export declare const SWEETLINK_SESSION_EXP_SECONDS: number;
 export declare const SWEETLINK_CLI_EXP_SECONDS: number;
 export declare const SWEETLINK_HEARTBEAT_INTERVAL_MS = 15000;
 export declare const SWEETLINK_HEARTBEAT_TOLERANCE_MS = 45000;
-export type SweetLinkTokenScope = 'session' | 'cli';
+export type SweetLinkTokenScope = "session" | "cli";
 export interface SweetLinkTokenPayload {
     readonly tokenId: string;
     readonly scope: SweetLinkTokenScope;
@@ -20,42 +20,42 @@ export interface SignTokenOptions {
     readonly ttlSeconds: number;
     readonly sessionId?: string;
 }
-export declare function signSweetLinkToken({ secret, scope, subject, ttlSeconds, sessionId }: SignTokenOptions): string;
+export declare function signSweetLinkToken({ secret, scope, subject, ttlSeconds, sessionId, }: SignTokenOptions): string;
 export interface VerifyTokenOptions {
     readonly secret: string;
     readonly token: string;
     readonly expectedScope?: SweetLinkTokenScope;
 }
-export declare function verifySweetLinkToken({ secret, token, expectedScope }: VerifyTokenOptions): SweetLinkTokenPayload;
+export declare function verifySweetLinkToken({ secret, token, expectedScope, }: VerifyTokenOptions): SweetLinkTokenPayload;
 export declare function createSweetLinkSessionId(): string;
 export declare function createSweetLinkCommandId(): string;
 export type SweetLinkCommand = SweetLinkRunScriptCommand | SweetLinkGetDomCommand | SweetLinkNavigateCommand | SweetLinkPingCommand | SweetLinkScreenshotCommand | SweetLinkSelectorDiscoveryCommand;
 export interface SweetLinkRunScriptCommand {
-    readonly type: 'runScript';
+    readonly type: "runScript";
     readonly id: string;
     readonly code: string;
     readonly timeoutMs?: number;
     readonly captureConsole?: boolean;
 }
 export interface SweetLinkGetDomCommand {
-    readonly type: 'getDom';
+    readonly type: "getDom";
     readonly id: string;
     readonly selector?: string;
     readonly includeShadowDom?: boolean;
 }
 export interface SweetLinkNavigateCommand {
-    readonly type: 'navigate';
+    readonly type: "navigate";
     readonly id: string;
     readonly url: string;
 }
 export interface SweetLinkPingCommand {
-    readonly type: 'ping';
+    readonly type: "ping";
     readonly id: string;
 }
 export interface SweetLinkScreenshotCommand {
-    readonly type: 'screenshot';
+    readonly type: "screenshot";
     readonly id: string;
-    readonly mode: 'full' | 'element';
+    readonly mode: "full" | "element";
     readonly selector?: string | null;
     readonly quality?: number;
     readonly timeoutMs?: number;
@@ -63,45 +63,45 @@ export interface SweetLinkScreenshotCommand {
     readonly hooks?: readonly SweetLinkScreenshotHook[];
 }
 export interface SweetLinkSelectorDiscoveryCommand {
-    readonly type: 'discoverSelectors';
+    readonly type: "discoverSelectors";
     readonly id: string;
     readonly scopeSelector?: string | null;
     readonly limit?: number;
     readonly includeHidden?: boolean;
 }
 export interface SweetLinkScreenshotResultData {
-    readonly mimeType: 'image/jpeg';
+    readonly mimeType: "image/jpeg";
     readonly base64: string;
     readonly width: number;
     readonly height: number;
     readonly renderer: SweetLinkScreenshotRenderer;
 }
-export type SweetLinkScreenshotRenderer = 'auto' | 'puppeteer' | 'html2canvas' | 'html-to-image';
+export type SweetLinkScreenshotRenderer = "auto" | "puppeteer" | "html2canvas" | "html-to-image";
 export type SweetLinkScreenshotHook = {
-    readonly type: 'scrollIntoView';
+    readonly type: "scrollIntoView";
     readonly selector?: string | null;
-    readonly behavior?: 'auto' | 'smooth';
-    readonly block?: 'start' | 'center' | 'end' | 'nearest';
+    readonly behavior?: "auto" | "smooth";
+    readonly block?: "start" | "center" | "end" | "nearest";
 } | {
-    readonly type: 'waitForSelector';
+    readonly type: "waitForSelector";
     readonly selector: string;
-    readonly visibility?: 'any' | 'visible';
+    readonly visibility?: "any" | "visible";
     readonly timeoutMs?: number;
 } | {
-    readonly type: 'waitForIdle';
+    readonly type: "waitForIdle";
     readonly timeoutMs?: number;
     readonly frameCount?: number;
 } | {
-    readonly type: 'wait';
+    readonly type: "wait";
     readonly ms: number;
 } | {
-    readonly type: 'script';
+    readonly type: "script";
     readonly code: string;
 };
 export interface SweetLinkSelectorCandidate {
     readonly selector: string;
     readonly tagName: string;
-    readonly hook: 'data-target' | 'id' | 'aria' | 'role' | 'structure' | 'testid';
+    readonly hook: "data-target" | "id" | "aria" | "role" | "structure" | "testid";
     readonly textSnippet: string;
     readonly score: number;
     readonly visible: boolean;
@@ -137,7 +137,7 @@ export interface SweetLinkCommandResultError {
     readonly console?: readonly SweetLinkConsoleEvent[];
 }
 export type SweetLinkCommandResult = SweetLinkCommandResultSuccess | SweetLinkCommandResultError;
-export type SweetLinkConsoleLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
+export type SweetLinkConsoleLevel = "log" | "info" | "warn" | "error" | "debug";
 export interface SweetLinkConsoleEvent {
     readonly id: string;
     readonly timestamp: number;
@@ -155,7 +155,7 @@ export interface SweetLinkSessionMetadata {
 }
 export type SweetLinkClientMessage = SweetLinkRegisterMessage | SweetLinkHeartbeatMessage | SweetLinkCommandResultMessage | SweetLinkConsoleStreamMessage;
 export interface SweetLinkRegisterMessage {
-    readonly kind: 'register';
+    readonly kind: "register";
     readonly token: string;
     readonly sessionId: string;
     readonly url: string;
@@ -164,32 +164,32 @@ export interface SweetLinkRegisterMessage {
     readonly topOrigin: string;
 }
 export interface SweetLinkHeartbeatMessage {
-    readonly kind: 'heartbeat';
+    readonly kind: "heartbeat";
     readonly sessionId: string;
 }
 export interface SweetLinkCommandResultMessage {
-    readonly kind: 'commandResult';
+    readonly kind: "commandResult";
     readonly sessionId: string;
     readonly result: SweetLinkCommandResult;
 }
 export interface SweetLinkConsoleStreamMessage {
-    readonly kind: 'console';
+    readonly kind: "console";
     readonly sessionId: string;
     readonly events: readonly SweetLinkConsoleEvent[];
 }
 export type SweetLinkServerMessage = SweetLinkServerCommandMessage | SweetLinkServerMetadataMessage | SweetLinkServerDisconnectMessage;
 export interface SweetLinkServerCommandMessage {
-    readonly kind: 'command';
+    readonly kind: "command";
     readonly sessionId: string;
     readonly command: SweetLinkCommand;
 }
 export interface SweetLinkServerMetadataMessage {
-    readonly kind: 'metadata';
+    readonly kind: "metadata";
     readonly sessionId: string;
     readonly codename: string;
 }
 export interface SweetLinkServerDisconnectMessage {
-    readonly kind: 'disconnect';
+    readonly kind: "disconnect";
     readonly reason: string;
 }
 export interface SweetLinkSessionSummary {
@@ -204,7 +204,7 @@ export interface SweetLinkSessionSummary {
     readonly consoleEventsBuffered: number;
     readonly consoleErrorsBuffered: number;
     readonly pendingCommandCount: number;
-    readonly socketState: 'open' | 'closing' | 'closed' | 'connecting' | 'unknown';
+    readonly socketState: "open" | "closing" | "closed" | "connecting" | "unknown";
     readonly userAgent: string;
     readonly lastConsoleEventAt: number | null;
 }

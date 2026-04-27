@@ -1,6 +1,6 @@
-import type { SweetLinkSelectorCandidate, SweetLinkSelectorDiscoveryResult } from '../../shared/src/index.js';
-import { type SweetLinkCommandResult } from '../../shared/src/index.js';
-import type { CliConfig } from '../types.js';
+import type { SweetLinkSelectorCandidate, SweetLinkSelectorDiscoveryResult } from "../../shared/src/index.js";
+import { type SweetLinkCommandResult } from "../../shared/src/index.js";
+import type { CliConfig } from "../types.js";
 export interface SweetLinkSessionSummaryResponse {
     readonly sessions: Array<{
         readonly sessionId: string;
@@ -14,12 +14,12 @@ export interface SweetLinkSessionSummaryResponse {
         readonly consoleEventsBuffered?: number;
         readonly consoleErrorsBuffered?: number;
         readonly pendingCommandCount?: number;
-        readonly socketState?: 'open' | 'closing' | 'closed' | 'connecting' | 'unknown';
+        readonly socketState?: "open" | "closing" | "closed" | "connecting" | "unknown";
         readonly userAgent?: string;
         readonly lastConsoleEventAt?: number | null;
     }>;
 }
-export type SweetLinkSessionSummary = SweetLinkSessionSummaryResponse['sessions'][number];
+export type SweetLinkSessionSummary = SweetLinkSessionSummaryResponse["sessions"][number];
 export interface SweetLinkConsoleDump {
     readonly id: string;
     readonly timestamp: number;
@@ -56,7 +56,7 @@ export declare function resolvePromptOption(options: {
     question?: string;
 }): string | undefined;
 /** Builds a DOM click script scoped to the provided selector. */
-export declare function buildClickScript({ selector, scrollIntoView, bubbles }: BuildClickScriptOptions): string;
+export declare function buildClickScript({ selector, scrollIntoView, bubbles, }: BuildClickScriptOptions): string;
 /** Shared guard ensuring candidates from selector discovery are valid. */
 export declare const isSweetLinkSelectorCandidate: (value: unknown) => value is SweetLinkSelectorCandidate;
 /** Wrapper guards selector discovery responses. */

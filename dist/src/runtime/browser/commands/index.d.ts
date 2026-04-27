@@ -1,5 +1,5 @@
-import type { SweetLinkCommand, SweetLinkCommandResult } from '@sweetlink/shared';
-import type { SweetLinkScreenshotHooks } from '../types.js';
+import type { SweetLinkCommand, SweetLinkCommandResult } from "@sweetlink/shared";
+import type { SweetLinkScreenshotHooks } from "../types.js";
 export interface CommandExecutor {
     execute(command: SweetLinkCommand): Promise<SweetLinkCommandResult>;
 }

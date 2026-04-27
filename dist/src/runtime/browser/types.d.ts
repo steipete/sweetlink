@@ -1,5 +1,5 @@
-import type { SweetLinkConsoleEvent as SharedSweetLinkConsoleEvent, SweetLinkCommand, SweetLinkScreenshotResultData } from '@sweetlink/shared';
-export type SweetLinkClientStatus = 'idle' | 'connecting' | 'connected' | 'error';
+import type { SweetLinkConsoleEvent as SharedSweetLinkConsoleEvent, SweetLinkCommand, SweetLinkScreenshotResultData } from "@sweetlink/shared";
+export type SweetLinkClientStatus = "idle" | "connecting" | "connected" | "error";
 export interface SweetLinkStatusSnapshot {
     readonly status: SweetLinkClientStatus;
     readonly reason: string | null;
@@ -46,13 +46,13 @@ export interface SweetLinkLogger {
 export interface SweetLinkScreenshotHooks {
     preloadLibraries(): Promise<void>;
     captureScreenshot(command: Extract<SweetLinkCommand, {
-        type: 'screenshot';
+        type: "screenshot";
     }>, targetInfo: ScreenshotTargetInfo): Promise<SweetLinkScreenshotResultData>;
     resolveTarget(command: Extract<SweetLinkCommand, {
-        type: 'screenshot';
+        type: "screenshot";
     }>): ScreenshotTargetInfo;
     applyPreHooks(command: Extract<SweetLinkCommand, {
-        type: 'screenshot';
+        type: "screenshot";
     }>, targetInfo: ScreenshotTargetInfo): Promise<void>;
 }
 export interface SweetLinkBrowserEnvironment {
@@ -76,7 +76,7 @@ export interface SweetLinkClient {
     }): void;
     getCurrentSession(): ActiveSweetLinkSession | null;
 }
-export type ActiveSweetLinkSession = Omit<SweetLinkSessionBootstrap, 'codename'> & {
+export type ActiveSweetLinkSession = Omit<SweetLinkSessionBootstrap, "codename"> & {
     socket: WebSocket | null;
     heartbeatTimer: number | null;
     consoleBuffer: SharedSweetLinkConsoleEvent[];
@@ -92,5 +92,5 @@ export interface ScreenshotTargetInfo {
         height: number;
     };
 }
-export type { SweetLinkCommand, SweetLinkCommandResult, SweetLinkConsoleEvent, SweetLinkScreenshotRenderer, SweetLinkScreenshotResultData, SweetLinkServerCommandMessage, SweetLinkServerMessage, } from '@sweetlink/shared';
+export type { SweetLinkCommand, SweetLinkCommandResult, SweetLinkConsoleEvent, SweetLinkScreenshotRenderer, SweetLinkScreenshotResultData, SweetLinkServerCommandMessage, SweetLinkServerMessage, } from "@sweetlink/shared";
 //# sourceMappingURL=types.d.ts.map

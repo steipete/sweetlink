@@ -2,9 +2,9 @@ import type {
   SweetLinkConsoleEvent as SharedSweetLinkConsoleEvent,
   SweetLinkCommand,
   SweetLinkScreenshotResultData,
-} from '@sweetlink/shared';
+} from "@sweetlink/shared";
 
-export type SweetLinkClientStatus = 'idle' | 'connecting' | 'connected' | 'error';
+export type SweetLinkClientStatus = "idle" | "connecting" | "connected" | "error";
 
 export interface SweetLinkStatusSnapshot {
   readonly status: SweetLinkClientStatus;
@@ -13,7 +13,7 @@ export interface SweetLinkStatusSnapshot {
 }
 
 export const DEFAULT_STATUS_SNAPSHOT: SweetLinkStatusSnapshot = {
-  status: 'idle',
+  status: "idle",
   reason: null,
   codename: null,
 };
@@ -61,13 +61,13 @@ export interface SweetLinkLogger {
 export interface SweetLinkScreenshotHooks {
   preloadLibraries(): Promise<void>;
   captureScreenshot(
-    command: Extract<SweetLinkCommand, { type: 'screenshot' }>,
-    targetInfo: ScreenshotTargetInfo
+    command: Extract<SweetLinkCommand, { type: "screenshot" }>,
+    targetInfo: ScreenshotTargetInfo,
   ): Promise<SweetLinkScreenshotResultData>;
-  resolveTarget(command: Extract<SweetLinkCommand, { type: 'screenshot' }>): ScreenshotTargetInfo;
+  resolveTarget(command: Extract<SweetLinkCommand, { type: "screenshot" }>): ScreenshotTargetInfo;
   applyPreHooks(
-    command: Extract<SweetLinkCommand, { type: 'screenshot' }>,
-    targetInfo: ScreenshotTargetInfo
+    command: Extract<SweetLinkCommand, { type: "screenshot" }>,
+    targetInfo: ScreenshotTargetInfo,
   ): Promise<void>;
 }
 
@@ -93,7 +93,7 @@ export interface SweetLinkClient {
   getCurrentSession(): ActiveSweetLinkSession | null;
 }
 
-export type ActiveSweetLinkSession = Omit<SweetLinkSessionBootstrap, 'codename'> & {
+export type ActiveSweetLinkSession = Omit<SweetLinkSessionBootstrap, "codename"> & {
   socket: WebSocket | null;
   heartbeatTimer: number | null;
   consoleBuffer: SharedSweetLinkConsoleEvent[];
@@ -114,4 +114,4 @@ export type {
   SweetLinkScreenshotResultData,
   SweetLinkServerCommandMessage,
   SweetLinkServerMessage,
-} from '@sweetlink/shared';
+} from "@sweetlink/shared";

@@ -1,31 +1,34 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, readFile, rm } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
-import os from 'node:os';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { Command, CommanderError, Option } from 'commander';
-import { compact, uniq } from 'es-toolkit';
-import type { Browser, ConsoleMessage, Page, Request } from 'playwright-core';
+import { existsSync, readFileSync } from "node:fs";
+import { mkdir, readFile, rm } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { Command, CommanderError, Option } from "commander";
+import { compact, uniq } from "es-toolkit";
+import type { Browser, ConsoleMessage, Page, Request } from "playwright-core";
 import {
   createSweetLinkCommandId,
   type SweetLinkCommandResult,
   type SweetLinkScreenshotHook,
   type SweetLinkScreenshotRenderer,
   type SweetLinkSelectorCandidate,
-} from '../shared/src/index.js';
-import { registerClickCommand } from './commands/click.js';
-import { registerRunJsCommand } from './commands/run-js.js';
-import { registerTrustCaCommand } from './commands/trust-ca.js';
-import { readRootProgramOptions, resolveConfig } from './core/config.js';
-import type { SweetLinkFileConfig } from './core/config-file.js';
-import { loadSweetLinkFileConfig } from './core/config-file.js';
-import { cloneProcessEnv, readCommandOptions } from './core/env.js';
-import { cleanupControlledChromeRegistry, registerControlledChromeInstance } from './devtools-registry.js';
-import { sweetLinkCliTestMode, sweetLinkDebug, sweetLinkEnv } from './env.js';
-import { fetchJson } from './http.js';
+} from "../shared/src/index.js";
+import { registerClickCommand } from "./commands/click.js";
+import { registerRunJsCommand } from "./commands/run-js.js";
+import { registerTrustCaCommand } from "./commands/trust-ca.js";
+import { readRootProgramOptions, resolveConfig } from "./core/config.js";
+import type { SweetLinkFileConfig } from "./core/config-file.js";
+import { loadSweetLinkFileConfig } from "./core/config-file.js";
+import { cloneProcessEnv, readCommandOptions } from "./core/env.js";
+import {
+  cleanupControlledChromeRegistry,
+  registerControlledChromeInstance,
+} from "./devtools-registry.js";
+import { sweetLinkCliTestMode, sweetLinkDebug, sweetLinkEnv } from "./env.js";
+import { fetchJson } from "./http.js";
 import {
   collectPuppeteerDiagnostics,
   focusControlledChromePage,
@@ -35,20 +38,20 @@ import {
   reuseExistingControlledChrome,
   signalSweetLinkBootstrap,
   waitForSweetLinkSession,
-} from './runtime/chrome.js';
-import { ensureDeepLinkAuthFlow } from './runtime/chrome/deep-link.js';
+} from "./runtime/chrome.js";
+import { ensureDeepLinkAuthFlow } from "./runtime/chrome/deep-link.js";
 import {
   buildCookieOrigins,
   collectChromeCookies,
   collectChromeCookiesForDomains,
   normalizePuppeteerCookie,
   type PuppeteerCookieParam,
-} from './runtime/cookies.js';
+} from "./runtime/cookies.js";
 import {
   ensureDevStackRunning as ensureDevStackRunningRuntime,
   isAppReachable as isAppReachableRuntime,
   maybeInstallMkcertDispatcher,
-} from './runtime/devstack.js';
+} from "./runtime/devstack.js";
 import {
   attemptTwitterOauthAutoAccept,
   collectBootstrapDiagnostics,
@@ -72,16 +75,16 @@ import {
   saveDevToolsState,
   serializeConsoleMessage,
   trimBuffer,
-} from './runtime/devtools.js';
-import { fetchNextDevtoolsErrors } from './runtime/next-devtools.js';
+} from "./runtime/devtools.js";
+import { fetchNextDevtoolsErrors } from "./runtime/next-devtools.js";
 import {
   attemptDevToolsCapture,
   maybeDescribeScreenshot,
   persistScreenshotResult,
   tryDevToolsRecovery,
   tryHtmlToImageFallback,
-} from './runtime/screenshot.js';
-import { renderCommandResult } from './runtime/scripts.js';
+} from "./runtime/screenshot.js";
+import { renderCommandResult } from "./runtime/scripts.js";
 import {
   buildClickScript,
   fetchConsoleEvents,
@@ -94,7 +97,7 @@ import {
   resolveSessionIdFromHint,
   type SweetLinkConsoleDump,
   type SweetLinkSessionSummary,
-} from './runtime/session.js';
+} from "./runtime/session.js";
 import {
   buildSmokeRouteUrl,
   clearSmokeProgress,
@@ -109,13 +112,18 @@ import {
   saveSmokeProgressIndex,
   triggerSweetLinkCliAuto,
   waitForSmokeRouteReady,
-} from './runtime/smoke.js';
-import { buildWaitCandidateUrls, configurePathRedirects, normalizeUrlForMatch, trimTrailingSlash } from './runtime/url.js';
-import { buildScreenshotHooks } from './screenshot-hooks.js';
-import { fetchCliToken } from './token.js';
-import type { CliConfig, ServerConfig } from './types.js';
-import { describeAppForPrompt, formatAppLabel } from './util/app-label.js';
-import { extractEventMessage, isErrnoException, logDebugError } from './util/errors.js';
+} from "./runtime/smoke.js";
+import {
+  buildWaitCandidateUrls,
+  configurePathRedirects,
+  normalizeUrlForMatch,
+  trimTrailingSlash,
+} from "./runtime/url.js";
+import { buildScreenshotHooks } from "./screenshot-hooks.js";
+import { fetchCliToken } from "./token.js";
+import type { CliConfig, ServerConfig } from "./types.js";
+import { describeAppForPrompt, formatAppLabel } from "./util/app-label.js";
+import { extractEventMessage, isErrnoException, logDebugError } from "./util/errors.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,7 +132,7 @@ function resolveRepoRoot(startDir: string): string {
   let currentDir = startDir;
   // Walk up until a package.json exists or we reach the filesystem root.
   // This keeps the CLI working whether we run from `src` (tsx) or `dist/src`.
-  while (!existsSync(path.join(currentDir, 'package.json'))) {
+  while (!existsSync(path.join(currentDir, "package.json"))) {
     const parent = path.dirname(currentDir);
     if (parent === currentDir) {
       return startDir;
@@ -135,11 +143,11 @@ function resolveRepoRoot(startDir: string): string {
 }
 
 const repoRoot = resolveRepoRoot(__dirname);
-const packageJsonPath = path.join(repoRoot, 'package.json');
-let packageVersion = '0.0.0';
+const packageJsonPath = path.join(repoRoot, "package.json");
+let packageVersion = "0.0.0";
 try {
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as { version?: string };
-  if (typeof packageJson.version === 'string') {
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: string };
+  if (typeof packageJson.version === "string") {
     packageVersion = packageJson.version;
   }
 } catch {
@@ -153,7 +161,7 @@ const TRAILING_SLASH_PATTERN = /\/?$/;
 
 function formatDuration(ms: number): string {
   if (!Number.isFinite(ms)) {
-    return 'unknown';
+    return "unknown";
   }
   const abs = Math.max(0, ms);
   if (abs < 1000) {
@@ -181,13 +189,13 @@ function formatDuration(ms: number): string {
 
 const program = new Command();
 program
-  .name('sweetlink')
-  .description('Interact with SweetLink daemon sessions')
-  .version(packageVersion, '-v, --version', 'Show SweetLink CLI version');
+  .name("sweetlink")
+  .description("Interact with SweetLink daemon sessions")
+  .version(packageVersion, "-v, --version", "Show SweetLink CLI version");
 
 maybeInstallMkcertDispatcher();
 
-const LOOSE_PATH_SUFFIXES: ReadonlySet<string> = new Set(['home', 'index', 'overview']);
+const LOOSE_PATH_SUFFIXES: ReadonlySet<string> = new Set(["home", "index", "overview"]);
 const { config: fileConfig } = loadSweetLinkFileConfig();
 configurePathRedirects(fileConfig.redirects);
 const {
@@ -202,17 +210,17 @@ const defaultAppLabel = formatAppLabel(fileConfig.appLabel ?? sweetLinkEnv.appLa
 const defaultAppUrl = deriveDefaultAppUrl(envAppUrl, fileConfig);
 const defaultProdAppUrl = fileConfig.prodUrl ?? envProdAppUrl;
 const defaultDaemonUrl = fileConfig.daemonUrl ?? envDaemonUrl;
-const defaultAdminKey = fileConfig.adminKey ?? localAdminApiKey ?? sharedAdminApiKey ?? '';
+const defaultAdminKey = fileConfig.adminKey ?? localAdminApiKey ?? sharedAdminApiKey ?? "";
 const defaultHealthPaths = fileConfig.healthChecks?.paths ?? null;
 
-const LOCAL_DEFAULT_APP_URL = 'http://localhost:3000';
+const LOCAL_DEFAULT_APP_URL = "http://localhost:3000";
 
 function deriveDefaultAppUrl(envUrl: string | undefined, config: SweetLinkFileConfig): string {
-  const configuredAppUrl = typeof config.appUrl === 'string' ? config.appUrl.trim() : '';
+  const configuredAppUrl = typeof config.appUrl === "string" ? config.appUrl.trim() : "";
   if (configuredAppUrl.length > 0) {
     return configuredAppUrl;
   }
-  if (typeof config.port === 'number' && Number.isFinite(config.port) && config.port > 0) {
+  if (typeof config.port === "number" && Number.isFinite(config.port) && config.port > 0) {
     const baseUrl = envUrl ?? LOCAL_DEFAULT_APP_URL;
     return applyPortToUrl(baseUrl, config.port);
   }
@@ -232,7 +240,11 @@ function applyPortToUrl(base: string, port: number): string {
 function parseCliPort(value: string): number {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new CommanderError(1, 'InvalidPort', `--port expects a positive integer, received "${value}".`);
+    throw new CommanderError(
+      1,
+      "InvalidPort",
+      `--port expects a positive integer, received "${value}".`,
+    );
   }
   return parsed;
 }
@@ -253,7 +265,7 @@ interface OpenCommandOptions {
 interface OpenCommandContext {
   readonly config: CliConfig;
   readonly appLabel: string;
-  readonly env: 'dev' | 'prod';
+  readonly env: "dev" | "prod";
   readonly controlled: boolean;
   readonly preferredPort?: number;
   readonly shouldSyncCookies: boolean;
@@ -269,27 +281,33 @@ interface OpenCommandContext {
 }
 
 program
-  .option('-a, --app-url <url>', 'Application base URL for SweetLink commands', defaultAppUrl)
-  .option('--app-label <label>', 'Friendly name for your application (used in help output)', defaultAppLabel)
-  .option('--url <url>', 'Alias for --app-url')
+  .option("-a, --app-url <url>", "Application base URL for SweetLink commands", defaultAppUrl)
+  .option(
+    "--app-label <label>",
+    "Friendly name for your application (used in help output)",
+    defaultAppLabel,
+  )
+  .option("--url <url>", "Alias for --app-url")
   .addOption(
-    new Option('--port <number>', 'Override local app port (defaults to config or 3000)').argParser(parseCliPort)
+    new Option("--port <number>", "Override local app port (defaults to config or 3000)").argParser(
+      parseCliPort,
+    ),
   )
-  .option('-d, --daemon-url <url>', 'SweetLink daemon base URL', defaultDaemonUrl)
+  .option("-d, --daemon-url <url>", "SweetLink daemon base URL", defaultDaemonUrl)
   .option(
-    '-k, --admin-key <key>',
-    'Optional admin API key (defaults to SWEETLINK_LOCAL_ADMIN_API_KEY or SWEETLINK_ADMIN_API_KEY env; falls back to legacy SWEETISTICS_* keys)',
-    defaultAdminKey
+    "-k, --admin-key <key>",
+    "Optional admin API key (defaults to SWEETLINK_LOCAL_ADMIN_API_KEY or SWEETLINK_ADMIN_API_KEY env; falls back to legacy SWEETISTICS_* keys)",
+    defaultAdminKey,
   )
   .option(
-    '--oauth-script <path>',
-    'Absolute or relative path to an OAuth automation script (ESM module). Overrides config/env defaults.'
+    "--oauth-script <path>",
+    "Absolute or relative path to an OAuth automation script (ESM module). Overrides config/env defaults.",
   );
 
 program
-  .command('sessions')
-  .description('List active SweetLink sessions')
-  .option('--json', 'Output JSON instead of a table', false)
+  .command("sessions")
+  .description("List active SweetLink sessions")
+  .option("--json", "Output JSON instead of a table", false)
   .action(async (options: { json: boolean }, command: Command) => {
     const config = resolveConfig(command);
     const token = await fetchCliToken(config);
@@ -315,19 +333,21 @@ program
     }
 
     if (sessions.length === 0) {
-      console.log('No active SweetLink sessions.');
+      console.log("No active SweetLink sessions.");
       console.log(
-        'Hint: run `pnpm sweetlink open --controlled --path /` to launch an authenticated tab automatically.'
+        "Hint: run `pnpm sweetlink open --controlled --path /` to launch an authenticated tab automatically.",
       );
       return;
     }
 
     const now = Date.now();
-    console.log('Active SweetLink sessions:\n');
+    console.log("Active SweetLink sessions:\n");
     for (const session of sessions) {
       const heartbeatMsAgo =
-        typeof session.heartbeatMsAgo === 'number' ? session.heartbeatMsAgo : Math.max(0, now - session.lastSeenAt);
-      const socketState = session.socketState ?? 'unknown';
+        typeof session.heartbeatMsAgo === "number"
+          ? session.heartbeatMsAgo
+          : Math.max(0, now - session.lastSeenAt);
+      const socketState = session.socketState ?? "unknown";
       const consoleEventsBuffered = session.consoleEventsBuffered ?? 0;
       const consoleErrorsBuffered = session.consoleErrorsBuffered ?? 0;
       const pendingCommandCount = session.pendingCommandCount ?? 0;
@@ -340,40 +360,44 @@ program
       const socketLabel = `socket ${socketState}`;
       console.log(`  - last: ${lastHeartbeatLabel} • opened ${openedLabel} • ${socketLabel}`);
 
-      const pendingLabel = pendingCommandCount === 1 ? 'command' : 'commands';
+      const pendingLabel = pendingCommandCount === 1 ? "command" : "commands";
       const consoleLabel =
         consoleEventsBuffered > 0
-          ? `${consoleEventsBuffered} event${consoleEventsBuffered === 1 ? '' : 's'}${consoleErrorsBuffered ? ` (${consoleErrorsBuffered} error${consoleErrorsBuffered === 1 ? '' : 's'})` : ''}`
-          : 'none';
+          ? `${consoleEventsBuffered} event${consoleEventsBuffered === 1 ? "" : "s"}${consoleErrorsBuffered ? ` (${consoleErrorsBuffered} error${consoleErrorsBuffered === 1 ? "" : "s"})` : ""}`
+          : "none";
       console.log(`  - queues: ${pendingCommandCount} ${pendingLabel} • console ${consoleLabel}`);
 
       if (devtoolsSessionIds.has(session.sessionId)) {
-        console.log(`  - devtools: linked${devtoolsEndpoint ? ` (${devtoolsEndpoint})` : ''}`);
+        console.log(`  - devtools: linked${devtoolsEndpoint ? ` (${devtoolsEndpoint})` : ""}`);
       }
 
       if (session.userAgent) {
         console.log(`  - ua: ${session.userAgent}`);
       }
-      console.log('');
+      console.log("");
     }
     console.log(
-      'Tip: run `pnpm sweetlink console <sessionId> -n 50` to inspect the most recent console events for a session.'
+      "Tip: run `pnpm sweetlink console <sessionId> -n 50` to inspect the most recent console events for a session.",
     );
   });
 
 program
-  .command('cookies')
-  .description('Dump Chrome cookies for one or more domains or origins')
-  .argument('<domains...>', 'Domains or fully-qualified origins (e.g. localhost, https://example.com)')
-  .option('--json', 'Output JSON instead of a human-readable list', false)
+  .command("cookies")
+  .description("Dump Chrome cookies for one or more domains or origins")
+  .argument(
+    "<domains...>",
+    "Domains or fully-qualified origins (e.g. localhost, https://example.com)",
+  )
+  .option("--json", "Output JSON instead of a human-readable list", false)
   .action(async (domains: string[], options: { json: boolean }) => {
     const uniqueDomains = uniq(compact(domains.map((domain) => domain.trim())));
     if (uniqueDomains.length === 0) {
-      console.log('No domains provided; nothing to collect.');
+      console.log("No domains provided; nothing to collect.");
       return;
     }
 
-    const cookiesByDomain: Record<string, PuppeteerCookieParam[]> = await collectChromeCookiesForDomains(uniqueDomains);
+    const cookiesByDomain: Record<string, PuppeteerCookieParam[]> =
+      await collectChromeCookiesForDomains(uniqueDomains);
     if (options.json) {
       process.stdout.write(`${JSON.stringify(cookiesByDomain, null, 2)}\n`);
       return;
@@ -382,20 +406,20 @@ program
     for (const domain of uniqueDomains) {
       const domainCookies = cookiesByDomain[domain];
       const cookies = Array.isArray(domainCookies) ? domainCookies : [];
-      console.log(`\n${domain} — ${cookies.length} cookie${cookies.length === 1 ? '' : 's'}`);
+      console.log(`\n${domain} — ${cookies.length} cookie${cookies.length === 1 ? "" : "s"}`);
       if (cookies.length === 0) {
         continue;
       }
       for (const cookie of cookies) {
-        const scope = cookie.domain ? `domain=${cookie.domain}` : `url=${cookie.url ?? 'unknown'}`;
-        const cookiePath = cookie.path ?? '/';
-        const secureFlag = cookie.secure ? '; Secure' : '';
-        const httpOnlyFlag = cookie.httpOnly ? '; HttpOnly' : '';
+        const scope = cookie.domain ? `domain=${cookie.domain}` : `url=${cookie.url ?? "unknown"}`;
+        const cookiePath = cookie.path ?? "/";
+        const secureFlag = cookie.secure ? "; Secure" : "";
+        const httpOnlyFlag = cookie.httpOnly ? "; HttpOnly" : "";
         console.log(`  • ${cookie.name} (${scope} ${cookiePath}${secureFlag}${httpOnlyFlag})`);
         console.log(`    ${cookie.value}`);
       }
     }
-    console.log('');
+    console.log("");
   });
 
 registerRunJsCommand(program);
@@ -403,83 +427,97 @@ registerTrustCaCommand(program);
 registerClickCommand(program);
 
 program
-  .command('console <sessionId>')
-  .description('Fetch buffered console events for a session')
-  .option('-n, --limit <count>', 'Show only the last <count> console events', Number)
-  .option('--json', 'Output JSON', false)
-  .action(async (sessionId: string, options: { limit?: number; json?: boolean }, command: Command) => {
-    const config = resolveConfig(command);
-    const resolvedSessionId = await resolveSessionIdFromHint(sessionId, config);
-    const token = await fetchCliToken(config);
-    const response = await fetchJson<{ sessionId: string; events: SweetLinkConsoleDump[] }>(
-      `${config.daemonBaseUrl}/sessions/${encodeURIComponent(resolvedSessionId)}/console`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
+  .command("console <sessionId>")
+  .description("Fetch buffered console events for a session")
+  .option("-n, --limit <count>", "Show only the last <count> console events", Number)
+  .option("--json", "Output JSON", false)
+  .action(
+    async (sessionId: string, options: { limit?: number; json?: boolean }, command: Command) => {
+      const config = resolveConfig(command);
+      const resolvedSessionId = await resolveSessionIdFromHint(sessionId, config);
+      const token = await fetchCliToken(config);
+      const response = await fetchJson<{ sessionId: string; events: SweetLinkConsoleDump[] }>(
+        `${config.daemonBaseUrl}/sessions/${encodeURIComponent(resolvedSessionId)}/console`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (options.json) {
+        process.stdout.write(`${JSON.stringify(response.events, null, 2)}\n`);
+        return;
       }
-    );
 
-    if (options.json) {
-      process.stdout.write(`${JSON.stringify(response.events, null, 2)}\n`);
-      return;
-    }
-
-    if (response.events.length === 0) {
-      console.log('No buffered console output.');
-      return;
-    }
-    const limit =
-      typeof options.limit === 'number' && Number.isFinite(options.limit) && options.limit > 0
-        ? Math.floor(options.limit)
-        : null;
-    const events = limit ? response.events.slice(-limit) : response.events;
-    const startIndex = response.events.length - events.length;
-    for (const [offset, event] of events.entries()) {
-      const timestamp = new Date(event.timestamp).toLocaleTimeString();
-      const prefix = `${startIndex + offset + 1}.`;
-      console.log(`${prefix} [${timestamp}] ${event.level}:`, ...event.args);
-    }
-  });
+      if (response.events.length === 0) {
+        console.log("No buffered console output.");
+        return;
+      }
+      const limit =
+        typeof options.limit === "number" && Number.isFinite(options.limit) && options.limit > 0
+          ? Math.floor(options.limit)
+          : null;
+      const events = limit ? response.events.slice(-limit) : response.events;
+      const startIndex = response.events.length - events.length;
+      for (const [offset, event] of events.entries()) {
+        const timestamp = new Date(event.timestamp).toLocaleTimeString();
+        const prefix = `${startIndex + offset + 1}.`;
+        console.log(`${prefix} [${timestamp}] ${event.level}:`, ...event.args);
+      }
+    },
+  );
 
 program
-  .command('open')
+  .command("open")
   .description(`Open ${defaultAppLabel} in Chrome with SweetLink auto-enabled`)
-  .option('-e, --env <env>', 'Environment to open (dev or prod)', 'dev')
-  .option('-p, --path <path>', 'Optional path to append (default "")', '')
-  .option('--url <url>', 'Explicit URL to open (overrides --path and --env)')
-  .option('--controlled', 'Launch Chrome in controlled mode with DevTools enabled', false)
-  .option('--devtools-port <port>', 'Specify DevTools port to use with --controlled', Number)
-  .option('--no-cookie-sync', 'Disable copying cookies from your main Chrome profile into the controlled window', false)
-  .option('--timeout <seconds>', 'Seconds to wait for a SweetLink session (default 15)', Number)
-  .option('--no-devtools', 'Skip DevTools automation when opening in controlled mode')
-  .option('--headless', 'Launch the controlled browser headlessly', false)
-  .option('--foreground', 'Bring the Chrome window to the foreground after opening (macOS only)', false)
+  .option("-e, --env <env>", "Environment to open (dev or prod)", "dev")
+  .option("-p, --path <path>", 'Optional path to append (default "")', "")
+  .option("--url <url>", "Explicit URL to open (overrides --path and --env)")
+  .option("--controlled", "Launch Chrome in controlled mode with DevTools enabled", false)
+  .option("--devtools-port <port>", "Specify DevTools port to use with --controlled", Number)
+  .option(
+    "--no-cookie-sync",
+    "Disable copying cookies from your main Chrome profile into the controlled window",
+    false,
+  )
+  .option("--timeout <seconds>", "Seconds to wait for a SweetLink session (default 15)", Number)
+  .option("--no-devtools", "Skip DevTools automation when opening in controlled mode")
+  .option("--headless", "Launch the controlled browser headlessly", false)
+  .option(
+    "--foreground",
+    "Bring the Chrome window to the foreground after opening (macOS only)",
+    false,
+  )
   .action(async (options: OpenCommandOptions, command: Command) => {
     await runOpenCommand(options, command, program);
   });
 
 program
-  .command('daemon')
-  .description('Launch the SweetLink daemon process')
-  .argument('[args...]', 'Arguments forwarded to sweetlinkd')
+  .command("daemon")
+  .description("Launch the SweetLink daemon process")
+  .argument("[args...]", "Arguments forwarded to sweetlinkd")
   .allowUnknownOption(true)
   .action((_args: string[], command: Command) => {
     runDaemonCommand(command);
   });
 
-async function runOpenCommand(options: OpenCommandOptions, command: Command, rootProgram: Command): Promise<void> {
+async function runOpenCommand(
+  options: OpenCommandOptions,
+  command: Command,
+  rootProgram: Command,
+): Promise<void> {
   const context = buildOpenCommandContext(options, command, rootProgram);
   if (!context.controlled) {
     if (options.devtools === false) {
-      console.log('--no-devtools is ignored when launching an uncontrolled browser window.');
+      console.log("--no-devtools is ignored when launching an uncontrolled browser window.");
     }
     if (options.headless) {
-      console.log('--headless requires --controlled; launching a regular Chrome window instead.');
+      console.log("--headless requires --controlled; launching a regular Chrome window instead.");
     }
   }
   if (context.headless && context.foreground) {
-    console.log('--foreground is ignored in headless mode.');
+    console.log("--foreground is ignored in headless mode.");
   }
-  if (context.env === 'dev') {
+  if (context.env === "dev") {
     await ensureDevStackRunningRuntime(context.targetUrl, {
       repoRoot,
       healthPaths: context.healthCheckPaths ?? undefined,
@@ -506,25 +544,25 @@ async function runOpenCommand(options: OpenCommandOptions, command: Command, roo
 function runDaemonCommand(command: Command): void {
   const parent = command.parent as (Command & { rawArgs?: string[] }) | null;
   const rawArgs = parent?.rawArgs ?? process.argv;
-  const daemonIndex = rawArgs.findIndex((arg: string) => arg === 'daemon');
+  const daemonIndex = rawArgs.findIndex((arg: string) => arg === "daemon");
   const afterDaemon = daemonIndex === -1 ? [] : rawArgs.slice(daemonIndex + 1);
-  const passthroughIndex = afterDaemon.indexOf('--');
+  const passthroughIndex = afterDaemon.indexOf("--");
   const forwarded =
     passthroughIndex >= 0
       ? afterDaemon.slice(passthroughIndex + 1)
-      : (command.args ?? []).filter((value) => typeof value === 'string');
+      : (command.args ?? []).filter((value) => typeof value === "string");
 
-  const child = spawn('sweetlinkd', forwarded, { stdio: 'inherit', env: cloneProcessEnv() });
-  child.on('error', (error: unknown) => {
-    if (isErrnoException(error) && error.code === 'ENOENT') {
+  const child = spawn("sweetlinkd", forwarded, { stdio: "inherit", env: cloneProcessEnv() });
+  child.on("error", (error: unknown) => {
+    if (isErrnoException(error) && error.code === "ENOENT") {
       console.error('Unable to find "sweetlinkd" on PATH. Try `pnpm exec sweetlinkd` instead.');
       process.exitCode = 1;
       return;
     }
-    console.error('Failed to launch sweetlinkd:', extractEventMessage(error));
+    console.error("Failed to launch sweetlinkd:", extractEventMessage(error));
     process.exitCode = 1;
   });
-  child.on('exit', (code) => {
+  child.on("exit", (code) => {
     process.exitCode = code ?? 0;
   });
 }
@@ -532,7 +570,7 @@ function runDaemonCommand(command: Command): void {
 function buildOpenCommandContext(
   options: OpenCommandOptions,
   command: Command,
-  rootProgram: Command
+  rootProgram: Command,
 ): OpenCommandContext {
   const config = resolveConfig(command);
   const env = normalizeOpenCommandEnvironment(options.env);
@@ -540,12 +578,12 @@ function buildOpenCommandContext(
   const parentOptions = readRootProgramOptions(parent);
   const developmentBaseUrl = parentOptions.appUrl;
   const productionBaseUrl = defaultProdAppUrl;
-  const baseUrl = env === 'prod' ? productionBaseUrl : developmentBaseUrl;
+  const baseUrl = env === "prod" ? productionBaseUrl : developmentBaseUrl;
   const explicitTarget = resolveExplicitTargetUrl(options.url);
   const targetUrl = explicitTarget ?? buildOpenCommandTargetUrl(baseUrl, options.path);
   const serverConfig = config.servers[env] ?? null;
   const preferredPort =
-    typeof options.devtoolsPort === 'number' && Number.isFinite(options.devtoolsPort)
+    typeof options.devtoolsPort === "number" && Number.isFinite(options.devtoolsPort)
       ? options.devtoolsPort
       : undefined;
   const controlled = Boolean(options.controlled);
@@ -571,9 +609,9 @@ function buildOpenCommandContext(
   };
 }
 
-function normalizeOpenCommandEnvironment(value?: string): 'dev' | 'prod' {
-  const normalized = (value ?? 'dev').trim().toLowerCase();
-  if (normalized === 'dev' || normalized === 'prod') {
+function normalizeOpenCommandEnvironment(value?: string): "dev" | "prod" {
+  const normalized = (value ?? "dev").trim().toLowerCase();
+  if (normalized === "dev" || normalized === "prod") {
     return normalized;
   }
   throw new Error('Invalid environment. Use "dev" or "prod".');
@@ -587,13 +625,13 @@ function buildOpenCommandTargetUrl(baseUrl: string, rawPath?: string): URL {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to parse base URL "${baseUrl}": ${message}`);
   }
-  targetUrl.searchParams.set('sweetlink', 'auto');
-  const fallbackPath = '/timeline';
+  targetUrl.searchParams.set("sweetlink", "auto");
+  const fallbackPath = "/timeline";
   const trimmedPath = rawPath?.trim();
   const pathSource = trimmedPath && trimmedPath.length > 0 ? trimmedPath : fallbackPath;
-  const [pathPartRaw, queryPart] = pathSource.split('?', 2);
+  const [pathPartRaw, queryPart] = pathSource.split("?", 2);
   const pathPart = pathPartRaw && pathPartRaw.length > 0 ? pathPartRaw : fallbackPath;
-  targetUrl.pathname = pathPart.startsWith('/') ? pathPart : `/${pathPart}`;
+  targetUrl.pathname = pathPart.startsWith("/") ? pathPart : `/${pathPart}`;
   if (queryPart) {
     const extraSearch = new URLSearchParams(queryPart);
     for (const [key, value] of extraSearch.entries()) {
@@ -613,7 +651,7 @@ function resolveExplicitTargetUrl(raw?: string): URL | null {
   }
   try {
     const target = new URL(trimmed);
-    target.searchParams.set('sweetlink', target.searchParams.get('sweetlink') ?? 'auto');
+    target.searchParams.set("sweetlink", target.searchParams.get("sweetlink") ?? "auto");
     return target;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -622,15 +660,15 @@ function resolveExplicitTargetUrl(raw?: string): URL | null {
 }
 
 function resolveCookieSyncPreference(command: Command, cookieSyncOption?: boolean): boolean {
-  const source = command.getOptionValueSource?.('cookieSync');
-  if (source === 'default') {
+  const source = command.getOptionValueSource?.("cookieSync");
+  if (source === "default") {
     return true;
   }
   return cookieSyncOption !== false;
 }
 
 function resolveOpenCommandTimeoutSeconds(value?: number): number {
-  if (typeof value === 'number' && Number.isFinite(value)) {
+  if (typeof value === "number" && Number.isFinite(value)) {
     return Math.max(0, value);
   }
   return 30;
@@ -643,22 +681,28 @@ async function fetchWaitTokenIfNeeded(context: OpenCommandContext): Promise<stri
   try {
     return await fetchCliToken(context.config);
   } catch (error) {
-    console.warn('Unable to fetch CLI token for session wait:', error);
+    console.warn("Unable to fetch CLI token for session wait:", error);
     return null;
   }
 }
 
 async function checkOpenCommandReachability(context: OpenCommandContext): Promise<boolean> {
-  return await isAppReachableRuntime(context.targetUrl.origin, context.healthCheckPaths ?? undefined);
+  return await isAppReachableRuntime(
+    context.targetUrl.origin,
+    context.healthCheckPaths ?? undefined,
+  );
 }
 
 function logOpenCommandReachabilityErrors(context: OpenCommandContext): void {
   console.error(
-    `${context.targetUrl.origin} did not respond. Start ${describeAppForPrompt(context.appLabel)} and retry.`
+    `${context.targetUrl.origin} did not respond. Start ${describeAppForPrompt(context.appLabel)} and retry.`,
   );
 }
 
-async function handleControlledOpen(context: OpenCommandContext, waitToken: string | null): Promise<void> {
+async function handleControlledOpen(
+  context: OpenCommandContext,
+  waitToken: string | null,
+): Promise<void> {
   const reuseResult = context.headless
     ? null
     : await reuseExistingControlledChrome(context.targetUrlString, {
@@ -670,7 +714,9 @@ async function handleControlledOpen(context: OpenCommandContext, waitToken: stri
     await handleControlledReuse(context, waitToken, reuseResult);
     return;
   }
-  console.warn('No reusable controlled Chrome session matched the target; launching a fresh controlled window.');
+  console.warn(
+    "No reusable controlled Chrome session matched the target; launching a fresh controlled window.",
+  );
   await handleControlledLaunch(context, waitToken);
 }
 
@@ -683,7 +729,7 @@ interface ControlledReuseResult {
 async function handleControlledReuse(
   context: OpenCommandContext,
   waitToken: string | null,
-  reuseResult: ControlledReuseResult
+  reuseResult: ControlledReuseResult,
 ): Promise<void> {
   const shouldFocus = context.foreground && !context.headless;
   let deepLinkResult: Awaited<ReturnType<typeof ensureDeepLinkAuthFlow>> | null = null;
@@ -698,34 +744,38 @@ async function handleControlledReuse(
         oauthScriptPath: context.oauthScriptPath,
       });
       if (deepLinkResult.signInClicked) {
-        console.log('Triggered Sweetistics sign-in to reach the deep link.');
+        console.log("Triggered Sweetistics sign-in to reach the deep link.");
       }
       const oauthAttempt = deepLinkResult.oauthAttempt;
       if (oauthAttempt) {
         if (oauthAttempt.handled) {
           console.log(
-            `Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${
-              oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''
-            }.`
+            `Automatically approved the OAuth prompt via ${oauthAttempt.action ?? "click"}${
+              oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ""
+            }.`,
           );
-        } else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
+        } else if (oauthAttempt.reason && oauthAttempt.reason !== "button-not-found") {
           const locationHint =
             oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
-              ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
-              : '';
+              ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? "unknown page"} ${oauthAttempt.url ?? ""})`
+              : "";
           console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
         }
       }
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Deep-link auth flow failed:', error);
+        console.warn("Deep-link auth flow failed:", error);
       }
     }
   } else {
-    console.log('DevTools automation disabled (--no-devtools); skipping telemetry bootstrap and OAuth auto-click.');
+    console.log(
+      "DevTools automation disabled (--no-devtools); skipping telemetry bootstrap and OAuth auto-click.",
+    );
   }
   if (context.enableDevtools && !deepLinkResult?.navigatedToTarget) {
-    console.warn('Deep link did not resolve in reused controlled Chrome; launching a fresh controlled window.');
+    console.warn(
+      "Deep link did not resolve in reused controlled Chrome; launching a fresh controlled window.",
+    );
     const freshContext: OpenCommandContext = {
       ...context,
       preferredPort: undefined,
@@ -735,23 +785,26 @@ async function handleControlledReuse(
   }
   console.log(`Reused controlled Chrome at ${reuseResult.devtoolsUrl} (env: ${context.env}).`);
   if (reuseResult.targetAlreadyOpen) {
-    console.log('Target tab was already open; activated existing page.');
+    console.log("Target tab was already open; activated existing page.");
   } else {
-    console.log('Opened a new tab in the existing controlled Chrome window.');
+    console.log("Opened a new tab in the existing controlled Chrome window.");
   }
   if (context.enableDevtools) {
-    console.log('The screenshot command will continue to use this DevTools instance.');
+    console.log("The screenshot command will continue to use this DevTools instance.");
   }
   if (shouldFocus && context.enableDevtools) {
-    const focused = await focusControlledChromePage(reuseResult.devtoolsUrl, context.targetUrlString);
+    const focused = await focusControlledChromePage(
+      reuseResult.devtoolsUrl,
+      context.targetUrlString,
+    );
     if (!focused && sweetLinkDebug) {
-      console.warn('Unable to focus controlled Chrome window automatically.');
+      console.warn("Unable to focus controlled Chrome window automatically.");
     }
   } else if (context.foreground && !context.enableDevtools) {
-    console.log('--foreground requires DevTools automation; skipping automatic focus.');
+    console.log("--foreground requires DevTools automation; skipping automatic focus.");
   }
   console.log(
-    'Remember this session codename. Run `pnpm sweetlink sessions`, copy the session id or codename, and use that handle for every follow-up command instead of rerunning `pnpm sweetlink open`.'
+    "Remember this session codename. Run `pnpm sweetlink sessions`, copy the session id or codename, and use that handle for every follow-up command instead of rerunning `pnpm sweetlink open`.",
   );
 
   await waitForSessionAfterOpen(context, waitToken, {
@@ -763,25 +816,28 @@ async function handleControlledReuse(
       ? () => triggerSweetLinkCliAuto(reuseResult.devtoolsUrl, context.targetUrlString)
       : undefined,
     failureMessage: context.enableDevtools
-      ? 'Controlled Chrome reused but SweetLink did not register automatically.'
-      : 'Controlled Chrome reused. DevTools automation disabled; verify the session from the UI if SweetLink does not appear.',
+      ? "Controlled Chrome reused but SweetLink did not register automatically."
+      : "Controlled Chrome reused. DevTools automation disabled; verify the session from the UI if SweetLink does not appear.",
   });
 
   await surfaceBlockingDiagnosticsAfterNavigation(
-    'SweetLink open',
+    "SweetLink open",
     context.enableDevtools ? reuseResult.devtoolsUrl : undefined,
-    context.targetUrlString
+    context.targetUrlString,
   );
 }
 
-async function handleControlledLaunch(context: OpenCommandContext, waitToken: string | null): Promise<void> {
+async function handleControlledLaunch(
+  context: OpenCommandContext,
+  waitToken: string | null,
+): Promise<void> {
   const info = await launchControlledChrome(context.targetUrlString, {
     port: context.preferredPort,
     cookieSync: context.shouldSyncCookies,
     headless: context.headless,
     foreground: context.foreground,
   });
-  const userDataDirectoryDisplay = info.userDataDir.replace(os.homedir(), '~');
+  const userDataDirectoryDisplay = info.userDataDir.replace(os.homedir(), "~");
   if (context.enableDevtools) {
     await registerControlledChromeInstance(info.devtoolsUrl, info.userDataDir);
     await cleanupControlledChromeRegistry(info.devtoolsUrl);
@@ -793,62 +849,64 @@ async function handleControlledLaunch(context: OpenCommandContext, waitToken: st
         oauthScriptPath: context.oauthScriptPath,
       });
       if (deepLinkResult.signInClicked) {
-        console.log('Triggered Sweetistics sign-in to reach the deep link.');
+        console.log("Triggered Sweetistics sign-in to reach the deep link.");
       }
       const oauthAttempt = deepLinkResult.oauthAttempt;
       if (oauthAttempt) {
         if (oauthAttempt.handled) {
           console.log(
-            `Automatically approved the OAuth prompt via ${oauthAttempt.action ?? 'click'}${
-              oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ''
-            }.`
+            `Automatically approved the OAuth prompt via ${oauthAttempt.action ?? "click"}${
+              oauthAttempt.clickedText ? ` (${oauthAttempt.clickedText})` : ""
+            }.`,
           );
-        } else if (oauthAttempt.reason && oauthAttempt.reason !== 'button-not-found') {
+        } else if (oauthAttempt.reason && oauthAttempt.reason !== "button-not-found") {
           const locationHint =
             oauthAttempt.url || oauthAttempt.title || oauthAttempt.host
-              ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? 'unknown page'} ${oauthAttempt.url ?? ''})`
-              : '';
+              ? ` (at ${oauthAttempt.title ?? oauthAttempt.host ?? "unknown page"} ${oauthAttempt.url ?? ""})`
+              : "";
           console.log(`OAuth auto-accept skipped: ${oauthAttempt.reason}${locationHint}.`);
         }
       }
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Deep-link auth flow failed:', error);
+        console.warn("Deep-link auth flow failed:", error);
       }
     }
   } else {
-    console.log('DevTools automation disabled (--no-devtools); launched without OAuth auto-click.');
+    console.log("DevTools automation disabled (--no-devtools); launched without OAuth auto-click.");
   }
-  console.log(`Opened controlled Chrome window to ${context.targetUrlString} (env: ${context.env}).`);
+  console.log(
+    `Opened controlled Chrome window to ${context.targetUrlString} (env: ${context.env}).`,
+  );
   console.log(`DevTools endpoint: ${info.devtoolsUrl}`);
   console.log(`User data dir   : ${userDataDirectoryDisplay}`);
   if (context.enableDevtools) {
-    console.log('The screenshot command will auto-detect this DevTools instance.');
+    console.log("The screenshot command will auto-detect this DevTools instance.");
   }
   if (context.headless) {
-    console.log('Running in headless mode (--headless).');
+    console.log("Running in headless mode (--headless).");
   }
   const shouldFocus = context.foreground && !context.headless;
   if (shouldFocus && context.enableDevtools) {
     const focused = await focusControlledChromePage(info.devtoolsUrl, context.targetUrlString);
     if (!focused && sweetLinkDebug) {
-      console.warn('Unable to focus controlled Chrome window automatically.');
+      console.warn("Unable to focus controlled Chrome window automatically.");
     }
   } else if (context.foreground && !context.enableDevtools) {
-    console.log('--foreground requires DevTools automation; skipping automatic focus.');
+    console.log("--foreground requires DevTools automation; skipping automatic focus.");
   }
 
   await waitForSessionAfterOpen(context, waitToken, {
     devtoolsUrl: context.enableDevtools ? info.devtoolsUrl : undefined,
     failureMessage: context.enableDevtools
-      ? 'Controlled Chrome launched but SweetLink did not register automatically; keep the window open and retry from the UI if needed.'
-      : 'Controlled Chrome launched without DevTools automation; complete the login manually if SweetLink does not register.',
+      ? "Controlled Chrome launched but SweetLink did not register automatically; keep the window open and retry from the UI if needed."
+      : "Controlled Chrome launched without DevTools automation; complete the login manually if SweetLink does not register.",
   });
 
   await surfaceBlockingDiagnosticsAfterNavigation(
-    'SweetLink open',
+    "SweetLink open",
     context.enableDevtools ? info.devtoolsUrl : undefined,
-    context.targetUrlString
+    context.targetUrlString,
   );
 }
 
@@ -862,7 +920,7 @@ interface SessionWaitOptions {
 async function waitForSessionAfterOpen(
   context: OpenCommandContext,
   waitToken: string | null,
-  options: SessionWaitOptions
+  options: SessionWaitOptions,
 ): Promise<void> {
   if (!waitToken || context.timeoutSeconds <= 0) {
     return;
@@ -906,14 +964,14 @@ async function waitForSessionAfterOpen(
     try {
       const diagnostics = await collectBootstrapDiagnostics(options.devtoolsUrl, candidates);
       if (diagnostics) {
-        console.warn('SweetLink bootstrap diagnostics (DevTools snapshot):');
-        logBootstrapDiagnostics('SweetLink', diagnostics);
+        console.warn("SweetLink bootstrap diagnostics (DevTools snapshot):");
+        logBootstrapDiagnostics("SweetLink", diagnostics);
       }
     } catch (error) {
-      console.warn('Failed to collect DevTools diagnostics:', error);
+      console.warn("Failed to collect DevTools diagnostics:", error);
     }
 
-    await logPuppeteerPageSnapshot('SweetLink', options.devtoolsUrl, context.targetUrlString);
+    await logPuppeteerPageSnapshot("SweetLink", options.devtoolsUrl, context.targetUrlString);
   }
 }
 
@@ -923,7 +981,7 @@ async function waitForSessionAfterOpen(
 async function surfaceBlockingDiagnosticsAfterNavigation(
   label: string,
   devtoolsUrl: string | undefined,
-  targetUrl: string
+  targetUrl: string,
 ): Promise<void> {
   if (!devtoolsUrl) {
     return;
@@ -936,14 +994,15 @@ async function surfaceBlockingDiagnosticsAfterNavigation(
     if (diagnostics) {
       const bootstrapIncomplete =
         diagnostics.autoFlag !== true ||
-        (typeof diagnostics.sessionStorageAuto === 'string' && diagnostics.sessionStorageAuto.length > 0);
+        (typeof diagnostics.sessionStorageAuto === "string" &&
+          diagnostics.sessionStorageAuto.length > 0);
       const hasBlocking = diagnosticsContainBlockingIssues(diagnostics) || bootstrapIncomplete;
       if (hasBlocking) {
         console.warn(`${label}: detected runtime anomalies after navigation.`);
         logBootstrapDiagnostics(label, diagnostics);
         if (bootstrapIncomplete) {
           console.warn(
-            `${label}: SweetLink bootstrap did not complete (autoFlag=${diagnostics.autoFlag}, sessionStorage=${diagnostics.sessionStorageAuto}).`
+            `${label}: SweetLink bootstrap did not complete (autoFlag=${diagnostics.autoFlag}, sessionStorage=${diagnostics.sessionStorageAuto}).`,
           );
         }
         await logPuppeteerPageSnapshot(label, devtoolsUrl, targetUrl);
@@ -954,7 +1013,7 @@ async function surfaceBlockingDiagnosticsAfterNavigation(
       }
     }
   } catch (error) {
-    console.warn('Failed to collect DevTools diagnostics after navigation:', error);
+    console.warn("Failed to collect DevTools diagnostics after navigation:", error);
   }
 
   if (!loggedBlocking) {
@@ -968,7 +1027,11 @@ async function surfaceBlockingDiagnosticsAfterNavigation(
   }
 }
 
-async function logPuppeteerPageSnapshot(label: string, devtoolsUrl: string, targetUrl: string): Promise<void> {
+async function logPuppeteerPageSnapshot(
+  label: string,
+  devtoolsUrl: string,
+  targetUrl: string,
+): Promise<void> {
   try {
     // Puppeteer fallback gives us raw body text when the DevTools overlay fails to render,
     // which is handy when we're stuck on intermediate screens (e.g., Twitter OAuth).
@@ -982,7 +1045,7 @@ async function logPuppeteerPageSnapshot(label: string, devtoolsUrl: string, targ
     }
     if (snapshot.overlayText) {
       console.warn(`${label} overlay (via Puppeteer):`);
-      for (const line of snapshot.overlayText.split('\n')) {
+      for (const line of snapshot.overlayText.split("\n")) {
         const trimmed = line.trim();
         if (trimmed.length > 0) {
           console.warn(`  ${trimmed}`);
@@ -991,7 +1054,7 @@ async function logPuppeteerPageSnapshot(label: string, devtoolsUrl: string, targ
       return;
     }
     if (snapshot.bodyText && snapshot.bodyText.trim().length > 0) {
-      const condensed = snapshot.bodyText.replaceAll(/\s+/g, ' ').trim();
+      const condensed = snapshot.bodyText.replaceAll(/\s+/g, " ").trim();
       const snippet = condensed.length > 600 ? `${condensed.slice(0, 600)}…` : condensed;
       console.warn(`${label} body text (via Puppeteer): ${snippet}`);
     } else if (!snapshot.overlayText) {
@@ -1002,64 +1065,81 @@ async function logPuppeteerPageSnapshot(label: string, devtoolsUrl: string, targ
   }
 }
 
-async function handleUncontrolledOpen(context: OpenCommandContext, waitToken: string | null): Promise<void> {
+async function handleUncontrolledOpen(
+  context: OpenCommandContext,
+  waitToken: string | null,
+): Promise<void> {
   await launchChrome(context.targetUrlString, { foreground: context.foreground });
   console.log(`Opened Chrome to ${context.targetUrlString} (env: ${context.env}).`);
   await waitForSessionAfterOpen(context, waitToken, {
     failureMessage:
-      'Chrome tab opened but SweetLink did not register within the timeout window. Use `pnpm sweetlink sessions` to inspect manually.',
+      "Chrome tab opened but SweetLink did not register within the timeout window. Use `pnpm sweetlink sessions` to inspect manually.",
   });
 }
 
 program
-  .command('smoke')
-  .description('Run the SweetLink authenticated smoke test across non-admin routes')
-  .option('--session <sessionId>', 'Existing SweetLink session id or codename to reuse')
-  .option('--routes <routes>', `Comma-separated list of routes (default ${DEFAULT_SMOKE_ROUTES.join(', ')})`)
-  .option('--timeout <seconds>', 'Per-route timeout in seconds (default 45)', Number)
-  .option('--resume', 'Resume from the last completed route', false)
+  .command("smoke")
+  .description("Run the SweetLink authenticated smoke test across non-admin routes")
+  .option("--session <sessionId>", "Existing SweetLink session id or codename to reuse")
+  .option(
+    "--routes <routes>",
+    `Comma-separated list of routes (default ${DEFAULT_SMOKE_ROUTES.join(", ")})`,
+  )
+  .option("--timeout <seconds>", "Per-route timeout in seconds (default 45)", Number)
+  .option("--resume", "Resume from the last completed route", false)
   .action(async function (this: Command) {
     const options = readCommandOptions<SmokeCommandOptions>(this);
     const routes = deriveSmokeRoutes(options.routes, DEFAULT_SMOKE_ROUTES);
     if (routes.length === 0) {
-      console.log('No routes specified for the smoke test. Provide --routes or keep the default set.');
+      console.log(
+        "No routes specified for the smoke test. Provide --routes or keep the default set.",
+      );
       return;
     }
     const timeoutSeconds =
-      typeof options.timeout === 'number' && Number.isFinite(options.timeout) ? Math.max(5, options.timeout) : 45;
+      typeof options.timeout === "number" && Number.isFinite(options.timeout)
+        ? Math.max(5, options.timeout)
+        : 45;
     await runSweetLinkSmoke(
       { sessionHint: options.session, routes, timeoutSeconds, resume: options.resume === true },
-      this
+      this,
     );
   });
 
 program
-  .command('screenshot <sessionId>')
-  .description('Capture a JPEG screenshot from a SweetLink session')
-  .option('-s, --selector <selector>', 'CSS selector to capture (defaults to full page)')
-  .option('-q, --quality <0-1>', 'JPEG quality (0-1, default 0.92)', Number)
-  .option('-o, --output <path>', 'Output path (defaults to /tmp/sweetlink-<timestamp>.jpg)')
-  .option('-t, --timeout <ms>', 'Command timeout in milliseconds (default 30_000)', Number, 30_000)
-  .option('--devtools-url <url>', 'DevTools HTTP endpoint (default http://127.0.0.1:9222)')
-  .option('--method <method>', 'Capture method: auto, puppeteer, html2canvas, html-to-image', 'auto')
-  .option('--scroll-into-view', 'Scroll the target into view before capturing', false)
-  .option('--scroll-selector <selector>', 'Selector to scroll into view (defaults to capture selector)')
-  .option('--wait-for-selector <selector>', 'Wait for a selector to appear before capturing')
-  .option('--wait-visible', 'Require the wait selector to be visible', false)
-  .option('--wait-timeout <ms>', 'Timeout for --wait-for-selector (default 10_000)', Number, 10_000)
-  .option('--delay <ms>', 'Delay in milliseconds after hooks run (default 0)', Number)
-  .option('--before-script <codeOrPath>', 'Inline JS (or @path) to run before capture')
+  .command("screenshot <sessionId>")
+  .description("Capture a JPEG screenshot from a SweetLink session")
+  .option("-s, --selector <selector>", "CSS selector to capture (defaults to full page)")
+  .option("-q, --quality <0-1>", "JPEG quality (0-1, default 0.92)", Number)
+  .option("-o, --output <path>", "Output path (defaults to /tmp/sweetlink-<timestamp>.jpg)")
+  .option("-t, --timeout <ms>", "Command timeout in milliseconds (default 30_000)", Number, 30_000)
+  .option("--devtools-url <url>", "DevTools HTTP endpoint (default http://127.0.0.1:9222)")
   .option(
-    '--preset <name>',
-    'Hook preset compatibility alias (card-ready is applied automatically and no longer requires this flag)'
+    "--method <method>",
+    "Capture method: auto, puppeteer, html2canvas, html-to-image",
+    "auto",
   )
-  .option('--prompt <prompt>', 'Send the saved screenshot to Codex for analysis')
-  .addOption(program.createOption('--question <prompt>').hideHelp())
+  .option("--scroll-into-view", "Scroll the target into view before capturing", false)
+  .option(
+    "--scroll-selector <selector>",
+    "Selector to scroll into view (defaults to capture selector)",
+  )
+  .option("--wait-for-selector <selector>", "Wait for a selector to appear before capturing")
+  .option("--wait-visible", "Require the wait selector to be visible", false)
+  .option("--wait-timeout <ms>", "Timeout for --wait-for-selector (default 10_000)", Number, 10_000)
+  .option("--delay <ms>", "Delay in milliseconds after hooks run (default 0)", Number)
+  .option("--before-script <codeOrPath>", "Inline JS (or @path) to run before capture")
+  .option(
+    "--preset <name>",
+    "Hook preset compatibility alias (card-ready is applied automatically and no longer requires this flag)",
+  )
+  .option("--prompt <prompt>", "Send the saved screenshot to Codex for analysis")
+  .addOption(program.createOption("--question <prompt>").hideHelp())
   .action(async (sessionId: string, options: ScreenshotOptions, command: Command) => {
     const config = resolveConfig(command);
     const resolvedSessionId = await resolveSessionIdFromHint(sessionId, config);
     const token = await fetchCliToken(config);
-    const mode = options.selector ? 'element' : 'full';
+    const mode = options.selector ? "element" : "full";
     const prompt = resolvePromptOption(options);
     const suppressOutput = Boolean(prompt);
     const logInfo = (...args: unknown[]) => {
@@ -1071,10 +1151,13 @@ program
     const now = new Date();
     const defaultOutput = path.join(
       os.tmpdir(),
-      `sweetlink-${now.toISOString().replaceAll(':', '-').replaceAll('.', '-')}.jpg`
+      `sweetlink-${now.toISOString().replaceAll(":", "-").replaceAll(".", "-")}.jpg`,
     );
     const outputPath = options.output ? path.resolve(options.output) : defaultOutput;
-    const quality = typeof options.quality === 'number' && !Number.isNaN(options.quality) ? options.quality : 0.92;
+    const quality =
+      typeof options.quality === "number" && !Number.isNaN(options.quality)
+        ? options.quality
+        : 0.92;
     const method = normalizeScreenshotMethod(options.method);
 
     await mkdir(path.dirname(outputPath), { recursive: true }).catch(() => {
@@ -1082,7 +1165,8 @@ program
     });
 
     const devtoolsConfig = await loadDevToolsConfig();
-    const devtoolsUrl = options.devtoolsUrl ?? devtoolsConfig?.devtoolsUrl ?? 'http://127.0.0.1:9222';
+    const devtoolsUrl =
+      options.devtoolsUrl ?? devtoolsConfig?.devtoolsUrl ?? "http://127.0.0.1:9222";
 
     let sessionSummary: SweetLinkSessionSummary | undefined;
     try {
@@ -1091,7 +1175,7 @@ program
       sessionSummary = undefined;
     }
 
-    const wantsPuppeteer = method === 'puppeteer' || method === 'auto';
+    const wantsPuppeteer = method === "puppeteer" || method === "auto";
     if (wantsPuppeteer && sessionSummary?.url) {
       const devtoolsCaptureResult = await attemptDevToolsCapture({
         devtoolsUrl,
@@ -1103,32 +1187,35 @@ program
       });
       if (devtoolsCaptureResult) {
         logInfo(
-          `Saved screenshot to ${outputPath} (${devtoolsCaptureResult.width}x${devtoolsCaptureResult.height}, ${devtoolsCaptureResult.sizeKb.toFixed(1)} KB, method: ${devtoolsCaptureResult.renderer}).`
+          `Saved screenshot to ${outputPath} (${devtoolsCaptureResult.width}x${devtoolsCaptureResult.height}, ${devtoolsCaptureResult.sizeKb.toFixed(1)} KB, method: ${devtoolsCaptureResult.renderer}).`,
         );
-        await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: config.appLabel });
+        await maybeDescribeScreenshot(prompt, outputPath, {
+          silent: suppressOutput,
+          appLabel: config.appLabel,
+        });
         return;
       }
-      if (method === 'puppeteer') {
+      if (method === "puppeteer") {
         throw new Error(
-          'Failed to capture via Puppeteer. Ensure Chrome is running with a DevTools port (try `pnpm sweetlink open --controlled`).'
+          "Failed to capture via Puppeteer. Ensure Chrome is running with a DevTools port (try `pnpm sweetlink open --controlled`).",
         );
       }
     }
 
     const rendererOverride: SweetLinkScreenshotRenderer | undefined =
-      method === 'html2canvas' || method === 'html-to-image' ? method : undefined;
+      method === "html2canvas" || method === "html-to-image" ? method : undefined;
 
     const beforeScriptCode = await resolveHookSnippet(options.beforeScript);
     const commandOptions = readCommandOptions<{ preset?: unknown }>(command);
     const presetCandidate = commandOptions.preset ?? options.preset;
-    const presetRaw = typeof presetCandidate === 'string' ? presetCandidate.trim() : '';
+    const presetRaw = typeof presetCandidate === "string" ? presetCandidate.trim() : "";
     const presetName = presetRaw.toLowerCase();
     if (presetName.length > 0) {
-      if (presetName === 'card-ready') {
+      if (presetName === "card-ready") {
         logInfo('Preset "card-ready" is now the default hook stack; the flag is optional.');
       } else {
         throw new Error(
-          `Screenshot preset "${presetRaw}" is no longer supported. The built-in hooks cover the previous behaviour.`
+          `Screenshot preset "${presetRaw}" is no longer supported. The built-in hooks cover the previous behaviour.`,
         );
       }
     }
@@ -1139,26 +1226,34 @@ program
       waitSelector: options.waitForSelector,
       waitVisible: options.waitVisible === undefined ? undefined : Boolean(options.waitVisible),
       waitTimeout:
-        typeof options.waitTimeout === 'number' && Number.isFinite(options.waitTimeout)
+        typeof options.waitTimeout === "number" && Number.isFinite(options.waitTimeout)
           ? options.waitTimeout
           : undefined,
-      delayMs: typeof options.delay === 'number' && Number.isFinite(options.delay) ? options.delay : undefined,
+      delayMs:
+        typeof options.delay === "number" && Number.isFinite(options.delay)
+          ? options.delay
+          : undefined,
       beforeScript: beforeScriptCode ?? undefined,
     };
 
     const hooks = buildScreenshotHooks(hookOptions);
 
     if (hooks.length > 0) {
-      logInfo(`Applying ${hooks.length} pre-capture hook${hooks.length === 1 ? '' : 's'} before screenshot.`);
+      logInfo(
+        `Applying ${hooks.length} pre-capture hook${hooks.length === 1 ? "" : "s"} before screenshot.`,
+      );
     }
 
     const payload: ScreenshotCommandPayload = {
-      type: 'screenshot',
+      type: "screenshot",
       id: createSweetLinkCommandId(),
       mode,
       selector: options.selector,
       quality,
-      timeoutMs: typeof options.timeout === 'number' && !Number.isNaN(options.timeout) ? options.timeout : 30_000,
+      timeoutMs:
+        typeof options.timeout === "number" && !Number.isNaN(options.timeout)
+          ? options.timeout
+          : 30_000,
       renderer: rendererOverride,
       hooks: hooks.length > 0 ? hooks : undefined,
     };
@@ -1166,13 +1261,13 @@ program
     const response = await fetchJson<{ result: SweetLinkCommandResult }>(
       `${config.daemonBaseUrl}/sessions/${encodeURIComponent(resolvedSessionId)}/command`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      }
+      },
     );
 
     const { result } = response;
@@ -1193,7 +1288,9 @@ program
           return;
         }
 
-        const fallbackError = fallbackOutcome.fallbackResult.ok ? null : fallbackOutcome.fallbackResult.error;
+        const fallbackError = fallbackOutcome.fallbackResult.ok
+          ? null
+          : fallbackOutcome.fallbackResult.error;
         const recovered = await tryDevToolsRecovery({
           sessionUrl: sessionSummary?.url,
           devtoolsUrl,
@@ -1239,33 +1336,36 @@ program
     }
 
     await persistScreenshotResult(outputPath, result, { silent: suppressOutput });
-    await maybeDescribeScreenshot(prompt, outputPath, { silent: suppressOutput, appLabel: config.appLabel });
+    await maybeDescribeScreenshot(prompt, outputPath, {
+      silent: suppressOutput,
+      appLabel: config.appLabel,
+    });
   });
 
 program
-  .command('selectors <sessionId>')
-  .description('Discover candidate selectors within a SweetLink session')
-  .option('-l, --limit <count>', 'Maximum number of candidates to return (default 20)', Number)
-  .option('-m, --max <count>', 'Alias for --limit', Number)
-  .option('--scope <selector>', 'Restrict discovery to elements inside this selector')
-  .option('--include-hidden', 'Include off-screen or hidden elements', false)
-  .option('--json', 'Output JSON payload', false)
+  .command("selectors <sessionId>")
+  .description("Discover candidate selectors within a SweetLink session")
+  .option("-l, --limit <count>", "Maximum number of candidates to return (default 20)", Number)
+  .option("-m, --max <count>", "Alias for --limit", Number)
+  .option("--scope <selector>", "Restrict discovery to elements inside this selector")
+  .option("--include-hidden", "Include off-screen or hidden elements", false)
+  .option("--json", "Output JSON payload", false)
   .action(async (sessionId: string, options: SelectorCommandOptions, command: Command) => {
     const config = resolveConfig(command);
     const resolvedSessionId = await resolveSessionIdFromHint(sessionId, config);
     const token = await fetchCliToken(config);
     const limit = (() => {
-      if (typeof options.max === 'number' && Number.isFinite(options.max)) {
+      if (typeof options.max === "number" && Number.isFinite(options.max)) {
         return Math.max(1, Math.floor(options.max));
       }
-      if (typeof options.limit === 'number' && Number.isFinite(options.limit)) {
+      if (typeof options.limit === "number" && Number.isFinite(options.limit)) {
         return Math.max(1, Math.floor(options.limit));
       }
       return 20;
     })();
 
     const payload = {
-      type: 'discoverSelectors' as const,
+      type: "discoverSelectors" as const,
       id: createSweetLinkCommandId(),
       scopeSelector: options.scope ?? null,
       limit,
@@ -1275,13 +1375,13 @@ program
     const response = await fetchJson<{ result: SweetLinkCommandResult }>(
       `${config.daemonBaseUrl}/sessions/${encodeURIComponent(resolvedSessionId)}/command`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      }
+      },
     );
 
     const { result } = response;
@@ -1305,19 +1405,21 @@ program
     }
 
     if (candidates.length === 0) {
-      console.log('No candidates were discovered. Ensure the target UI is mounted and try again.');
-      console.log('Tip: use --scope to limit discovery or --include-hidden to inspect collapsed panels.');
+      console.log("No candidates were discovered. Ensure the target UI is mounted and try again.");
+      console.log(
+        "Tip: use --scope to limit discovery or --include-hidden to inspect collapsed panels.",
+      );
       return;
     }
 
     console.log(
-      `Discovered ${candidates.length} selector candidate${candidates.length === 1 ? '' : 's'} (limit ${limit}):\n`
+      `Discovered ${candidates.length} selector candidate${candidates.length === 1 ? "" : "s"} (limit ${limit}):\n`,
     );
     for (const candidate of candidates.slice(0, limit)) {
       console.log(`• ${candidate.selector}`);
       console.log(`  Hook     : ${candidate.hook} (score ${candidate.score})`);
       console.log(
-        `  Visible  : ${candidate.visible ? 'yes' : 'no'} (${candidate.size.width}x${candidate.size.height})`
+        `  Visible  : ${candidate.visible ? "yes" : "no"} (${candidate.size.width}x${candidate.size.height})`,
       );
       console.log(`  Text     : ${candidate.textSnippet}`);
       if (candidate.dataTarget) {
@@ -1330,74 +1432,81 @@ program
       }
       console.log(`  Position : x=${candidate.position.left}, y=${candidate.position.top}`);
       console.log(`  Path     : ${candidate.path}`);
-      console.log('');
+      console.log("");
     }
   });
 
-const devtools = program.command('devtools').description('Inspect DevTools-enabled Chrome sessions');
+const devtools = program
+  .command("devtools")
+  .description("Inspect DevTools-enabled Chrome sessions");
 
 devtools
-  .command('status')
-  .description('Show DevTools connection status and telemetry summary')
-  .option('--json', 'Output JSON payload', false)
+  .command("status")
+  .description("Show DevTools connection status and telemetry summary")
+  .option("--json", "Output JSON payload", false)
   .action(async (options: { json?: boolean }, command: Command) => {
     await devtoolsStatus(options, command);
   });
 
 devtools
-  .command('tabs')
-  .description('List open tabs in the controlled Chrome window')
-  .option('--json', 'Output JSON payload', false)
+  .command("tabs")
+  .description("List open tabs in the controlled Chrome window")
+  .option("--json", "Output JSON payload", false)
   .action(async (options: { json?: boolean }) => {
     await devtoolsTabs(options);
   });
 
 devtools
-  .command('console')
-  .description('Print buffered console events from the controlled Chrome window')
-  .option('--tail <count>', 'Number of entries to show (default 50)', Number, 50)
-  .option('--json', 'Output JSON payload', false)
+  .command("console")
+  .description("Print buffered console events from the controlled Chrome window")
+  .option("--tail <count>", "Number of entries to show (default 50)", Number, 50)
+  .option("--json", "Output JSON payload", false)
   .action(async (options: { tail: number; json?: boolean }) => {
     await devtoolsShowConsole(options);
   });
 
 devtools
-  .command('network')
-  .description('Print buffered network requests from the controlled Chrome window')
-  .option('--tail <count>', 'Number of entries to show (default 50)', Number, 50)
-  .option('--json', 'Output JSON payload', false)
+  .command("network")
+  .description("Print buffered network requests from the controlled Chrome window")
+  .option("--tail <count>", "Number of entries to show (default 50)", Number, 50)
+  .option("--json", "Output JSON payload", false)
   .action(async (options: { tail: number; json?: boolean }) => {
     await devtoolsShowNetwork(options);
   });
 
 devtools
-  .command('listen')
-  .description('Attach to DevTools and buffer console/network telemetry locally')
-  .option('--session <sessionId>', 'Associate telemetry with a SweetLink session id')
-  .option('--reset', 'Clear existing telemetry buffers before listening', false)
-  .option('--background', 'Run without interactive prompts (for automation)', false)
-  .action(async (options: { session?: string; reset?: boolean; background?: boolean }, command: Command) => {
-    await devtoolsListen(options, command);
-  });
+  .command("listen")
+  .description("Attach to DevTools and buffer console/network telemetry locally")
+  .option("--session <sessionId>", "Associate telemetry with a SweetLink session id")
+  .option("--reset", "Clear existing telemetry buffers before listening", false)
+  .option("--background", "Run without interactive prompts (for automation)", false)
+  .action(
+    async (
+      options: { session?: string; reset?: boolean; background?: boolean },
+      command: Command,
+    ) => {
+      await devtoolsListen(options, command);
+    },
+  );
 
 devtools
-  .command('authorize')
-  .description('Attempt to auto-click the OAuth authorize prompt in the controlled browser')
-  .option('--url <url>', 'Override the candidate OAuth URL (defaults to the tracked session)')
+  .command("authorize")
+  .description("Attempt to auto-click the OAuth authorize prompt in the controlled browser")
+  .option("--url <url>", "Override the candidate OAuth URL (defaults to the tracked session)")
   .action(async (options: { url?: string }, command: Command) => {
     await devtoolsAuthorize(options, command);
   });
 
-program.hook('preAction', () => {
+program.hook("preAction", () => {
   // Ensure commander does not swallow promise rejections so we can log helpful messages.
-  process.on('unhandledRejection', (error) => {
+  process.on("unhandledRejection", (error) => {
     reportError(error);
     process.exitCode = 1;
   });
 });
 
 program.addHelpText(
-  'afterAll',
+  "afterAll",
   `
 DevTools commands:
   devtools status            Show endpoint reachability, viewport, and buffer sizes
@@ -1406,7 +1515,7 @@ DevTools commands:
   devtools authorize         Force an OAuth authorize click in the active controlled tab
   devtools console [options] Print buffered console events (use --tail / --json)
   devtools network [options] Print buffered network entries (use --tail / --json)
-`
+`,
 );
 
 program.exitOverride();
@@ -1432,20 +1541,20 @@ async function resolveHookSnippet(value?: string): Promise<string | null> {
   if (trimmed.length === 0) {
     return null;
   }
-  if (trimmed.startsWith('@')) {
+  if (trimmed.startsWith("@")) {
     const candidatePath = trimmed.slice(1).trim();
     if (!candidatePath) {
-      throw new Error('Expected a file path after @ for --before-script.');
+      throw new Error("Expected a file path after @ for --before-script.");
     }
     const absolute = path.isAbsolute(candidatePath) ? candidatePath : path.resolve(candidatePath);
-    const hookContents = await readFile(absolute, 'utf8');
+    const hookContents = await readFile(absolute, "utf8");
     return hookContents.toString();
   }
   return trimmed;
 }
 
 export function formatPathForDisplay(value: string): string {
-  return value.replace(os.homedir(), '~');
+  return value.replace(os.homedir(), "~");
 }
 
 function reportError(error: unknown): void {
@@ -1457,7 +1566,7 @@ function reportError(error: unknown): void {
     console.error(error.message);
     return;
   }
-  console.error('Unexpected error', error);
+  console.error("Unexpected error", error);
 }
 
 interface SmokeCommandOptions {
@@ -1487,9 +1596,9 @@ interface ScreenshotOptions {
 }
 
 type ScreenshotCommandPayload = {
-  readonly type: 'screenshot';
+  readonly type: "screenshot";
   readonly id: string;
-  readonly mode: 'full' | 'element';
+  readonly mode: "full" | "element";
   readonly selector?: string;
   readonly quality: number;
   readonly timeoutMs: number;
@@ -1505,32 +1614,34 @@ interface SelectorCommandOptions {
   json?: boolean;
 }
 
-type ScreenshotMethod = 'auto' | 'puppeteer' | 'html2canvas' | 'html-to-image';
+type ScreenshotMethod = "auto" | "puppeteer" | "html2canvas" | "html-to-image";
 
 function normalizeScreenshotMethod(input?: string): ScreenshotMethod {
   if (!input) {
-    return 'auto';
+    return "auto";
   }
   const normalized = input.toLowerCase().trim();
   switch (normalized) {
-    case 'auto': {
-      return 'auto';
+    case "auto": {
+      return "auto";
     }
-    case 'puppeteer': {
-      return 'puppeteer';
+    case "puppeteer": {
+      return "puppeteer";
     }
-    case 'html2canvas':
-    case 'html-2-canvas': {
-      return 'html2canvas';
+    case "html2canvas":
+    case "html-2-canvas": {
+      return "html2canvas";
     }
-    case 'html-to-image':
-    case 'htmltoimage':
-    case 'dom-to-image':
-    case 'domtoimage': {
-      return 'html-to-image';
+    case "html-to-image":
+    case "htmltoimage":
+    case "dom-to-image":
+    case "domtoimage": {
+      return "html-to-image";
     }
     default: {
-      throw new Error('Invalid screenshot method. Use auto, puppeteer, html2canvas, or html-to-image.');
+      throw new Error(
+        "Invalid screenshot method. Use auto, puppeteer, html2canvas, or html-to-image.",
+      );
     }
   }
 }
@@ -1572,13 +1683,13 @@ interface SmokeRouteResult extends SmokeRouteState {
 
 async function resolveSmokePrerequisites(
   params: { sessionHint?: string; timeoutSeconds: number },
-  command: Command
+  command: Command,
 ): Promise<SmokePrerequisites | null> {
   const config = resolveConfig(command);
   const devtoolsConfig = await loadDevToolsConfig();
   if (!devtoolsConfig?.devtoolsUrl) {
     console.error(
-      'DevTools endpoint not found. Launch a controlled Chrome window with `pnpm sweetlink open --controlled` first.'
+      "DevTools endpoint not found. Launch a controlled Chrome window with `pnpm sweetlink open --controlled` first.",
     );
     process.exitCode = 1;
     return null;
@@ -1591,7 +1702,7 @@ async function resolveSmokePrerequisites(
 
   if (!sessionId) {
     console.error(
-      'Unable to determine a SweetLink session. Pass --session or rerun `pnpm sweetlink open --controlled`.'
+      "Unable to determine a SweetLink session. Pass --session or rerun `pnpm sweetlink open --controlled`.",
     );
     process.exitCode = 1;
     return null;
@@ -1601,14 +1712,16 @@ async function resolveSmokePrerequisites(
   try {
     token = await fetchCliToken(config);
   } catch (error) {
-    console.error('Unable to fetch SweetLink CLI token:', extractEventMessage(error));
+    console.error("Unable to fetch SweetLink CLI token:", extractEventMessage(error));
     process.exitCode = 1;
     return null;
   }
 
   const session = await getSessionSummaryById(config, token, sessionId);
   if (!session) {
-    console.error(`SweetLink session ${sessionId} was not found. Reopen the controlled window and retry.`);
+    console.error(
+      `SweetLink session ${sessionId} was not found. Reopen the controlled window and retry.`,
+    );
     process.exitCode = 1;
     return null;
   }
@@ -1635,7 +1748,7 @@ async function determineSmokeStartIndex(options: {
       await clearSmokeProgress(options.baseOrigin, options.routes);
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to clear stored smoke progress before run:', error);
+        console.warn("Failed to clear stored smoke progress before run:", error);
       }
     }
     return 0;
@@ -1643,19 +1756,19 @@ async function determineSmokeStartIndex(options: {
 
   const savedIndex = await loadSmokeProgressIndex(options.baseOrigin, options.routes);
   if (savedIndex === null) {
-    console.log('No prior smoke progress found. Starting from the beginning.');
+    console.log("No prior smoke progress found. Starting from the beginning.");
     return 0;
   }
 
   if (savedIndex >= options.routes.length) {
-    console.log('Previous smoke run completed every route. Starting from the beginning.');
+    console.log("Previous smoke run completed every route. Starting from the beginning.");
     return 0;
   }
 
   if (savedIndex > 0) {
     const resumeRoute = options.routes[savedIndex];
     console.log(
-      `Resuming smoke test from route #${savedIndex + 1} (${resumeRoute}). Run without --resume to start over.`
+      `Resuming smoke test from route #${savedIndex + 1} (${resumeRoute}). Run without --resume to start over.`,
     );
   }
 
@@ -1666,7 +1779,7 @@ async function executeSmokeRoute(
   context: SmokeRouteContext,
   state: SmokeRouteState,
   route: string | undefined,
-  routeIndex: number
+  routeIndex: number,
 ): Promise<SmokeRouteResult> {
   let { session } = state;
   let lastKnownUrl = state.lastKnownUrl;
@@ -1686,13 +1799,13 @@ async function executeSmokeRoute(
       lastKnownUrl,
       failure: {
         route: `#${routeIndex + 1}`,
-        reason: 'Missing route entry in smoke route list.',
+        reason: "Missing route entry in smoke route list.",
       },
     };
   }
 
   const targetUrl = buildSmokeRouteUrl(context.baseUrl, route);
-  const displayPath = `${targetUrl.pathname}${targetUrl.search || ''}`;
+  const displayPath = `${targetUrl.pathname}${targetUrl.search || ""}`;
   console.log(`\n→ ${displayPath}`);
 
   const sessionConnected = await ensureSweetLinkSessionConnected({
@@ -1707,24 +1820,28 @@ async function executeSmokeRoute(
   });
 
   if (!sessionConnected) {
-    console.warn('  Unable to verify active SweetLink session before navigation.');
+    console.warn("  Unable to verify active SweetLink session before navigation.");
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'session unavailable before navigation' },
+      failure: { route: displayPath, reason: "session unavailable before navigation" },
     };
   }
 
   const attemptNavigation = async () => {
-    await navigateSweetLinkSession({ sessionId: activeSessionId, targetUrl, config: context.config });
+    await navigateSweetLinkSession({
+      sessionId: activeSessionId,
+      targetUrl,
+      config: context.config,
+    });
   };
 
   try {
     await attemptNavigation();
   } catch (error) {
-    const reason = extractEventMessage(error, 'navigation failed');
+    const reason = extractEventMessage(error, "navigation failed");
     if (SESSION_RECOVERY_PATTERN.test(reason)) {
-      console.warn('  Session went offline during navigation command. Attempting recovery…');
+      console.warn("  Session went offline during navigation command. Attempting recovery…");
       const recovered = await ensureSweetLinkSessionConnected({
         config: context.config,
         token: context.token,
@@ -1739,7 +1856,7 @@ async function executeSmokeRoute(
         try {
           await attemptNavigation();
         } catch (retryError) {
-          const retryReason = extractEventMessage(retryError, 'navigation failed');
+          const retryReason = extractEventMessage(retryError, "navigation failed");
           console.warn(`  Navigation failed after recovery: ${retryReason}`);
           return { session, lastKnownUrl, failure: { route: displayPath, reason: retryReason } };
         }
@@ -1762,7 +1879,7 @@ async function executeSmokeRoute(
   });
 
   if (!handshake && context.devtoolsUrl) {
-    console.warn('  SweetLink session did not reconnect after navigation. Retrying bootstrap…');
+    console.warn("  SweetLink session did not reconnect after navigation. Retrying bootstrap…");
     await triggerSweetLinkCliAuto(context.devtoolsUrl, targetUrl.toString());
     handshake = await waitForSweetLinkSession({
       config: context.config,
@@ -1783,9 +1900,15 @@ async function executeSmokeRoute(
         candidateUrls: [targetUrl.toString()],
       });
       if (recovered) {
-        const refreshed = await getSessionSummaryById(context.config, context.token, activeSessionId);
+        const refreshed = await getSessionSummaryById(
+          context.config,
+          context.token,
+          activeSessionId,
+        );
         const recoveredUrl =
-          typeof refreshed?.url === 'string' && refreshed.url.length > 0 ? refreshed.url : targetUrl.toString();
+          typeof refreshed?.url === "string" && refreshed.url.length > 0
+            ? refreshed.url
+            : targetUrl.toString();
         handshake = {
           sessionId: activeSessionId,
           url: recoveredUrl,
@@ -1795,11 +1918,11 @@ async function executeSmokeRoute(
   }
 
   if (!handshake) {
-    console.warn('  SweetLink session did not come back online after navigation.');
+    console.warn("  SweetLink session did not come back online after navigation.");
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'session did not reconnect' },
+      failure: { route: displayPath, reason: "session did not reconnect" },
     };
   }
 
@@ -1808,7 +1931,8 @@ async function executeSmokeRoute(
   }
 
   lastKnownUrl = handshake.url ?? targetUrl.toString();
-  session = (await getSessionSummaryById(context.config, context.token, activeSessionId)) ?? session;
+  session =
+    (await getSessionSummaryById(context.config, context.token, activeSessionId)) ?? session;
 
   const diagnostics = await waitForSmokeRouteReady({
     devtoolsUrl: context.devtoolsUrl,
@@ -1817,27 +1941,31 @@ async function executeSmokeRoute(
   });
 
   if (!diagnostics) {
-    console.warn('  Timed out waiting for the route to reach a stable state.');
-    return { session, lastKnownUrl, failure: { route: displayPath, reason: 'timeout awaiting route readiness' } };
+    console.warn("  Timed out waiting for the route to reach a stable state.");
+    return {
+      session,
+      lastKnownUrl,
+      failure: { route: displayPath, reason: "timeout awaiting route readiness" },
+    };
   }
 
-  const finalHref = diagnostics.locationHref ?? 'unknown';
+  const finalHref = diagnostics.locationHref ?? "unknown";
   if (!urlsRoughlyMatch(finalHref, targetUrl.toString())) {
     console.warn(`  Expected ${targetUrl.toString()} but browser reported ${finalHref}.`);
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'unexpected location after navigation' },
+      failure: { route: displayPath, reason: "unexpected location after navigation" },
     };
   }
 
   if (diagnosticsContainBlockingIssues(diagnostics)) {
-    console.warn('  Blocking diagnostics detected while loading the route:');
-    logBootstrapDiagnostics('Smoke', diagnostics);
+    console.warn("  Blocking diagnostics detected while loading the route:");
+    logBootstrapDiagnostics("Smoke", diagnostics);
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'runtime diagnostics reported blocking issues' },
+      failure: { route: displayPath, reason: "runtime diagnostics reported blocking issues" },
     };
   }
 
@@ -1849,27 +1977,27 @@ async function executeSmokeRoute(
 
   const authEvents = newEvents.filter((event) => consoleEventIndicatesAuthIssue(event));
   if (authEvents.length > 0) {
-    console.warn('  Detected authentication failures in the console log:');
+    console.warn("  Detected authentication failures in the console log:");
     for (const event of authEvents.slice(-5)) {
       console.warn(`    ${formatConsoleEventSummary(event)}`);
     }
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'authentication failures detected in console output' },
+      failure: { route: displayPath, reason: "authentication failures detected in console output" },
     };
   }
 
   const runtimeErrorEvents = newEvents.filter((event) => consoleEventIndicatesRuntimeError(event));
   if (runtimeErrorEvents.length > 0) {
-    console.warn('  Detected console errors after the route finished loading:');
+    console.warn("  Detected console errors after the route finished loading:");
     for (const event of runtimeErrorEvents.slice(-5)) {
       console.warn(`    ${formatConsoleEventSummary(event)}`);
     }
     return {
       session,
       lastKnownUrl,
-      failure: { route: displayPath, reason: 'console errors detected after load' },
+      failure: { route: displayPath, reason: "console errors detected after load" },
     };
   }
 
@@ -1877,11 +2005,11 @@ async function executeSmokeRoute(
     await saveSmokeProgressIndex(context.baseOrigin, context.routes, routeIndex + 1);
   } catch (error) {
     if (sweetLinkDebug) {
-      console.warn('Failed to persist smoke progress after route completion:', error);
+      console.warn("Failed to persist smoke progress after route completion:", error);
     }
   }
 
-  console.log('  ✅ Route passed without authentication or runtime errors.');
+  console.log("  ✅ Route passed without authentication or runtime errors.");
 
   return {
     session,
@@ -1892,7 +2020,7 @@ async function executeSmokeRoute(
 
 async function runSweetLinkSmoke(
   params: { sessionHint?: string; routes: string[]; timeoutSeconds: number; resume: boolean },
-  command: Command
+  command: Command,
 ): Promise<void> {
   const prerequisites = await resolveSmokePrerequisites(params, command);
   if (!prerequisites) {
@@ -1915,10 +2043,12 @@ async function runSweetLinkSmoke(
 
   const remainingRouteCount = params.routes.length - startIndex;
   console.log(
-    `Running SweetLink smoke test across ${remainingRouteCount} route${remainingRouteCount === 1 ? '' : 's'} using session ${formatSessionHeadline(initialSession)}.`
+    `Running SweetLink smoke test across ${remainingRouteCount} route${remainingRouteCount === 1 ? "" : "s"} using session ${formatSessionHeadline(initialSession)}.`,
   );
   if (startIndex > 0) {
-    console.log(`Skipping ${startIndex} route${startIndex === 1 ? '' : 's'} that already passed in a previous run.`);
+    console.log(
+      `Skipping ${startIndex} route${startIndex === 1 ? "" : "s"} that already passed in a previous run.`,
+    );
   }
 
   let lastKnownUrl = initialSession.url ?? baseUrl.toString();
@@ -1939,7 +2069,12 @@ async function runSweetLinkSmoke(
   const failures: SmokeFailure[] = [];
   for (let routeIndex = startIndex; routeIndex < params.routes.length; routeIndex += 1) {
     // biome-ignore lint/performance/noAwaitInLoops: smoke routes must execute sequentially to reuse evolving session state.
-    const result = await executeSmokeRoute(context, { session, lastKnownUrl }, params.routes[routeIndex], routeIndex);
+    const result = await executeSmokeRoute(
+      context,
+      { session, lastKnownUrl },
+      params.routes[routeIndex],
+      routeIndex,
+    );
     session = result.session;
     lastKnownUrl = result.lastKnownUrl;
     if (result.failure) {
@@ -1949,12 +2084,14 @@ async function runSweetLinkSmoke(
 
   if (failures.length > 0) {
     console.error(
-      `\nSweetLink smoke test detected issues on ${failures.length} route${failures.length === 1 ? '' : 's'}:`
+      `\nSweetLink smoke test detected issues on ${failures.length} route${failures.length === 1 ? "" : "s"}:`,
     );
     for (const failure of failures) {
       console.error(`  - ${failure.route}: ${failure.reason}`);
     }
-    console.error('Review the diagnostics above, fix the auth flow, and rerun `pnpm sweetlink smoke`.');
+    console.error(
+      "Review the diagnostics above, fix the auth flow, and rerun `pnpm sweetlink smoke`.",
+    );
     if (process.exitCode === undefined || process.exitCode === 0) {
       process.exitCode = 1;
     }
@@ -1963,19 +2100,19 @@ async function runSweetLinkSmoke(
       await clearSmokeProgress(baseOrigin, params.routes);
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to clear smoke progress after successful run:', error);
+        console.warn("Failed to clear smoke progress after successful run:", error);
       }
     }
-    console.log('\nSweetLink smoke test passed for all routes.');
+    console.log("\nSweetLink smoke test passed for all routes.");
   }
 }
 
 function extractPathSegments(routePath: string): string[] {
   const normalized = trimTrailingSlash(routePath);
-  if (normalized === '/' || normalized.length === 0) {
+  if (normalized === "/" || normalized.length === 0) {
     return [];
   }
-  return normalized.replace(LEADING_SLASH_PATTERN, '').split('/');
+  return normalized.replace(LEADING_SLASH_PATTERN, "").split("/");
 }
 
 function suffixSegmentsAllowed(segments: string[]): boolean {
@@ -1996,7 +2133,7 @@ export const __sweetlinkCliTestHelpers = {
 };
 
 /* biome-ignore lint/performance/noBarrelFile: CLI entrypoint intentionally re-exports runtime helpers for compatibility. */
-export { diagnosticsContainBlockingIssues, logBootstrapDiagnostics } from './runtime/devtools.js';
+export { diagnosticsContainBlockingIssues, logBootstrapDiagnostics } from "./runtime/devtools.js";
 export {
   buildClickScript,
   fetchConsoleEvents,
@@ -2004,7 +2141,7 @@ export {
   formatSessionHeadline,
   resolvePromptOption,
   resolveSessionIdFromHint,
-} from './runtime/session.js';
+} from "./runtime/session.js";
 
 function urlsRoughlyMatch(a: string, b: string): boolean {
   const urlA = normalizeUrlForMatch(a);
@@ -2036,7 +2173,9 @@ function urlsRoughlyMatch(a: string, b: string): boolean {
 async function devtoolsAuthorize(options: { url?: string }, command: Command): Promise<void> {
   const devtoolsConfig = await loadDevToolsConfig();
   if (!devtoolsConfig?.devtoolsUrl) {
-    console.log('No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.');
+    console.log(
+      "No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.",
+    );
     return;
   }
 
@@ -2071,14 +2210,14 @@ async function devtoolsAuthorize(options: { url?: string }, command: Command): P
       }
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to inspect DevTools tabs for authorize command:', error);
+        console.warn("Failed to inspect DevTools tabs for authorize command:", error);
       }
     }
   }
 
   if (!sessionUrl) {
     console.error(
-      'Unable to determine which tab contains the OAuth consent screen. Pass --url <authorizeUrl> to override.'
+      "Unable to determine which tab contains the OAuth consent screen. Pass --url <authorizeUrl> to override.",
     );
     if (process.exitCode === undefined) {
       process.exitCode = 1;
@@ -2094,19 +2233,21 @@ async function devtoolsAuthorize(options: { url?: string }, command: Command): P
     });
     if (result.handled) {
       console.log(
-        `Authorize prompt handled via ${result.action ?? 'click'}${
-          result.clickedText ? ` (${result.clickedText})` : ''
-        }.`
+        `Authorize prompt handled via ${result.action ?? "click"}${
+          result.clickedText ? ` (${result.clickedText})` : ""
+        }.`,
       );
     } else {
-      const reason = result.reason ?? 'no authorize button detected';
+      const reason = result.reason ?? "no authorize button detected";
       console.log(`Authorize prompt not handled automatically (${reason}).`);
-      if (reason === 'requires-login') {
-        console.log('Twitter login inputs detected. Complete login manually and rerun the command.');
+      if (reason === "requires-login") {
+        console.log(
+          "Twitter login inputs detected. Complete login manually and rerun the command.",
+        );
       }
     }
   } catch (error) {
-    console.error('Failed to trigger OAuth authorize automation:', extractEventMessage(error));
+    console.error("Failed to trigger OAuth authorize automation:", extractEventMessage(error));
     if (process.exitCode === undefined) {
       process.exitCode = 1;
     }
@@ -2116,14 +2257,19 @@ async function devtoolsAuthorize(options: { url?: string }, command: Command): P
 async function devtoolsStatus(options: { json?: boolean }, command: Command): Promise<void> {
   const config = await loadDevToolsConfig();
   if (!config) {
-    console.log('No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.');
+    console.log(
+      "No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.",
+    );
     return;
   }
 
   let reachable: boolean | undefined;
   let tabs: Array<{ id: string; title: string; url: string; type?: string }> = [];
   try {
-    const response = await fetch(`${config.devtoolsUrl.replace(TRAILING_SLASH_PATTERN, '')}/json/version`, { method: 'GET' });
+    const response = await fetch(
+      `${config.devtoolsUrl.replace(TRAILING_SLASH_PATTERN, "")}/json/version`,
+      { method: "GET" },
+    );
     if (response.ok) {
       reachable = true;
       tabs = await fetchDevToolsTabs(config.devtoolsUrl);
@@ -2171,7 +2317,7 @@ async function devtoolsStatus(options: { json?: boolean }, command: Command): Pr
     return;
   }
 
-  const reachabilityLabel = isReachable ? 'reachable' : 'offline';
+  const reachabilityLabel = isReachable ? "reachable" : "offline";
   console.log(`DevTools endpoint : ${config.devtoolsUrl} (${reachabilityLabel})`);
   console.log(`Last updated      : ${new Date(config.updatedAt).toISOString()}`);
   if (config.viewport) {
@@ -2180,7 +2326,9 @@ async function devtoolsStatus(options: { json?: boolean }, command: Command): Pr
   }
   console.log(`Tabs              : ${tabs.length}`);
   if (matchedSessionId) {
-    console.log(`Linked session    : ${matchedSessionId}${matchedSessionTitle ? ` (${matchedSessionTitle})` : ''}`);
+    console.log(
+      `Linked session    : ${matchedSessionId}${matchedSessionTitle ? ` (${matchedSessionTitle})` : ""}`,
+    );
   }
   console.log(`Console buffer    : ${state?.console.length ?? 0} entries`);
   console.log(`Network buffer    : ${state?.network.length ?? 0} entries`);
@@ -2192,7 +2340,9 @@ async function devtoolsStatus(options: { json?: boolean }, command: Command): Pr
 async function devtoolsTabs(options: { json?: boolean }): Promise<void> {
   const config = await loadDevToolsConfig();
   if (!config) {
-    console.log('No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.');
+    console.log(
+      "No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.",
+    );
     return;
   }
 
@@ -2203,25 +2353,27 @@ async function devtoolsTabs(options: { json?: boolean }): Promise<void> {
   }
 
   if (tabs.length === 0) {
-    console.log('No tabs reported by DevTools.');
+    console.log("No tabs reported by DevTools.");
     return;
   }
 
   for (const tab of tabs) {
-    console.log(`• ${tab.title || '(untitled)'}`);
+    console.log(`• ${tab.title || "(untitled)"}`);
     console.log(`  URL : ${tab.url}`);
     console.log(`  ID  : ${tab.id}`);
     if (tab.type) {
       console.log(`  Type: ${tab.type}`);
     }
-    console.log('');
+    console.log("");
   }
 }
 
 async function devtoolsShowConsole(options: { tail: number; json?: boolean }): Promise<void> {
   const state = await loadDevToolsState();
   if (!state || state.console.length === 0) {
-    console.log('No console events recorded. Run `pnpm sweetlink devtools listen` to start capturing telemetry.');
+    console.log(
+      "No console events recorded. Run `pnpm sweetlink devtools listen` to start capturing telemetry.",
+    );
     return;
   }
 
@@ -2235,19 +2387,21 @@ async function devtoolsShowConsole(options: { tail: number; json?: boolean }): P
 
   for (const entry of entries) {
     const timestamp = new Date(entry.ts).toISOString();
-    let location = '';
+    let location = "";
     if (entry.location?.url) {
-      const lineSuffix = entry.location.lineNumber === undefined ? '' : `:${entry.location.lineNumber}`;
-      const columnSuffix = entry.location.columnNumber === undefined ? '' : `:${entry.location.columnNumber}`;
+      const lineSuffix =
+        entry.location.lineNumber === undefined ? "" : `:${entry.location.lineNumber}`;
+      const columnSuffix =
+        entry.location.columnNumber === undefined ? "" : `:${entry.location.columnNumber}`;
       location = ` (${entry.location.url}${lineSuffix}${columnSuffix})`;
     }
-    let argsSuffix = '';
+    let argsSuffix = "";
     if (entry.args.length > 0) {
       const formattedArgs: string[] = [];
       for (const value of entry.args) {
         formattedArgs.push(formatConsoleArg(value));
       }
-      argsSuffix = ` ${formattedArgs.join(' ')}`;
+      argsSuffix = ` ${formattedArgs.join(" ")}`;
     }
     console.log(`[${timestamp}] ${entry.type}: ${entry.text}${argsSuffix}${location}`);
   }
@@ -2256,7 +2410,9 @@ async function devtoolsShowConsole(options: { tail: number; json?: boolean }): P
 async function devtoolsShowNetwork(options: { tail: number; json?: boolean }): Promise<void> {
   const state = await loadDevToolsState();
   if (!state || state.network.length === 0) {
-    console.log('No network entries recorded. Run `pnpm sweetlink devtools listen` to start capturing telemetry.');
+    console.log(
+      "No network entries recorded. Run `pnpm sweetlink devtools listen` to start capturing telemetry.",
+    );
     return;
   }
 
@@ -2270,21 +2426,23 @@ async function devtoolsShowNetwork(options: { tail: number; json?: boolean }): P
 
   for (const entry of entries) {
     const timestamp = new Date(entry.ts).toISOString();
-    const status = entry.status === undefined ? (entry.failureText ?? 'failed') : entry.status;
-    const type = entry.resourceType ? ` [${entry.resourceType}]` : '';
+    const status = entry.status === undefined ? (entry.failureText ?? "failed") : entry.status;
+    const type = entry.resourceType ? ` [${entry.resourceType}]` : "";
     console.log(`[${timestamp}] ${entry.method} ${status} ${entry.url}${type}`);
   }
 }
 
 async function devtoolsListen(
   options: { session?: string; reset?: boolean; background?: boolean },
-  command: Command
+  command: Command,
 ): Promise<void> {
   const background = Boolean(options.background);
   const config = await loadDevToolsConfig();
   if (!config) {
     if (!background) {
-      console.log('No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.');
+      console.log(
+        "No DevTools session detected. Launch Chrome with `pnpm sweetlink open --controlled` first.",
+      );
     }
     return;
   }
@@ -2293,11 +2451,11 @@ async function devtoolsListen(
     try {
       await rm(DEVTOOLS_STATE_PATH, { force: true });
       if (!background) {
-        console.log('Cleared cached DevTools telemetry state.');
+        console.log("Cleared cached DevTools telemetry state.");
       }
     } catch (error) {
-      if (!isErrnoException(error) || error.code !== 'ENOENT') {
-        console.warn('Failed to reset DevTools state:', error);
+      if (!isErrnoException(error) || error.code !== "ENOENT") {
+        console.warn("Failed to reset DevTools state:", error);
       }
     }
   }
@@ -2314,10 +2472,10 @@ async function devtoolsListen(
     try {
       await saveDevToolsState(state);
     } catch (error) {
-      console.warn('Failed to persist reset DevTools state:', error);
+      console.warn("Failed to persist reset DevTools state:", error);
     }
     if (!background) {
-      console.log('Reset complete. Re-run without --reset to resume live capture.');
+      console.log("Reset complete. Re-run without --reset to resume live capture.");
     }
     return;
   }
@@ -2334,7 +2492,7 @@ async function devtoolsListen(
     try {
       await saveDevToolsConfig({ devtoolsUrl: config.devtoolsUrl, sessionId });
     } catch (error) {
-      logDebugError('Failed to persist DevTools session binding', error);
+      logDebugError("Failed to persist DevTools session binding", error);
     }
   }
 
@@ -2346,8 +2504,10 @@ async function devtoolsListen(
   try {
     ({ browser, page } = await connectToDevTools(config));
   } catch (error) {
-    console.error('Failed to connect to the DevTools endpoint:', extractEventMessage(error));
-    console.error('Hint: ensure a controlled Chrome window is running via `pnpm sweetlink open --controlled`.');
+    console.error("Failed to connect to the DevTools endpoint:", extractEventMessage(error));
+    console.error(
+      "Hint: ensure a controlled Chrome window is running via `pnpm sweetlink open --controlled`.",
+    );
     process.exitCode = 1;
     return;
   }
@@ -2360,7 +2520,7 @@ async function devtoolsListen(
   try {
     await saveDevToolsConfig({ devtoolsUrl: config.devtoolsUrl, viewport });
   } catch (error) {
-    logDebugError('Failed to persist DevTools viewport configuration', error);
+    logDebugError("Failed to persist DevTools viewport configuration", error);
   }
 
   const flush = async () => {
@@ -2377,7 +2537,7 @@ async function devtoolsListen(
       timer = setTimeout(() => {
         timer = null;
         flush().catch((error) => {
-          console.warn('Failed to persist DevTools telemetry:', error);
+          console.warn("Failed to persist DevTools telemetry:", error);
         });
       }, 300);
     };
@@ -2385,7 +2545,7 @@ async function devtoolsListen(
 
   const attachListeners = (p: Page) => {
     // Capture console and network events for the page and trim buffers as they grow.
-    p.on('console', (message: ConsoleMessage) => {
+    p.on("console", (message: ConsoleMessage) => {
       const persistConsole = async () => {
         const entry = await serializeConsoleMessage(message);
         devtoolsState.console.push(entry);
@@ -2393,11 +2553,11 @@ async function devtoolsListen(
         scheduleFlush();
       };
       persistConsole().catch((error) => {
-        console.warn('Failed to serialize console message:', error);
+        console.warn("Failed to serialize console message:", error);
       });
     });
 
-    p.on('requestfinished', (request: Request) => {
+    p.on("requestfinished", (request: Request) => {
       const persistNetworkEntry = async () => {
         const response = await request.response();
         const entry = createNetworkEntryFromRequest(request, response?.status());
@@ -2406,13 +2566,17 @@ async function devtoolsListen(
         scheduleFlush();
       };
       persistNetworkEntry().catch((error) => {
-        console.warn('Failed to serialize network request:', error);
+        console.warn("Failed to serialize network request:", error);
       });
     });
 
-    p.on('requestfailed', (request: Request) => {
+    p.on("requestfailed", (request: Request) => {
       const failure = request.failure();
-      const entry = createNetworkEntryFromRequest(request, undefined, failure?.errorText ?? 'failed');
+      const entry = createNetworkEntryFromRequest(
+        request,
+        undefined,
+        failure?.errorText ?? "failed",
+      );
       devtoolsState.network.push(entry);
       trimBuffer(devtoolsState.network, DEVTOOLS_NETWORK_LIMIT);
       scheduleFlush();
@@ -2421,12 +2585,12 @@ async function devtoolsListen(
 
   attachListeners(page);
   const context = page.context();
-  context.on('page', (newPage: Page) => {
+  context.on("page", (newPage: Page) => {
     attachListeners(newPage);
   });
 
   if (!background) {
-    console.log('Listening for console and network events… Press Ctrl+C to stop.');
+    console.log("Listening for console and network events… Press Ctrl+C to stop.");
   }
 
   const shutdown = async () => {
@@ -2434,30 +2598,30 @@ async function devtoolsListen(
       await flush();
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to flush DevTools state during shutdown.', error);
+        console.warn("Failed to flush DevTools state during shutdown.", error);
       }
     }
     try {
       await browser.close();
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to close DevTools browser during shutdown.', error);
+        console.warn("Failed to close DevTools browser during shutdown.", error);
       }
     }
     process.exit(0);
   };
 
-  process.once('SIGINT', () => {
+  process.once("SIGINT", () => {
     shutdown().catch((error) => {
       if (sweetLinkDebug) {
-        console.warn('Graceful shutdown after SIGINT failed:', error);
+        console.warn("Graceful shutdown after SIGINT failed:", error);
       }
     });
   });
-  process.once('SIGTERM', () => {
+  process.once("SIGTERM", () => {
     shutdown().catch((error) => {
       if (sweetLinkDebug) {
-        console.warn('Graceful shutdown after SIGTERM failed:', error);
+        console.warn("Graceful shutdown after SIGTERM failed:", error);
       }
     });
   });
@@ -2467,7 +2631,10 @@ async function devtoolsListen(
   });
 }
 
-async function resolveDevToolsSessionId(config: DevToolsConfig, command: Command): Promise<string | undefined> {
+async function resolveDevToolsSessionId(
+  config: DevToolsConfig,
+  command: Command,
+): Promise<string | undefined> {
   try {
     const cliConfig = resolveConfig(command);
     if (!cliConfig.adminApiKey) {
@@ -2485,7 +2652,7 @@ async function resolveDevToolsSessionId(config: DevToolsConfig, command: Command
 function findBestSessionMatch(
   sessions: readonly SweetLinkSessionSummary[],
   config: DevToolsConfig,
-  hint?: string | null
+  hint?: string | null,
 ): SweetLinkSessionSummary | undefined {
   if (hint) {
     const existing = sessions.find((session) => session.sessionId === hint);

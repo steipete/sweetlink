@@ -1,6 +1,6 @@
-import { getBrowserWindow } from '../utils/environment.js';
-import { isRecord } from '../utils/object.js';
-const STORAGE_KEY = 'sweetlink:last-session';
+import { getBrowserWindow } from "../utils/environment.js";
+import { isRecord } from "../utils/object.js";
+const STORAGE_KEY = "sweetlink:last-session";
 const EXPIRY_SAFETY_MARGIN_MS = 5000;
 const hasSessionStorage = (windowRef) => {
     if (!windowRef) {
@@ -22,12 +22,14 @@ const parseStoredValue = (raw) => {
         if (!isRecord(parsed)) {
             return null;
         }
-        const sessionId = typeof parsed.sessionId === 'string' ? parsed.sessionId : null;
-        const sessionToken = typeof parsed.sessionToken === 'string' ? parsed.sessionToken : null;
-        const socketUrl = typeof parsed.socketUrl === 'string' ? parsed.socketUrl : null;
-        const expiresAtMs = typeof parsed.expiresAtMs === 'number' && Number.isFinite(parsed.expiresAtMs) ? parsed.expiresAtMs : null;
-        const codename = typeof parsed.codename === 'string' ? parsed.codename : null;
-        if (!((sessionId && sessionToken) && socketUrl)) {
+        const sessionId = typeof parsed.sessionId === "string" ? parsed.sessionId : null;
+        const sessionToken = typeof parsed.sessionToken === "string" ? parsed.sessionToken : null;
+        const socketUrl = typeof parsed.socketUrl === "string" ? parsed.socketUrl : null;
+        const expiresAtMs = typeof parsed.expiresAtMs === "number" && Number.isFinite(parsed.expiresAtMs)
+            ? parsed.expiresAtMs
+            : null;
+        const codename = typeof parsed.codename === "string" ? parsed.codename : null;
+        if (!(sessionId && sessionToken && socketUrl)) {
             return null;
         }
         return {
@@ -74,7 +76,7 @@ const updateStoredSessionCodename = (codename, windowRef) => {
     if (!current) {
         return;
     }
-    const normalizedCodename = typeof codename === 'string' && codename.trim().length > 0 ? codename.trim() : null;
+    const normalizedCodename = typeof codename === "string" && codename.trim().length > 0 ? codename.trim() : null;
     if (current.codename === normalizedCodename) {
         return;
     }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const noop = () => {
   /* suppress console noise */
@@ -12,7 +12,7 @@ const delayMock = vi.fn().mockResolvedValue(undefined);
 
 const connectMock = vi.fn();
 
-vi.mock('puppeteer', () => ({
+vi.mock("puppeteer", () => ({
   default: { connect: connectMock },
 }));
 
@@ -29,13 +29,13 @@ const buildDeps = () => ({
   delay: delayMock,
 });
 
-const { primeControlledChromeCookies } = await import('../../../../src/runtime/chrome/cookies');
+const { primeControlledChromeCookies } = await import("../../../../src/runtime/chrome/cookies");
 
 beforeEach(() => {
   collectChromeCookiesMock.mockReset();
-  collectChromeCookiesMock.mockResolvedValue([{ name: 'auth', value: '1' }]);
+  collectChromeCookiesMock.mockResolvedValue([{ name: "auth", value: "1" }]);
   buildOriginsMock.mockReset();
-  buildOriginsMock.mockReturnValue(['https://example.dev']);
+  buildOriginsMock.mockReturnValue(["https://example.dev"]);
   resolvePageMock.mockReset();
   navigatePageMock.mockReset();
   waitForReadyMock.mockReset();
@@ -46,57 +46,57 @@ beforeEach(() => {
 });
 
 const createPage = () => {
-  const cookiesMock = vi.fn().mockResolvedValue([{ name: 'session', value: '123' }]);
+  const cookiesMock = vi.fn().mockResolvedValue([{ name: "session", value: "123" }]);
   return {
-    url: () => 'https://example.dev/app',
+    url: () => "https://example.dev/app",
     setCookie: vi.fn().mockResolvedValue(undefined),
     cookies: cookiesMock,
-  } as unknown as import('puppeteer').Page;
+  } as unknown as import("puppeteer").Page;
 };
 
-describe('primeControlledChromeCookies', () => {
-  it('returns early when no cookies are collected', async () => {
+describe("primeControlledChromeCookies", () => {
+  it("returns early when no cookies are collected", async () => {
     collectChromeCookiesMock.mockResolvedValue([]);
 
     await primeControlledChromeCookies(
       {
-        devtoolsUrl: 'http://localhost:9222',
-        targetUrl: 'https://example.dev/app',
+        devtoolsUrl: "http://localhost:9222",
+        targetUrl: "https://example.dev/app",
         reload: false,
-        context: 'new-tab',
+        context: "new-tab",
       },
-      buildDeps()
+      buildDeps(),
     );
 
     expect(connectMock).not.toHaveBeenCalled();
   });
 
-  it('warns when Puppeteer cannot connect', async () => {
-    collectChromeCookiesMock.mockResolvedValue([{ name: 'auth', value: '1' }]);
-    connectMock.mockRejectedValue(new Error('offline'));
+  it("warns when Puppeteer cannot connect", async () => {
+    collectChromeCookiesMock.mockResolvedValue([{ name: "auth", value: "1" }]);
+    connectMock.mockRejectedValue(new Error("offline"));
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(noop);
 
     await primeControlledChromeCookies(
       {
-        devtoolsUrl: 'http://localhost:9222',
-        targetUrl: 'https://example.dev/app',
+        devtoolsUrl: "http://localhost:9222",
+        targetUrl: "https://example.dev/app",
         reload: false,
-        context: 'new-tab',
+        context: "new-tab",
       },
-      buildDeps()
+      buildDeps(),
     );
 
     expect(warnSpy).toHaveBeenCalledWith(
-      'Unable to attach to controlled Chrome for cookie priming:',
-      expect.any(Error)
+      "Unable to attach to controlled Chrome for cookie priming:",
+      expect.any(Error),
     );
     warnSpy.mockRestore();
   });
 
-  it('applies cookies, verifies sync, and reloads when requested', async () => {
-    collectChromeCookiesMock.mockResolvedValue([{ name: 'auth', value: '1' }]);
-    buildOriginsMock.mockReturnValue(['https://example.dev']);
+  it("applies cookies, verifies sync, and reloads when requested", async () => {
+    collectChromeCookiesMock.mockResolvedValue([{ name: "auth", value: "1" }]);
+    buildOriginsMock.mockReturnValue(["https://example.dev"]);
     const page = createPage();
     resolvePageMock.mockResolvedValue(page);
     waitForReadyMock.mockResolvedValue(undefined);
@@ -109,16 +109,16 @@ describe('primeControlledChromeCookies', () => {
 
     await primeControlledChromeCookies(
       {
-        devtoolsUrl: 'http://localhost:9222',
-        targetUrl: 'https://example.dev/app',
+        devtoolsUrl: "http://localhost:9222",
+        targetUrl: "https://example.dev/app",
         reload: true,
-        context: 'existing-tab',
+        context: "existing-tab",
       },
-      buildDeps()
+      buildDeps(),
     );
 
-    expect(page.setCookie).toHaveBeenCalledWith({ name: 'auth', value: '1' });
-    expect(page.cookies).toHaveBeenCalledWith('https://example.dev');
+    expect(page.setCookie).toHaveBeenCalledWith({ name: "auth", value: "1" });
+    expect(page.cookies).toHaveBeenCalledWith("https://example.dev");
     expect(attemptReloadMock).toHaveBeenCalled();
     expect(disconnectMock).toHaveBeenCalled();
   });

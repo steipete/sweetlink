@@ -1,9 +1,9 @@
-import { loadDefaultExportFromUrl } from '../module-loader.js';
-import { discoverSelectorCandidates } from '../selector-discovery.js';
-import { CONSOLE_LEVELS, getConsoleMethod, setConsoleMethod } from '../utils/console.js';
-import { getBrowserWindow } from '../utils/environment.js';
-import { toError } from '../utils/errors.js';
-import { sanitizeResult } from '../utils/sanitize.js';
+import { loadDefaultExportFromUrl } from "../module-loader.js";
+import { discoverSelectorCandidates } from "../selector-discovery.js";
+import { CONSOLE_LEVELS, getConsoleMethod, setConsoleMethod } from "../utils/console.js";
+import { getBrowserWindow } from "../utils/environment.js";
+import { toError } from "../utils/errors.js";
+import { sanitizeResult } from "../utils/sanitize.js";
 export function createCommandExecutor(context) {
     return {
         execute: (command) => executeCommand(command, context),
@@ -13,22 +13,22 @@ function executeCommand(command, context) {
     const started = performance.now();
     try {
         switch (command.type) {
-            case 'runScript': {
+            case "runScript": {
                 return runScriptCommand(command, started);
             }
-            case 'getDom': {
+            case "getDom": {
                 return runGetDomCommand(command, started);
             }
-            case 'navigate': {
+            case "navigate": {
                 return runNavigateCommand(command, started);
             }
-            case 'ping': {
+            case "ping": {
                 return runPingCommand(command, started);
             }
-            case 'screenshot': {
+            case "screenshot": {
                 return runScreenshotCommand(command, started, context);
             }
-            case 'discoverSelectors': {
+            case "discoverSelectors": {
                 return runSelectorDiscoveryCommand(command, started);
             }
             default: {
@@ -59,7 +59,7 @@ async function runScriptCommand(command, started) {
         ${command.code}
       }
     `;
-        const blob = new Blob([moduleSource], { type: 'text/javascript' });
+        const blob = new Blob([moduleSource], { type: "text/javascript" });
         const moduleUrl = URL.createObjectURL(blob);
         let runner;
         try {
@@ -68,8 +68,8 @@ async function runScriptCommand(command, started) {
         finally {
             URL.revokeObjectURL(moduleUrl);
         }
-        if (typeof runner !== 'function') {
-            throw new TypeError('Injected script did not export a runnable function');
+        if (typeof runner !== "function") {
+            throw new TypeError("Injected script did not export a runnable function");
         }
         const execute = runner;
         const resultValue = await execute(getBrowserWindow() ?? window, document, console);
@@ -162,7 +162,7 @@ async function runScreenshotCommand(command, started, context) {
     let targetInfo = context.screenshotHooks.resolveTarget(command);
     try {
         await context.screenshotHooks.applyPreHooks(command, targetInfo);
-        if (command.mode === 'element') {
+        if (command.mode === "element") {
             targetInfo = context.screenshotHooks.resolveTarget(command);
         }
         const data = await context.screenshotHooks.captureScreenshot(command, targetInfo);
@@ -191,7 +191,7 @@ function interceptConsole(buffer) {
     const consoleWithLevels = console;
     for (const level of CONSOLE_LEVELS) {
         const originalFunction = getConsoleMethod(consoleWithLevels, level);
-        if (typeof originalFunction !== 'function') {
+        if (typeof originalFunction !== "function") {
             continue;
         }
         original.set(level, originalFunction);

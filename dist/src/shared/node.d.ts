@@ -4,7 +4,7 @@ export interface ResolveSweetLinkSecretOptions {
 }
 export interface SweetLinkSecretResolution {
     readonly secret: string;
-    readonly source: 'env' | 'file' | 'generated';
+    readonly source: "env" | "file" | "generated";
     readonly path?: string;
 }
 export declare function resolveSweetLinkSecret(options?: ResolveSweetLinkSecretOptions): Promise<SweetLinkSecretResolution>;

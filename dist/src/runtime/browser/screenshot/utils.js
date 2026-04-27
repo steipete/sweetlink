@@ -1,13 +1,13 @@
-import { regex } from 'arkregex';
-import { compact } from 'es-toolkit';
-import { loadDomToImageFromScript } from '../dom-to-image-loader.js';
-import { toError } from '../utils/errors.js';
+import { regex } from "arkregex";
+import { compact } from "es-toolkit";
+import { loadDomToImageFromScript } from "../dom-to-image-loader.js";
+import { toError } from "../utils/errors.js";
 let domToImagePromise = null;
-let html2canvasColorPatchState = 'unpatched';
+let html2canvasColorPatchState = "unpatched";
 const patchedCssWindows = new WeakSet();
 const browserWindow = globalThis.window ?? null;
-const SAFE_CSS_PROPERTY_PATTERN = regex.as('^[a-z-]+$', 'i');
-const OKLCH_PATTERN = regex.as('okl(?:ab|ch)', 'i');
+const SAFE_CSS_PROPERTY_PATTERN = regex.as("^[a-z-]+$", "i");
+const OKLCH_PATTERN = regex.as("okl(?:ab|ch)", "i");
 const WHITESPACE_SPLIT_PATTERN = regex.as(String.raw `\s+`);
 const TRAILING_ZERO_PATTERN = regex.as(String.raw `\.0+$`);
 const noop = () => {
@@ -22,9 +22,9 @@ export const recordScreenshotError = (kind, error) => {
     clientWindow.__sweetlinkScreenshotErrors[kind] = toError(error).message;
 };
 const isSafeCssProperty = (property) => {
-    const normalizedProperty = typeof property === 'string' ? property : String(property);
+    const normalizedProperty = typeof property === "string" ? property : String(property);
     return (SAFE_CSS_PROPERTY_PATTERN.test(normalizedProperty) ||
-        String.prototype.startsWith.call(normalizedProperty, '--'));
+        String.prototype.startsWith.call(normalizedProperty, "--"));
 };
 export function loadDomToImage() {
     if (domToImagePromise) {
@@ -33,34 +33,34 @@ export function loadDomToImage() {
     const resolveModule = async () => {
         try {
             const loadedModule = await loadDomToImageFromScript();
-            if (typeof loadedModule.toJpeg === 'function') {
+            if (typeof loadedModule.toJpeg === "function") {
                 return loadedModule;
             }
         }
         catch (error) {
-            recordScreenshotError('domToImage', error);
-            console.warn('[SweetLink] Failed to load dom-to-image-more via script:', error);
+            recordScreenshotError("domToImage", error);
+            console.warn("[SweetLink] Failed to load dom-to-image-more via script:", error);
         }
         const globalAny = browserWindow
             ? browserWindow
             : null;
         const fallback = globalAny?.domToImage ?? globalAny?.domtoimage ?? globalAny?.domtoImage;
-        if (fallback && typeof fallback.toJpeg === 'function') {
+        if (fallback && typeof fallback.toJpeg === "function") {
             return fallback;
         }
-        throw new Error('dom-to-image-more is unavailable; ensure it is installed or exposed globally as domtoimage');
+        throw new Error("dom-to-image-more is unavailable; ensure it is installed or exposed globally as domtoimage");
     };
     domToImagePromise = resolveModule();
     return domToImagePromise;
 }
 export function patchHtml2canvasColorParser(html2canvasModule) {
-    if (html2canvasColorPatchState === 'patched') {
+    if (html2canvasColorPatchState === "patched") {
         return;
     }
     const moduleAny = html2canvasModule;
     const colorApi = moduleAny.Color ?? moduleAny.default?.Color;
-    if (!colorApi || typeof colorApi.parse !== 'function') {
-        html2canvasColorPatchState = 'patched';
+    if (!colorApi || typeof colorApi.parse !== "function") {
+        html2canvasColorPatchState = "patched";
         return;
     }
     // html2canvas bails as soon as its colour parser sees OKLAB/OKLCH tokens. Wrap the parser and
@@ -78,19 +78,20 @@ export function patchHtml2canvasColorParser(html2canvasModule) {
             throw error;
         }
     };
-    html2canvasColorPatchState = 'patched';
+    html2canvasColorPatchState = "patched";
 }
 function ensureCssGetPropertyValuePatched(contextWindow) {
     if (patchedCssWindows.has(contextWindow)) {
         return;
     }
-    const cssDeclaration = contextWindow.CSSStyleDeclaration;
+    const cssDeclaration = contextWindow
+        .CSSStyleDeclaration;
     if (!cssDeclaration) {
         patchedCssWindows.add(contextWindow);
         return;
     }
     const proto = cssDeclaration.prototype;
-    if (typeof proto.getPropertyValue !== 'function') {
+    if (typeof proto.getPropertyValue !== "function") {
         patchedCssWindows.add(contextWindow);
         return;
     }
@@ -118,32 +119,32 @@ export function normalizeOklchColors(root, contextDocument = document) {
         return noop;
     }
     const properties = [
-        'color',
-        'background-color',
-        'background',
-        'background-image',
-        'border-top-color',
-        'border-right-color',
-        'border-bottom-color',
-        'border-left-color',
-        'outline-color',
-        'text-decoration-color',
-        'box-shadow',
-        'text-shadow',
-        'column-rule-color',
-        'caret-color',
-        'fill',
-        'stroke',
+        "color",
+        "background-color",
+        "background",
+        "background-image",
+        "border-top-color",
+        "border-right-color",
+        "border-bottom-color",
+        "border-left-color",
+        "outline-color",
+        "text-decoration-color",
+        "box-shadow",
+        "text-shadow",
+        "column-rule-color",
+        "caret-color",
+        "fill",
+        "stroke",
     ];
     const documentElement = contextDocument.documentElement;
     const elements = root === documentElement
-        ? [documentElement, ...contextDocument.querySelectorAll('*')]
-        : [root, ...root.querySelectorAll('*')];
-    const sandbox = contextDocument.createElement('span');
-    sandbox.style.position = 'absolute';
-    sandbox.style.visibility = 'hidden';
-    sandbox.style.pointerEvents = 'none';
-    sandbox.style.zIndex = '-1';
+        ? [documentElement, ...contextDocument.querySelectorAll("*")]
+        : [root, ...root.querySelectorAll("*")];
+    const sandbox = contextDocument.createElement("span");
+    sandbox.style.position = "absolute";
+    sandbox.style.visibility = "hidden";
+    sandbox.style.pointerEvents = "none";
+    sandbox.style.zIndex = "-1";
     body.append(sandbox);
     const revertStyles = [];
     for (const element of elements) {
@@ -151,7 +152,7 @@ export function normalizeOklchColors(root, contextDocument = document) {
         const customProperties = [];
         for (let index = 0; index < computed.length; index += 1) {
             const name = computed.item(index);
-            if (name.startsWith('--')) {
+            if (name.startsWith("--")) {
                 customProperties.push(name);
             }
         }
@@ -161,7 +162,7 @@ export function normalizeOklchColors(root, contextDocument = document) {
                 continue;
             }
             const lowerValue = currentValue.toLowerCase();
-            if (!(lowerValue.includes('oklch') || lowerValue.includes('oklab'))) {
+            if (!(lowerValue.includes("oklch") || lowerValue.includes("oklab"))) {
                 continue;
             }
             const converted = replaceOkColorFunctions(currentValue);
@@ -176,12 +177,13 @@ export function normalizeOklchColors(root, contextDocument = document) {
                 continue;
             }
             const resolvedLower = resolved.toLowerCase();
-            if (resolvedLower.includes('oklch') || resolvedLower.includes('oklab')) {
+            if (resolvedLower.includes("oklch") || resolvedLower.includes("oklab")) {
                 continue;
             }
             const inlineValue = element.style.getPropertyValue(property);
             const inlinePriority = element.style.getPropertyPriority(property);
-            if (inlineValue === resolved && inlinePriority === element.style.getPropertyPriority(property)) {
+            if (inlineValue === resolved &&
+                inlinePriority === element.style.getPropertyPriority(property)) {
                 continue;
             }
             revertStyles.push(() => {
@@ -226,14 +228,14 @@ export function normalizeOklchColors(root, contextDocument = document) {
     };
 }
 function replaceOkColorFunctions(input) {
-    let result = '';
+    let result = "";
     let cursor = 0;
     let changed = false;
     const lower = input.toLowerCase();
     while (cursor < input.length) {
         const nextIndex = (() => {
-            const oklchIndex = lower.indexOf('oklch(', cursor);
-            const oklabIndex = lower.indexOf('oklab(', cursor);
+            const oklchIndex = lower.indexOf("oklch(", cursor);
+            const oklabIndex = lower.indexOf("oklab(", cursor);
             if (oklchIndex === -1) {
                 return oklabIndex;
             }
@@ -246,17 +248,17 @@ function replaceOkColorFunctions(input) {
             result += input.slice(cursor);
             break;
         }
-        const token = lower.startsWith('oklch(', nextIndex) ? 'oklch' : 'oklab';
+        const token = lower.startsWith("oklch(", nextIndex) ? "oklch" : "oklab";
         const openIndex = nextIndex + token.length;
         result += input.slice(cursor, nextIndex);
         let end = openIndex + 1;
         let depth = 1;
         while (end < input.length && depth > 0) {
             const char = input.charAt(end);
-            if (char === '(') {
+            if (char === "(") {
                 depth += 1;
             }
-            else if (char === ')') {
+            else if (char === ")") {
                 depth -= 1;
             }
             end += 1;
@@ -265,7 +267,7 @@ function replaceOkColorFunctions(input) {
             return null;
         }
         const inside = input.slice(openIndex + 1, end - 1);
-        const replacement = token === 'oklch' ? convertOklchToRgb(inside) : convertOklabToRgb(inside);
+        const replacement = token === "oklch" ? convertOklchToRgb(inside) : convertOklabToRgb(inside);
         if (replacement) {
             result += replacement;
             changed = true;
@@ -276,9 +278,9 @@ function replaceOkColorFunctions(input) {
         cursor = end;
     }
     let output = result;
-    const colorMixPattern = regex.as(String.raw `color-mix\(\s*in\s+okl(?:ab|ch)`, 'gi');
+    const colorMixPattern = regex.as(String.raw `color-mix\(\s*in\s+okl(?:ab|ch)`, "gi");
     if (colorMixPattern.test(output)) {
-        output = output.replaceAll(colorMixPattern, (segment) => segment.replace(OKLCH_PATTERN, 'srgb'));
+        output = output.replaceAll(colorMixPattern, (segment) => segment.replace(OKLCH_PATTERN, "srgb"));
         changed = true;
     }
     if (!changed || output === input) {
@@ -287,8 +289,8 @@ function replaceOkColorFunctions(input) {
     return output;
 }
 function convertOklchToRgb(payload) {
-    const [colorPartRaw, alphaPartRaw] = payload.split('/');
-    const colorPart = colorPartRaw?.trim() ?? '';
+    const [colorPartRaw, alphaPartRaw] = payload.split("/");
+    const colorPart = colorPartRaw?.trim() ?? "";
     if (!colorPart) {
         return null;
     }
@@ -296,7 +298,7 @@ function convertOklchToRgb(payload) {
     if (components.length < 3) {
         return null;
     }
-    const [lightnessToken = '', chromaToken = '', hueToken = ''] = components;
+    const [lightnessToken = "", chromaToken = "", hueToken = ""] = components;
     const lightness = parseOklchComponent(lightnessToken, { isPercentage: true });
     const chroma = parseOklchComponent(chromaToken, { clampZero: true });
     const hue = parseHueComponent(hueToken);
@@ -311,11 +313,11 @@ function convertOklchToRgb(payload) {
     if (alpha >= 0.999) {
         return `rgb(${String(r)}, ${String(g)}, ${String(b)})`;
     }
-    return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${alpha.toFixed(3).replace(TRAILING_ZERO_PATTERN, '')})`;
+    return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${alpha.toFixed(3).replace(TRAILING_ZERO_PATTERN, "")})`;
 }
 function convertOklabToRgb(payload) {
-    const [colorPartRaw, alphaPartRaw] = payload.split('/');
-    const colorPart = colorPartRaw?.trim() ?? '';
+    const [colorPartRaw, alphaPartRaw] = payload.split("/");
+    const colorPart = colorPartRaw?.trim() ?? "";
     if (!colorPart) {
         return null;
     }
@@ -323,7 +325,7 @@ function convertOklabToRgb(payload) {
     if (components.length < 3) {
         return null;
     }
-    const [lightnessToken = '', aToken = '', bToken = ''] = components;
+    const [lightnessToken = "", aToken = "", bToken = ""] = components;
     const lightness = parseOklchComponent(lightnessToken, { isPercentage: true });
     const aComponent = parseOklabComponent(aToken);
     const bComponent = parseOklabComponent(bToken);
@@ -338,12 +340,12 @@ function convertOklabToRgb(payload) {
     if (alpha >= 0.999) {
         return `rgb(${String(r)}, ${String(g)}, ${String(b)})`;
     }
-    return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${alpha.toFixed(3).replace(TRAILING_ZERO_PATTERN, '')})`;
+    return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${alpha.toFixed(3).replace(TRAILING_ZERO_PATTERN, "")})`;
 }
 function parseOklchComponent(value, options) {
     const trimmed = value.toLowerCase();
     let numeric;
-    if (trimmed.endsWith('%')) {
+    if (trimmed.endsWith("%")) {
         const parsed = Number.parseFloat(trimmed.slice(0, -1));
         if (Number.isNaN(parsed)) {
             return null;
@@ -370,7 +372,7 @@ function parseOklabComponent(value) {
     if (!trimmed) {
         return null;
     }
-    if (trimmed.endsWith('%')) {
+    if (trimmed.endsWith("%")) {
         const parsed = Number.parseFloat(trimmed.slice(0, -1));
         if (Number.isNaN(parsed)) {
             return null;
@@ -389,19 +391,19 @@ function parseFloatOrNull(input) {
 }
 function parseHueComponent(value) {
     const trimmed = value.trim().toLowerCase();
-    if (trimmed.endsWith('deg')) {
+    if (trimmed.endsWith("deg")) {
         const parsed = parseFloatOrNull(trimmed.slice(0, -3));
         return parsed === null ? null : parsed;
     }
-    if (trimmed.endsWith('grad')) {
+    if (trimmed.endsWith("grad")) {
         const parsed = parseFloatOrNull(trimmed.slice(0, -4));
         return parsed === null ? null : parsed * (9 / 10);
     }
-    if (trimmed.endsWith('rad')) {
+    if (trimmed.endsWith("rad")) {
         const parsed = parseFloatOrNull(trimmed.slice(0, -3));
         return parsed === null ? null : (parsed * 180) / Math.PI;
     }
-    if (trimmed.endsWith('turn')) {
+    if (trimmed.endsWith("turn")) {
         const parsed = parseFloatOrNull(trimmed.slice(0, -4));
         return parsed === null ? null : parsed * 360;
     }
@@ -410,7 +412,7 @@ function parseHueComponent(value) {
 }
 function parseAlphaComponent(value) {
     const trimmed = value.trim();
-    if (trimmed.endsWith('%')) {
+    if (trimmed.endsWith("%")) {
         const parsed = Number.parseFloat(trimmed.slice(0, -1));
         if (Number.isNaN(parsed)) {
             return null;

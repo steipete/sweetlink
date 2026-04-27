@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2023"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -30,147 +26,61 @@
         "name": "next"
       }
     ],
-    "types": [
-      "node"
-    ],
-    "typeRoots": [
-      "./src/types",
-      "./node_modules/@types"
-    ],
+    "types": ["node"],
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     "tsBuildInfoFile": ".cache/tsbuildinfo",
     "paths": {
-      "@/lib/validation/transformers": [
-        "./src/lib/validation/transformers.ts"
-      ],
-      "he": [
-        "./src/types/he"
-      ],
-      "@sweetistics/contracts": [
-        "./packages/contracts/src/index.browser.ts"
-      ],
-      "@sweetistics/contracts/*": [
-        "./packages/contracts/src/*.ts"
-      ],
-      "@sweetistics/contracts/utils": [
-        "./packages/contracts/src/utils/index.ts"
-      ],
-      "@sweetistics/contracts/utils/*": [
-        "./packages/contracts/src/utils/*"
-      ],
-      "@sweetlink/shared": [
-        "./apps/sweetlink/shared/src/index.ts"
-      ],
-      "@sweetlink/shared/*": [
-        "./apps/sweetlink/shared/src/*"
-      ],
-      "@sweetlink/shared/node": [
-        "./apps/sweetlink/shared/src/node.ts"
-      ],
-      "@sweetistics/twitter-graphql": [
-        "./packages/twitter-graphql/src/index.ts"
-      ],
-      "@/lib/inngest/queue": [
-        "./src/lib/inngest/queue"
-      ],
-      "@/lib/test-context": [
-        "./src/lib/test-context"
-      ],
-      "@/lib/jobs/user-analysis": [
-        "./src/lib/jobs/user-analysis"
-      ],
-      "@/lib/better-stack-logger": [
-        "./src/lib/better-stack-logger.ts"
-      ],
-      "@/lib/logger-core.node": [
-        "./src/lib/logger-core.node.ts"
-      ],
-      "@/lib/logger": [
-        "./src/lib/logger.ts"
-      ],
-      "@/mocks/data/offline-app-data": [
-        "./src/mocks/data/offline-app-data.ts"
-      ],
-      "@/mocks/data/twitter-snapshots": [
-        "./src/mocks/data/twitter-snapshots.ts"
-      ],
-      "@/server/trpc/core": [
-        "./src/server/trpc/core"
-      ],
-      "@/db/schema": [
-        "./src/db/schema"
-      ],
+      "@/lib/validation/transformers": ["./src/lib/validation/transformers.ts"],
+      "he": ["./src/types/he"],
+      "@sweetistics/contracts": ["./packages/contracts/src/index.browser.ts"],
+      "@sweetistics/contracts/*": ["./packages/contracts/src/*.ts"],
+      "@sweetistics/contracts/utils": ["./packages/contracts/src/utils/index.ts"],
+      "@sweetistics/contracts/utils/*": ["./packages/contracts/src/utils/*"],
+      "@sweetlink/shared": ["./apps/sweetlink/shared/src/index.ts"],
+      "@sweetlink/shared/*": ["./apps/sweetlink/shared/src/*"],
+      "@sweetlink/shared/node": ["./apps/sweetlink/shared/src/node.ts"],
+      "@sweetistics/twitter-graphql": ["./packages/twitter-graphql/src/index.ts"],
+      "@/lib/inngest/queue": ["./src/lib/inngest/queue"],
+      "@/lib/test-context": ["./src/lib/test-context"],
+      "@/lib/jobs/user-analysis": ["./src/lib/jobs/user-analysis"],
+      "@/lib/better-stack-logger": ["./src/lib/better-stack-logger.ts"],
+      "@/lib/logger-core.node": ["./src/lib/logger-core.node.ts"],
+      "@/lib/logger": ["./src/lib/logger.ts"],
+      "@/mocks/data/offline-app-data": ["./src/mocks/data/offline-app-data.ts"],
+      "@/mocks/data/twitter-snapshots": ["./src/mocks/data/twitter-snapshots.ts"],
+      "@/server/trpc/core": ["./src/server/trpc/core"],
+      "@/db/schema": ["./src/db/schema"],
       "@sweetistics/test-utils/environment": [
         "./packages/test-utils/src/environment.ts",
         "./packages/test-utils/dist/environment.js"
       ],
-      "@/lib/server-runtime-guard": [
-        "./src/lib/server-runtime-guard.ts"
-      ],
-      "@/domains/*": [
-        "./src/domains/*"
-      ],
-      "@/db/server": [
-        "./src/test-support/browser/db-server.ts"
-      ],
-      "@/lib/server-runtime-guard/browser": [
-        "./src/test-support/browser/server-runtime-guard.ts"
-      ],
-      "@/*": [
-        "./src/*"
-      ],
-      "*": [
-        "./*"
-      ],
-      "@/tests/app-support": [
-        "./tests/app-support/index.ts"
-      ],
-      "@/tests/app-support/*": [
-        "./tests/app-support/*"
-      ],
+      "@/lib/server-runtime-guard": ["./src/lib/server-runtime-guard.ts"],
+      "@/domains/*": ["./src/domains/*"],
+      "@/db/server": ["./src/test-support/browser/db-server.ts"],
+      "@/lib/server-runtime-guard/browser": ["./src/test-support/browser/server-runtime-guard.ts"],
+      "@/*": ["./src/*"],
+      "*": ["./*"],
+      "@/tests/app-support": ["./tests/app-support/index.ts"],
+      "@/tests/app-support/*": ["./tests/app-support/*"],
       "@sweetistics/test-utils": [
         "./packages/test-utils/src/index.ts",
         "./packages/test-utils/dist/index.js"
       ],
-      "@sweetistics/test-utils/*": [
-        "./packages/test-utils/src/*",
-        "./packages/test-utils/dist/*"
-      ],
-      "@tests/*": [
-        "./tests/*"
-      ],
-      "@chrome-extension/*": [
-        "./apps/chrome-extension/src/*"
-      ],
-      "@scripts/*": [
-        "./scripts/*"
-      ],
-      "@sweetlink-app": [
-        "./apps/sweetlink/src/index.ts"
-      ],
-      "@sweetlink-app/*": [
-        "./apps/sweetlink/src/*"
-      ],
-      "@mobile": [
-        "./apps/mobile/src/index.ts"
-      ],
-      "@mobile/*": [
-        "./apps/mobile/src/*"
-      ],
+      "@sweetistics/test-utils/*": ["./packages/test-utils/src/*", "./packages/test-utils/dist/*"],
+      "@tests/*": ["./tests/*"],
+      "@chrome-extension/*": ["./apps/chrome-extension/src/*"],
+      "@scripts/*": ["./scripts/*"],
+      "@sweetlink-app": ["./apps/sweetlink/src/index.ts"],
+      "@sweetlink-app/*": ["./apps/sweetlink/src/*"],
+      "@mobile": ["./apps/mobile/src/index.ts"],
+      "@mobile/*": ["./apps/mobile/src/*"],
       "@sweetistics/test-utils/testing-library": [
         "./packages/test-utils/src/testing-library.ts",
         "./packages/test-utils/dist/testing-library/index.js"
       ],
-      "@sweetistics/tweets": [
-        "./packages/tweets/src/index.ts",
-        "./packages/tweets/dist/index.js"
-      ],
-      "@sweetistics/tweets/*": [
-        "./packages/tweets/src/*",
-        "./packages/tweets/dist/*"
-      ],
-      "@/types/app-router": [
-        "./src/types/app-router.ts"
-      ],
+      "@sweetistics/tweets": ["./packages/tweets/src/index.ts", "./packages/tweets/dist/index.js"],
+      "@sweetistics/tweets/*": ["./packages/tweets/src/*", "./packages/tweets/dist/*"],
+      "@/types/app-router": ["./src/types/app-router.ts"],
       "@sweetistics/trpc-shared/workspace": [
         "./packages/trpc-shared/src/workspace-client-types.ts"
       ],

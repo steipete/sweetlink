@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 type RuntimeImporter = (specifier: string) => Promise<unknown>;
 
@@ -9,7 +9,7 @@ const getRuntimeImporter = (): RuntimeImporter => {
     // Turbopack tries to statically analyse bare dynamic imports and treats blob URLs as <dynamic> modules.
     // Wrapping the import call in a Function keeps it purely runtime so blob-based scripts bypass module resolution.
     // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    runtimeImporter = new Function('specifier', 'return import(specifier);') as RuntimeImporter;
+    runtimeImporter = new Function("specifier", "return import(specifier);") as RuntimeImporter;
   }
   return runtimeImporter;
 };

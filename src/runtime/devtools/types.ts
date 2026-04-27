@@ -1,5 +1,5 @@
-import type { Browser, Page } from 'playwright-core';
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer';
+import type { Browser, Page } from "playwright-core";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
 
 export interface SweetLinkBootstrapDiagnostics {
   readyState?: string;
@@ -20,7 +20,7 @@ export interface SweetLinkBootstrapDiagnostics {
   nextRouteError?: { message?: string | null; digest?: string | null } | null;
 }
 
-export type BootstrapDiagnosticError = NonNullable<SweetLinkBootstrapDiagnostics['errors']>[number];
+export type BootstrapDiagnosticError = NonNullable<SweetLinkBootstrapDiagnostics["errors"]>[number];
 
 export interface DevToolsTabEntry {
   id: string;
@@ -51,8 +51,15 @@ export interface SweetLinkOauthAuthorizeContext {
   readonly evaluateInDevToolsTab: (targetUrl: string, expression: string) => Promise<unknown>;
   readonly urlsRoughlyMatch: (candidate: string, target: string) => boolean;
   readonly connectPuppeteer: (attempts?: number) => Promise<PuppeteerBrowser | null>;
-  readonly resolvePuppeteerPage: (browser: PuppeteerBrowser, targetUrl: string) => Promise<PuppeteerPage | null>;
-  readonly navigatePuppeteerPage: (page: PuppeteerPage, targetUrl: string, attempts?: number) => Promise<boolean>;
+  readonly resolvePuppeteerPage: (
+    browser: PuppeteerBrowser,
+    targetUrl: string,
+  ) => Promise<PuppeteerPage | null>;
+  readonly navigatePuppeteerPage: (
+    page: PuppeteerPage,
+    targetUrl: string,
+    attempts?: number,
+  ) => Promise<boolean>;
   readonly waitForPageReady: (page: PuppeteerPage) => Promise<void>;
   readonly delay: (milliseconds: number) => Promise<void>;
   readonly logDebugError: (message: string, error?: unknown) => void;
@@ -60,6 +67,6 @@ export interface SweetLinkOauthAuthorizeContext {
 
 export interface SweetLinkOauthAutomation {
   authorize(
-    context: SweetLinkOauthAuthorizeContext
+    context: SweetLinkOauthAuthorizeContext,
   ): Promise<TwitterOauthAutoAcceptResult> | TwitterOauthAutoAcceptResult;
 }

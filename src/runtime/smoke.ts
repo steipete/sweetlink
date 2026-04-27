@@ -1,27 +1,31 @@
-import { regex } from 'arkregex';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
-import { compact, uniq } from 'es-toolkit';
-import { loadSweetLinkFileConfig } from '../core/config-file.js';
-import { sweetLinkDebug } from '../env.js';
-import type { CliConfig } from '../types.js';
-import { describeUnknown, isErrnoException } from '../util/errors.js';
-import { delay } from '../util/time.js';
+import { regex } from "arkregex";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { compact, uniq } from "es-toolkit";
+import { loadSweetLinkFileConfig } from "../core/config-file.js";
+import { sweetLinkDebug } from "../env.js";
+import type { CliConfig } from "../types.js";
+import { describeUnknown, isErrnoException } from "../util/errors.js";
+import { delay } from "../util/time.js";
 import {
   collectBootstrapDiagnostics,
   diagnosticsContainBlockingIssues,
   evaluateInDevToolsTab,
   type SweetLinkBootstrapDiagnostics,
-} from './devtools.js';
-import type { SweetLinkConsoleDump } from './session.js';
-import { executeRunScriptCommand, fetchSessionSummaries, getSessionSummaryById } from './session.js';
-import { buildWaitCandidateUrls, configurePathRedirects, urlsRoughlyMatch } from './url.js';
+} from "./devtools.js";
+import type { SweetLinkConsoleDump } from "./session.js";
+import {
+  executeRunScriptCommand,
+  fetchSessionSummaries,
+  getSessionSummaryById,
+} from "./session.js";
+import { buildWaitCandidateUrls, configurePathRedirects, urlsRoughlyMatch } from "./url.js";
 
-const ABSOLUTE_URL_PATTERN = regex.as('^https?:', 'i');
+const ABSOLUTE_URL_PATTERN = regex.as("^https?:", "i");
 
 const normalizeRouteList = (input: unknown): string[] => {
-  if (typeof input === 'string') {
+  if (typeof input === "string") {
     const trimmed = input.trim();
     return trimmed.length > 0 ? [trimmed] : [];
   }
@@ -30,17 +34,19 @@ const normalizeRouteList = (input: unknown): string[] => {
   }
   return compact(
     input.map((route) => {
-      if (typeof route !== 'string') {
+      if (typeof route !== "string") {
         return null;
       }
       const trimmed = route.trim();
       return trimmed.length > 0 ? trimmed : null;
-    })
+    }),
   );
 };
 
-const normalizeSmokePresets = (presets: Record<string, unknown> | undefined): Record<string, string[]> => {
-  if (!presets || typeof presets !== 'object') {
+const normalizeSmokePresets = (
+  presets: Record<string, unknown> | undefined,
+): Record<string, string[]> => {
+  if (!presets || typeof presets !== "object") {
     return {};
   }
   const result: Record<string, string[]> = {};
@@ -53,7 +59,7 @@ const normalizeSmokePresets = (presets: Record<string, unknown> | undefined): Re
   return result;
 };
 
-const SMOKE_PROGRESS_PATH = path.join(os.homedir(), '.sweetlink', 'smoke-progress.json');
+const SMOKE_PROGRESS_PATH = path.join(os.homedir(), ".sweetlink", "smoke-progress.json");
 
 type SmokeProgressEntry = {
   readonly baseOrigin: string;
@@ -67,20 +73,20 @@ type SmokeProgressFile = {
 };
 
 const builtinSmokePresets = {
-  main: ['timeline', 'insights', 'search', 'pulse'],
+  main: ["timeline", "insights", "search", "pulse"],
   settings: [
-    'settings/account',
-    'settings/activity',
-    'settings/billing',
-    'settings/notifications',
-    'settings/social',
-    'settings/sync',
-    'settings/import',
-    'settings/extension',
-    'settings/beta',
+    "settings/account",
+    "settings/activity",
+    "settings/billing",
+    "settings/notifications",
+    "settings/social",
+    "settings/sync",
+    "settings/import",
+    "settings/extension",
+    "settings/beta",
   ],
-  'billing-only': ['settings/billing'],
-  'pulse-only': ['pulse'],
+  "billing-only": ["settings/billing"],
+  "pulse-only": ["pulse"],
 };
 
 const { config: fileConfig } = loadSweetLinkFileConfig();
@@ -97,8 +103,8 @@ const getPresetRoutes = (name: string): string[] => normalizeRouteList(SMOKE_ROU
 
 const configuredDefaults = normalizeRouteList(fileConfig.smokeRoutes?.defaults ?? []);
 
-const mainPresetRoutes: string[] = getPresetRoutes('main');
-const settingsPresetRoutes: string[] = getPresetRoutes('settings');
+const mainPresetRoutes: string[] = getPresetRoutes("main");
+const settingsPresetRoutes: string[] = getPresetRoutes("settings");
 const fallbackDefaults: string[] = [];
 if (mainPresetRoutes.length > 0) {
   fallbackDefaults.push(...mainPresetRoutes);
@@ -111,13 +117,17 @@ if (settingsPresetRoutes.length > 0) {
   fallbackDefaults.push(...builtinSmokePresets.settings);
 }
 
-export const DEFAULT_SMOKE_ROUTES = configuredDefaults.length > 0 ? configuredDefaults : fallbackDefaults;
+export const DEFAULT_SMOKE_ROUTES =
+  configuredDefaults.length > 0 ? configuredDefaults : fallbackDefaults;
 
-export const deriveSmokeRoutes = (raw: string | undefined, defaults: readonly string[]): string[] => {
+export const deriveSmokeRoutes = (
+  raw: string | undefined,
+  defaults: readonly string[],
+): string[] => {
   if (!raw || raw.trim().length === 0) {
     return [...defaults];
   }
-  const segments = compact(raw.split(',').map((segment) => segment.trim()));
+  const segments = compact(raw.split(",").map((segment) => segment.trim()));
   if (segments.length === 0) {
     return [...defaults];
   }
@@ -130,47 +140,47 @@ export const deriveSmokeRoutes = (raw: string | undefined, defaults: readonly st
 };
 
 const normalizeRoutePath = (route: string): string => {
-  const routeValue: string = typeof route === 'string' ? route : String(route ?? '');
+  const routeValue: string = typeof route === "string" ? route : String(route ?? "");
   if (!routeValue) {
-    return '/';
+    return "/";
   }
   if (ABSOLUTE_URL_PATTERN.test(routeValue)) {
     try {
       const parsed = new URL(routeValue);
-      return parsed.pathname || '/';
+      return parsed.pathname || "/";
     } catch {
-      return '/';
+      return "/";
     }
   }
   const trimmed = String.prototype.trim.call(routeValue) as string;
   if (!trimmed) {
-    return '/';
+    return "/";
   }
-  const withSlash = String.prototype.startsWith.call(trimmed, '/') ? trimmed : `/${trimmed}`;
-  return withSlash.replaceAll(/\/{2,}/g, '/');
+  const withSlash = String.prototype.startsWith.call(trimmed, "/") ? trimmed : `/${trimmed}`;
+  return withSlash.replaceAll(/\/{2,}/g, "/");
 };
 
 export const buildSmokeRouteUrl = (base: URL, route: string): URL => {
   if (ABSOLUTE_URL_PATTERN.test(route)) {
     try {
       const parsed = new URL(route);
-      parsed.searchParams.set('sweetlink', 'auto');
+      parsed.searchParams.set("sweetlink", "auto");
       return parsed;
     } catch {
       // Fall back to treating as relative path.
     }
   }
-  const [pathPart, searchPart] = route.split('?', 2);
+  const [pathPart, searchPart] = route.split("?", 2);
   const next = new URL(base.toString());
-  next.search = '';
-  next.pathname = normalizeRoutePath(pathPart ?? '/');
+  next.search = "";
+  next.pathname = normalizeRoutePath(pathPart ?? "/");
   if (searchPart) {
     const extra = new URLSearchParams(searchPart);
     for (const [key, value] of extra.entries()) {
       next.searchParams.set(key, value);
     }
   }
-  next.searchParams.set('sweetlink', 'auto');
+  next.searchParams.set("sweetlink", "auto");
   return next;
 };
 
@@ -203,7 +213,10 @@ export const navigateSweetLinkSession = async (params: {
   });
 };
 
-export const triggerSweetLinkCliAuto = async (devtoolsUrl: string, candidateUrl: string): Promise<void> => {
+export const triggerSweetLinkCliAuto = async (
+  devtoolsUrl: string,
+  candidateUrl: string,
+): Promise<void> => {
   const candidates = buildWaitCandidateUrls(candidateUrl);
   const expression = `(() => {
     try {
@@ -232,7 +245,7 @@ export const triggerSweetLinkCliAuto = async (devtoolsUrl: string, candidateUrl:
       break;
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Failed to trigger SweetLink CLI auto bootstrap:', error);
+        console.warn("Failed to trigger SweetLink CLI auto bootstrap:", error);
       }
     }
   }
@@ -259,7 +272,7 @@ export const ensureSweetLinkSessionConnected = async (params: {
     try {
       // biome-ignore lint/performance/noAwaitInLoops: polling for a session must remain sequential.
       const summary = await getSessionSummaryById(params.config, params.token, activeSessionId);
-      if (summary && summary.socketState === 'open') {
+      if (summary && summary.socketState === "open") {
         return true;
       }
       if (!summary) {
@@ -268,12 +281,14 @@ export const ensureSweetLinkSessionConnected = async (params: {
           if (!candidate?.url) {
             return false;
           }
-          return candidateUrls.some((candidateUrl) => urlsRoughlyMatch(candidate.url, candidateUrl));
+          return candidateUrls.some((candidateUrl) =>
+            urlsRoughlyMatch(candidate.url, candidateUrl),
+          );
         });
         if (replacement) {
           activeSessionId = replacement.sessionId;
           params.onSessionIdChanged?.(replacement.sessionId);
-          if (replacement.socketState === 'open') {
+          if (replacement.socketState === "open") {
             return true;
           }
         }
@@ -315,14 +330,14 @@ export const waitForSmokeRouteReady = async (params: {
           diagnostics.locationHref &&
           urlsRoughlyMatch(diagnostics.locationHref, params.targetUrl.toString()) &&
           diagnostics.readyState &&
-          (diagnostics.readyState === 'complete' || diagnostics.readyState === 'interactive')
+          (diagnostics.readyState === "complete" || diagnostics.readyState === "interactive")
         ) {
           return diagnostics;
         }
       }
     } catch (error) {
       if (sweetLinkDebug) {
-        console.warn('Smoke wait diagnostics error:', error);
+        console.warn("Smoke wait diagnostics error:", error);
       }
     }
     await delay(500);
@@ -337,7 +352,7 @@ function routesSignatureKey(routes: readonly string[]): string {
 
 async function readSmokeProgressFile(): Promise<SmokeProgressFile> {
   try {
-    const raw = await readFile(SMOKE_PROGRESS_PATH, 'utf8');
+    const raw = await readFile(SMOKE_PROGRESS_PATH, "utf8");
     const parsed = JSON.parse(raw) as SmokeProgressFile;
     if (parsed && Array.isArray(parsed.entries)) {
       return {
@@ -348,12 +363,15 @@ async function readSmokeProgressFile(): Promise<SmokeProgressFile> {
             nextIndex: entry.nextIndex ?? 0,
             updatedAt: entry.updatedAt ?? Date.now(),
           }))
-          .filter((entry) => typeof entry.baseOrigin === 'string' && typeof entry.routesSignature === 'string'),
+          .filter(
+            (entry) =>
+              typeof entry.baseOrigin === "string" && typeof entry.routesSignature === "string",
+          ),
       };
     }
   } catch (error) {
-    if (!isErrnoException(error) || error.code !== 'ENOENT') {
-      console.warn('Failed to read SweetLink smoke progress file:', error);
+    if (!isErrnoException(error) || error.code !== "ENOENT") {
+      console.warn("Failed to read SweetLink smoke progress file:", error);
     }
   }
   return { entries: [] };
@@ -363,17 +381,22 @@ async function writeSmokeProgressFile(file: SmokeProgressFile): Promise<void> {
   const directory = path.dirname(SMOKE_PROGRESS_PATH);
   await mkdir(directory, { recursive: true });
   const payload = JSON.stringify({ entries: file.entries }, null, 2);
-  await writeFile(SMOKE_PROGRESS_PATH, payload, 'utf8');
+  await writeFile(SMOKE_PROGRESS_PATH, payload, "utf8");
 }
 
 export function computeSmokeRouteSignature(routes: readonly string[]): string {
   return routesSignatureKey(routes);
 }
 
-export async function loadSmokeProgressIndex(baseOrigin: string, routes: readonly string[]): Promise<number | null> {
+export async function loadSmokeProgressIndex(
+  baseOrigin: string,
+  routes: readonly string[],
+): Promise<number | null> {
   const signature = routesSignatureKey(routes);
   const file = await readSmokeProgressFile();
-  const match = file.entries.find((entry) => entry.baseOrigin === baseOrigin && entry.routesSignature === signature);
+  const match = file.entries.find(
+    (entry) => entry.baseOrigin === baseOrigin && entry.routesSignature === signature,
+  );
   if (match && Number.isInteger(match.nextIndex) && match.nextIndex >= 0) {
     return match.nextIndex;
   }
@@ -383,13 +406,13 @@ export async function loadSmokeProgressIndex(baseOrigin: string, routes: readonl
 export async function saveSmokeProgressIndex(
   baseOrigin: string,
   routes: readonly string[],
-  nextIndex: number
+  nextIndex: number,
 ): Promise<void> {
   const signature = routesSignatureKey(routes);
   const file = await readSmokeProgressFile();
   const now = Date.now();
   const existingIndex = file.entries.findIndex(
-    (entry) => entry.baseOrigin === baseOrigin && entry.routesSignature === signature
+    (entry) => entry.baseOrigin === baseOrigin && entry.routesSignature === signature,
   );
   if (existingIndex === -1) {
     file.entries.push({ baseOrigin, routesSignature: signature, nextIndex, updatedAt: now });
@@ -404,11 +427,14 @@ export async function saveSmokeProgressIndex(
   await writeSmokeProgressFile(file);
 }
 
-export async function clearSmokeProgress(baseOrigin: string, routes: readonly string[]): Promise<void> {
+export async function clearSmokeProgress(
+  baseOrigin: string,
+  routes: readonly string[],
+): Promise<void> {
   const signature = routesSignatureKey(routes);
   const file = await readSmokeProgressFile();
   const filtered = file.entries.filter(
-    (entry) => !(entry.baseOrigin === baseOrigin && entry.routesSignature === signature)
+    (entry) => !(entry.baseOrigin === baseOrigin && entry.routesSignature === signature),
   );
   if (filtered.length === file.entries.length) {
     return;
@@ -417,19 +443,23 @@ export async function clearSmokeProgress(baseOrigin: string, routes: readonly st
 }
 
 export const consoleEventIndicatesAuthIssue = (event: SweetLinkConsoleDump): boolean => {
-  const level = typeof event?.level === 'string' ? event.level.toLowerCase() : '';
-  if (level && level !== 'error' && level !== 'warn' && level !== 'assert') {
+  const level = typeof event?.level === "string" ? event.level.toLowerCase() : "";
+  if (level && level !== "error" && level !== "warn" && level !== "assert") {
     return false;
   }
   if (!(event && Array.isArray(event.args))) {
     return false;
   }
   for (const value of event.args) {
-    const text = describeUnknown(value, '').toLowerCase();
+    const text = describeUnknown(value, "").toLowerCase();
     if (!text) {
       continue;
     }
-    if (text.includes('authentication required') || text.includes('unauthorized') || text.includes('401')) {
+    if (
+      text.includes("authentication required") ||
+      text.includes("unauthorized") ||
+      text.includes("401")
+    ) {
       return true;
     }
   }
@@ -437,26 +467,26 @@ export const consoleEventIndicatesAuthIssue = (event: SweetLinkConsoleDump): boo
 };
 
 export const consoleEventIndicatesRuntimeError = (event: SweetLinkConsoleDump): boolean => {
-  const level = typeof event?.level === 'string' ? event.level.toLowerCase() : '';
-  const isErrorLevel = level === 'error' || level === 'assert';
+  const level = typeof event?.level === "string" ? event.level.toLowerCase() : "";
+  const isErrorLevel = level === "error" || level === "assert";
 
   const args = Array.isArray(event?.args) ? event.args : [];
 
   const renderedArgs = args
-    .map((value) => describeUnknown(value, ''))
-    .filter((value) => typeof value === 'string' && value.trim().length > 0);
+    .map((value) => describeUnknown(value, ""))
+    .filter((value) => typeof value === "string" && value.trim().length > 0);
 
   if (renderedArgs.length === 0) {
     return isErrorLevel;
   }
 
-  const combined = renderedArgs.join(' ').toLowerCase();
+  const combined = renderedArgs.join(" ").toLowerCase();
 
-  if (combined.includes('[fast refresh]')) {
+  if (combined.includes("[fast refresh]")) {
     return false;
   }
 
-  const isTrpcMetadataLog = combined.includes('[trpc]') && combined.includes('trpcclienterror');
+  const isTrpcMetadataLog = combined.includes("[trpc]") && combined.includes("trpcclienterror");
   if (isTrpcMetadataLog) {
     return false;
   }
@@ -465,26 +495,30 @@ export const consoleEventIndicatesRuntimeError = (event: SweetLinkConsoleDump): 
     return true;
   }
 
-  if (level === 'warn') {
-    if (combined.includes('[trpc]')) {
+  if (level === "warn") {
+    if (combined.includes("[trpc]")) {
       return false;
     }
     return (
-      combined.includes('uncaught') ||
-      combined.includes('unhandled') ||
-      combined.includes('sweetlink auto-activation failed') ||
-      (combined.includes('error:') && !combined.includes('trpcclienterror'))
+      combined.includes("uncaught") ||
+      combined.includes("unhandled") ||
+      combined.includes("sweetlink auto-activation failed") ||
+      (combined.includes("error:") && !combined.includes("trpcclienterror"))
     );
   }
 
-  if (!level || level === 'log' || level === 'info' || level === 'debug') {
-    if (combined.includes('sweetlink auto-activation failed')) {
+  if (!level || level === "log" || level === "info" || level === "debug") {
+    if (combined.includes("sweetlink auto-activation failed")) {
       return true;
     }
-    if (combined.includes('uncaught') || combined.includes('unhandled')) {
+    if (combined.includes("uncaught") || combined.includes("unhandled")) {
       return true;
     }
-    if (combined.includes('error:') && !combined.includes('trpcclienterror') && !combined.includes('[trpc]')) {
+    if (
+      combined.includes("error:") &&
+      !combined.includes("trpcclienterror") &&
+      !combined.includes("[trpc]")
+    ) {
       return true;
     }
     return false;
@@ -494,10 +528,12 @@ export const consoleEventIndicatesRuntimeError = (event: SweetLinkConsoleDump): 
 };
 
 export const formatConsoleEventSummary = (event: SweetLinkConsoleDump): string => {
-  const timestamp = Number.isFinite(event.timestamp) ? new Date(event.timestamp).toISOString() : 'unknown-time';
+  const timestamp = Number.isFinite(event.timestamp)
+    ? new Date(event.timestamp).toISOString()
+    : "unknown-time";
   const message = event.args
-    .map((value) => describeUnknown(value, ''))
-    .join(' ')
+    .map((value) => describeUnknown(value, ""))
+    .join(" ")
     .trim();
-  return `[${timestamp}] ${event.level ?? 'log'} ${message}`;
+  return `[${timestamp}] ${event.level ?? "log"} ${message}`;
 };

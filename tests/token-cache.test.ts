@@ -1,12 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchCliToken, resetCliTokenCache } from '../src/token';
-import type { CliConfig } from '../src/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchCliToken, resetCliTokenCache } from "../src/token";
+import type { CliConfig } from "../src/types";
 
 const ORIGINAL_FETCH = globalThis.fetch;
 
-describe('fetchCliToken caching', () => {
+describe("fetchCliToken caching", () => {
   beforeEach(() => {
-    vi.stubEnv('SWEETLINK_SECRET', 'test-secret-for-cli');
+    vi.stubEnv("SWEETLINK_SECRET", "test-secret-for-cli");
     vi.resetModules();
     resetCliTokenCache();
   });
@@ -18,23 +18,23 @@ describe('fetchCliToken caching', () => {
     globalThis.fetch = ORIGINAL_FETCH;
   });
 
-  it('avoids repeated admin API calls once a secret-backed token is cached', async () => {
+  it("avoids repeated admin API calls once a secret-backed token is cached", async () => {
     const apiAttempts: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
     globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
       apiAttempts.push({ input, init });
       return {
         ok: false,
         status: 401,
-        statusText: 'Unauthorized',
-        json: async () => ({ error: 'Authentication required', code: 'AUTH_REQUIRED' }),
+        statusText: "Unauthorized",
+        json: async () => ({ error: "Authentication required", code: "AUTH_REQUIRED" }),
       } as Response;
     }) as typeof fetch;
 
     const config: CliConfig = {
-      appLabel: 'Example App',
-      appBaseUrl: 'https://app.example.dev',
-      daemonBaseUrl: 'https://daemon.local',
-      adminApiKey: 'dummy-admin-key',
+      appLabel: "Example App",
+      appBaseUrl: "https://app.example.dev",
+      daemonBaseUrl: "https://daemon.local",
+      adminApiKey: "dummy-admin-key",
       oauthScriptPath: null,
       servers: {},
     };
@@ -48,17 +48,17 @@ describe('fetchCliToken caching', () => {
     expect(secondToken).toBe(firstToken);
   });
 
-  it('reuses locally signed tokens when no admin key is supplied', async () => {
+  it("reuses locally signed tokens when no admin key is supplied", async () => {
     let fetchInvocations = 0;
     globalThis.fetch = (() => {
       fetchInvocations += 1;
-      throw new Error('fetch should not be invoked when adminApiKey is missing');
+      throw new Error("fetch should not be invoked when adminApiKey is missing");
     }) as typeof fetch;
 
     const config: CliConfig = {
-      appLabel: 'Example App',
-      appBaseUrl: 'https://app.example.dev',
-      daemonBaseUrl: 'https://daemon.local',
+      appLabel: "Example App",
+      appBaseUrl: "https://app.example.dev",
+      daemonBaseUrl: "https://daemon.local",
       adminApiKey: null,
       oauthScriptPath: null,
       servers: {},

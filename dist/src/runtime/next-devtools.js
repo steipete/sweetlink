@@ -1,19 +1,19 @@
-import { logDebugError } from '../util/errors.js';
-const ACCEPT_HEADER = 'application/json, text/event-stream';
+import { logDebugError } from "../util/errors.js";
+const ACCEPT_HEADER = "application/json, text/event-stream";
 async function callNextDevtoolsTool(origin, toolName, args = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2500);
     try {
         const response = await fetch(`${origin}/_next/mcp`, {
-            method: 'POST',
+            method: "POST",
             headers: {
                 Accept: ACCEPT_HEADER,
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                jsonrpc: '2.0',
+                jsonrpc: "2.0",
                 id: `${Date.now()}`,
-                method: 'tools/call',
+                method: "tools/call",
                 params: {
                     name: toolName,
                     arguments: args,
@@ -26,9 +26,9 @@ async function callNextDevtoolsTool(origin, toolName, args = {}) {
         }
         const raw = await response.text();
         const dataLine = raw
-            .split('\n')
+            .split("\n")
             .map((line) => line.trim())
-            .find((line) => line.startsWith('data:'));
+            .find((line) => line.startsWith("data:"));
         if (!dataLine) {
             return;
         }
@@ -39,7 +39,7 @@ async function callNextDevtoolsTool(origin, toolName, args = {}) {
         return JSON.parse(payload);
     }
     catch (error) {
-        logDebugError('Next DevTools call failed', error);
+        logDebugError("Next DevTools call failed", error);
         return;
     }
     finally {
@@ -54,17 +54,17 @@ export async function fetchNextDevtoolsErrors(targetUrl) {
     catch {
         return null;
     }
-    const result = await callNextDevtoolsTool(origin, 'get_errors');
+    const result = await callNextDevtoolsTool(origin, "get_errors");
     const content = result?.result?.content;
     if (!Array.isArray(content) || content.length === 0) {
         return null;
     }
-    const textChunk = content.find((entry) => entry?.type === 'text' && typeof entry.text === 'string');
+    const textChunk = content.find((entry) => entry?.type === "text" && typeof entry.text === "string");
     if (!textChunk?.text) {
         return null;
     }
     const normalized = textChunk.text.trim();
-    if (normalized.toLowerCase().startsWith('no errors detected')) {
+    if (normalized.toLowerCase().startsWith("no errors detected")) {
         return null;
     }
     return normalized;

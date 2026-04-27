@@ -1,19 +1,19 @@
-import { existsSync } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { regex } from 'arkregex';
-import { getCookies } from '@steipete/sweet-cookie';
-import { loadSweetLinkFileConfig } from '../core/config-file.js';
-import { cliEnv } from '../env.js';
-import { describeUnknown } from '../util/errors.js';
+import { existsSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { regex } from "arkregex";
+import { getCookies } from "@steipete/sweet-cookie";
+import { loadSweetLinkFileConfig } from "../core/config-file.js";
+import { cliEnv } from "../env.js";
+import { describeUnknown } from "../util/errors.js";
 let tldPatchedForLocalhost;
-const PROTOCOL_PREFIX_PATTERN = regex.as('^[a-z]+://', 'i');
+const PROTOCOL_PREFIX_PATTERN = regex.as("^[a-z]+://", "i");
 const LEADING_DOT_PATTERN = regex.as(String.raw `^\.`);
-const SECURE_PREFIX_PATTERN = regex.as('^__Secure-');
-const HOST_PREFIX_PATTERN = regex.as('^__Host-');
-const ORACLE_COOKIE_FILES = ['cookies.base64', 'cookies.json'];
+const SECURE_PREFIX_PATTERN = regex.as("^__Secure-");
+const HOST_PREFIX_PATTERN = regex.as("^__Host-");
+const ORACLE_COOKIE_FILES = ["cookies.base64", "cookies.json"];
 const resolveOracleInlineCookiesFile = () => {
-    const oracleDir = path.join(os.homedir(), '.oracle');
+    const oracleDir = path.join(os.homedir(), ".oracle");
     for (const filename of ORACLE_COOKIE_FILES) {
         const candidate = path.join(oracleDir, filename);
         if (existsSync(candidate)) {
@@ -27,7 +27,7 @@ export async function collectChromeCookies(targetUrl) {
     await ensureTldPatchedForLocalhost();
     const debugCookies = cliEnv.cookieDebug;
     if (debugCookies) {
-        console.log('Cookie sync debug enabled.');
+        console.log("Cookie sync debug enabled.");
     }
     const origins = buildCookieOrigins(targetUrl);
     const expandedOrigins = expandCookieOriginsForFallbacks(origins);
@@ -39,15 +39,15 @@ export async function collectChromeCookies(targetUrl) {
     const { cookies, warnings } = await getCookies({
         url: targetUrl,
         origins: expandedOrigins,
-        browsers: ['chrome'],
+        browsers: ["chrome"],
         chromeProfile: cliEnv.chromeProfilePath ?? undefined,
         debug: debugCookies,
         ...(inlineCookiesFile ? { inlineCookiesFile } : {}),
-        mode: 'first',
+        mode: "first",
     });
     if (debugCookies && warnings.length > 0) {
         for (const warning of warnings) {
-            console.warn('[SweetLink] Cookie warning:', warning);
+            console.warn("[SweetLink] Cookie warning:", warning);
         }
     }
     const collected = new Map();
@@ -92,15 +92,15 @@ export async function collectChromeCookiesForDomains(domains) {
             const { cookies, warnings } = await getCookies({
                 url: targetCandidate,
                 origins: expandedOrigins,
-                browsers: ['chrome'],
+                browsers: ["chrome"],
                 chromeProfile: cliEnv.chromeProfilePath ?? undefined,
                 debug: debugCookies,
                 ...(inlineCookiesFile ? { inlineCookiesFile } : {}),
-                mode: 'first',
+                mode: "first",
             });
             if (debugCookies && warnings.length > 0) {
                 for (const warning of warnings) {
-                    console.warn('[SweetLink] Cookie warning:', warning);
+                    console.warn("[SweetLink] Cookie warning:", warning);
                 }
             }
             ingestSweetCookieCookies({
@@ -133,7 +133,7 @@ function ingestSweetCookieCookies({ cookies, targetBaseUrl, collected, debug, })
     }
     for (const cookie of cookies) {
         if (debug) {
-            console.log(`Saw cookie ${describeUnknown(cookie.name, 'unknown')} from Sweet Cookie`);
+            console.log(`Saw cookie ${describeUnknown(cookie.name, "unknown")} from Sweet Cookie`);
         }
         const mapped = normalizePuppeteerCookie(sweetCookieToChromeCookieRecord(cookie), {
             sourceBase: resolveCookieSourceBase(cookie, targetBaseUrl),
@@ -142,7 +142,7 @@ function ingestSweetCookieCookies({ cookies, targetBaseUrl, collected, debug, })
         if (!mapped) {
             continue;
         }
-        const key = `${mapped.domain ?? mapped.url ?? targetBaseUrl.origin}|${mapped.path ?? '/'}|${mapped.name}`;
+        const key = `${mapped.domain ?? mapped.url ?? targetBaseUrl.origin}|${mapped.path ?? "/"}|${mapped.name}`;
         if (!collected.has(key)) {
             collected.set(key, mapped);
         }
@@ -155,20 +155,20 @@ function deriveCookieOriginFallbacks(baseUrl) {
     if (!baseUrl) {
         return [];
     }
-    const protocol = baseUrl.protocol || 'https:';
+    const protocol = baseUrl.protocol || "https:";
     const host = baseUrl.hostname;
     if (!host) {
         return [];
     }
     const candidates = new Set();
     const originWithSlash = `${protocol}//${host}/`;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    if (host === "localhost" || host === "127.0.0.1") {
         candidates.add(originWithSlash);
-        candidates.add('http://localhost/');
-        candidates.add('http://127.0.0.1/');
-        candidates.add('https://localhost/');
-        candidates.add('https://127.0.0.1/');
-        if (host === 'localhost') {
+        candidates.add("http://localhost/");
+        candidates.add("http://127.0.0.1/");
+        candidates.add("https://localhost/");
+        candidates.add("https://127.0.0.1/");
+        if (host === "localhost") {
             candidates.add(`${protocol}//${host}.localdomain/`);
         }
     }
@@ -179,7 +179,7 @@ function expandCookieOriginsForFallbacks(origins) {
     const expanded = new Set();
     for (const origin of origins) {
         expanded.add(origin);
-        const base = tryParseUrl(origin.endsWith('/') ? origin : `${origin}/`);
+        const base = tryParseUrl(origin.endsWith("/") ? origin : `${origin}/`);
         if (!base) {
             continue;
         }
@@ -219,7 +219,7 @@ function extractHostCandidate(domain) {
         return null;
     }
     try {
-        const url = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
+        const url = new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`);
         return url.hostname.toLowerCase();
     }
     catch {
@@ -268,7 +268,7 @@ function isConfiguredCookieDomain(host) {
 function isHostMatch(host, pattern) {
     const normalizedHost = host.toLowerCase();
     let normalizedPattern = pattern.toLowerCase();
-    if (normalizedPattern.startsWith('*.')) {
+    if (normalizedPattern.startsWith("*.")) {
         normalizedPattern = normalizedPattern.slice(2);
     }
     if (!normalizedPattern) {
@@ -298,8 +298,8 @@ function normalizeOrigin(value) {
     }
 }
 export function normalizePuppeteerCookie(cookie, bases) {
-    const originalName = typeof cookie.name === 'string' ? cookie.name : null;
-    const value = typeof cookie.value === 'string' ? cookie.value : null;
+    const originalName = typeof cookie.name === "string" ? cookie.name : null;
+    const value = typeof cookie.value === "string" ? cookie.value : null;
     if (!originalName || value === null) {
         return null;
     }
@@ -307,17 +307,19 @@ export function normalizePuppeteerCookie(cookie, bases) {
         name: originalName,
         value,
     };
-    const domain = typeof cookie.domain === 'string' && cookie.domain.length > 0 ? cookie.domain : null;
-    const path = typeof cookie.path === 'string' && cookie.path.length > 0 ? cookie.path : '/';
+    const domain = typeof cookie.domain === "string" && cookie.domain.length > 0 ? cookie.domain : null;
+    const path = typeof cookie.path === "string" && cookie.path.length > 0 ? cookie.path : "/";
     const targetHost = bases.targetBase.hostname;
-    const isLocalTarget = targetHost === 'localhost' || targetHost === '127.0.0.1';
-    const normalizedDomain = domain?.replace(LEADING_DOT_PATTERN, '') ?? null;
+    const isLocalTarget = targetHost === "localhost" || targetHost === "127.0.0.1";
+    const normalizedDomain = domain?.replace(LEADING_DOT_PATTERN, "") ?? null;
     const isConfiguredDomain = normalizedDomain ? isConfiguredCookieDomain(normalizedDomain) : false;
-    const isLocalDomain = normalizedDomain === 'localhost' || normalizedDomain === '127.0.0.1' || normalizedDomain === '::1';
-    if (isLocalTarget && result.name.startsWith('__Secure-better-auth.')) {
-        result.name = result.name.replace(SECURE_PREFIX_PATTERN, '');
+    const isLocalDomain = normalizedDomain === "localhost" ||
+        normalizedDomain === "127.0.0.1" ||
+        normalizedDomain === "::1";
+    if (isLocalTarget && result.name.startsWith("__Secure-better-auth.")) {
+        result.name = result.name.replace(SECURE_PREFIX_PATTERN, "");
     }
-    if (domain && domain !== 'localhost') {
+    if (domain && domain !== "localhost") {
         if (isLocalTarget && (isConfiguredDomain || isLocalDomain)) {
             result.url = bases.targetBase.origin;
         }
@@ -337,31 +339,33 @@ export function normalizePuppeteerCookie(cookie, bases) {
     if (cookie.HttpOnly === true || cookie.httpOnly === true) {
         result.httpOnly = true;
     }
-    const sameSiteSource = typeof cookie.sameSite === 'string' ? cookie.sameSite : undefined;
+    const sameSiteSource = typeof cookie.sameSite === "string" ? cookie.sameSite : undefined;
     const sameSite = normalizeSameSite(sameSiteSource);
     if (sameSite) {
         result.sameSite = sameSite;
     }
-    if (sameSite === 'None' && !result.secure) {
+    if (sameSite === "None" && !result.secure) {
         result.secure = true;
     }
-    if (typeof cookie.expires === 'number' && Number.isFinite(cookie.expires) && cookie.expires > 0) {
+    if (typeof cookie.expires === "number" && Number.isFinite(cookie.expires) && cookie.expires > 0) {
         result.expires = Math.round(cookie.expires);
     }
-    const rehomedToTarget = typeof result.url === 'string' && result.url.length > 0 && result.url === bases.targetBase.origin;
-    if (rehomedToTarget && bases.targetBase.protocol === 'http:') {
+    const rehomedToTarget = typeof result.url === "string" &&
+        result.url.length > 0 &&
+        result.url === bases.targetBase.origin;
+    if (rehomedToTarget && bases.targetBase.protocol === "http:") {
         if (result.secure) {
             result.secure = false;
         }
-        if (result.sameSite === 'None') {
-            result.sameSite = 'Lax';
+        if (result.sameSite === "None") {
+            result.sameSite = "Lax";
         }
-        if (result.name.startsWith('__Secure-')) {
-            result.name = result.name.replace(SECURE_PREFIX_PATTERN, '');
+        if (result.name.startsWith("__Secure-")) {
+            result.name = result.name.replace(SECURE_PREFIX_PATTERN, "");
         }
-        if (result.name.startsWith('__Host-')) {
-            result.name = result.name.replace(HOST_PREFIX_PATTERN, '');
-            result.path = '/';
+        if (result.name.startsWith("__Host-")) {
+            result.name = result.name.replace(HOST_PREFIX_PATTERN, "");
+            result.path = "/";
         }
     }
     return result;
@@ -371,14 +375,14 @@ function normalizeSameSite(value) {
         return undefined;
     }
     const normalized = value.toLowerCase();
-    if (normalized === 'strict') {
-        return 'Strict';
+    if (normalized === "strict") {
+        return "Strict";
     }
-    if (normalized === 'lax') {
-        return 'Lax';
+    if (normalized === "lax") {
+        return "Lax";
     }
-    if (normalized === 'no_restriction' || normalized === 'none') {
-        return 'None';
+    if (normalized === "no_restriction" || normalized === "none") {
+        return "None";
     }
     return undefined;
 }
@@ -386,11 +390,11 @@ function pruneIncompatibleCookies(targetBaseUrl, collected) {
     if (collected.size === 0) {
         return;
     }
-    const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
     if (!localHosts.has(targetBaseUrl.hostname)) {
         return;
     }
-    const disallowedNames = new Set(['_vercel_session', '_vercel_jwt']);
+    const disallowedNames = new Set(["_vercel_session", "_vercel_jwt"]);
     for (const [key, cookie] of collected.entries()) {
         const name = cookie.name?.toLowerCase();
         if (name && disallowedNames.has(name)) {
@@ -404,7 +408,7 @@ function tryParseUrl(candidate) {
     }
     catch {
         try {
-            return new URL(candidate.includes('://') ? candidate : `http://${candidate}`);
+            return new URL(candidate.includes("://") ? candidate : `http://${candidate}`);
         }
         catch {
             return null;
@@ -416,9 +420,9 @@ async function ensureTldPatchedForLocalhost() {
         return;
     }
     try {
-        const importedModule = await import('tldjs');
+        const importedModule = await import("tldjs");
         const tld = resolveTldModule(importedModule);
-        if (tld && typeof tld.getDomain === 'function') {
+        if (tld && typeof tld.getDomain === "function") {
             const originalGetDomain = tld.getDomain.bind(tld);
             tld.getDomain = (uri) => {
                 const domain = originalGetDomain(uri);
@@ -436,7 +440,7 @@ async function ensureTldPatchedForLocalhost() {
         }
     }
     catch (error) {
-        console.warn('Failed to patch tldjs for localhost support:', error);
+        console.warn("Failed to patch tldjs for localhost support:", error);
     }
 }
 function sweetCookieToChromeCookieRecord(cookie) {
@@ -454,7 +458,7 @@ function sweetCookieToChromeCookieRecord(cookie) {
 }
 function resolveCookieSourceBase(cookie, fallback) {
     const origin = cookie.source?.origin;
-    if (typeof origin === 'string' && origin.length > 0) {
+    if (typeof origin === "string" && origin.length > 0) {
         try {
             return new URL(origin);
         }
@@ -465,17 +469,17 @@ function resolveCookieSourceBase(cookie, fallback) {
     return fallback;
 }
 function resolveTldModule(value) {
-    if (typeof value !== 'object' || value === null) {
+    if (typeof value !== "object" || value === null) {
         return null;
     }
     const record = value;
-    if (typeof record.getDomain === 'function') {
+    if (typeof record.getDomain === "function") {
         return record;
     }
     const defaultExport = record.default;
-    if (typeof defaultExport === 'object' && defaultExport !== null) {
+    if (typeof defaultExport === "object" && defaultExport !== null) {
         const defaultRecord = defaultExport;
-        if (typeof defaultRecord.getDomain === 'function') {
+        if (typeof defaultRecord.getDomain === "function") {
             return defaultRecord;
         }
     }

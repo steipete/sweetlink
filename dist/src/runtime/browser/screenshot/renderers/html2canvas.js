@@ -1,10 +1,10 @@
-import { getBrowserWindow } from '../../utils/environment.js';
-import { commandSelectorSummary, HTML2CANVAS_TARGET_ATTR } from '../targets.js';
-import { normalizeOklchColors, patchHtml2canvasColorParser, recordScreenshotError } from '../utils.js';
+import { getBrowserWindow } from "../../utils/environment.js";
+import { commandSelectorSummary, HTML2CANVAS_TARGET_ATTR } from "../targets.js";
+import { normalizeOklchColors, patchHtml2canvasColorParser, recordScreenshotError, } from "../utils.js";
 let html2canvasModulePromise = null;
 async function loadHtml2Canvas() {
     if (!html2canvasModulePromise) {
-        html2canvasModulePromise = import('html2canvas');
+        html2canvasModulePromise = import("html2canvas");
     }
     const html2canvasModule = await html2canvasModulePromise;
     patchHtml2canvasColorParser(html2canvasModule);
@@ -19,15 +19,15 @@ export async function captureWithHtml2Canvas(targetInfo, quality) {
         targetInfo.base.setAttribute(HTML2CANVAS_TARGET_ATTR, markerValue);
     }
     const html2canvas = await loadHtml2Canvas();
-    if (typeof html2canvas !== 'function') {
+    if (typeof html2canvas !== "function") {
         restoreColors();
-        throw new TypeError('html2canvas is unavailable');
+        throw new TypeError("html2canvas is unavailable");
     }
     const timeoutMs = 6000;
     let canvasResult;
     let timer;
     try {
-        console.info('[SweetLink] html2canvas capture starting', {
+        console.info("[SweetLink] html2canvas capture starting", {
             selector: commandSelectorSummary(targetInfo.target),
             clip: targetInfo.clip ?? null,
         });
@@ -54,7 +54,7 @@ export async function captureWithHtml2Canvas(targetInfo, quality) {
             onclone: (clonedDocument) => {
                 const cloneWindow = clonedDocument.defaultView;
                 const cloneTarget = clonedDocument.querySelector(`[${HTML2CANVAS_TARGET_ATTR}="${markerValue}"]`);
-                if (!((cloneWindow && cloneTarget) && (cloneTarget instanceof cloneWindow.HTMLElement))) {
+                if (!(cloneWindow && cloneTarget && cloneTarget instanceof cloneWindow.HTMLElement)) {
                     return;
                 }
                 const rect = targetInfo.base.getBoundingClientRect();
@@ -67,14 +67,14 @@ export async function captureWithHtml2Canvas(targetInfo, quality) {
                 cloneTarget.style.height = `${heightPx}px`;
                 cloneTarget.style.minHeight = cloneTarget.style.height;
                 cloneTarget.style.maxHeight = cloneTarget.style.height;
-                cloneTarget.style.boxSizing = 'border-box';
-                const wrapper = clonedDocument.createElement('div');
-                wrapper.style.display = 'inline-block';
-                wrapper.style.padding = '0';
-                wrapper.style.margin = '0';
-                wrapper.style.border = 'none';
+                cloneTarget.style.boxSizing = "border-box";
+                const wrapper = clonedDocument.createElement("div");
+                wrapper.style.display = "inline-block";
+                wrapper.style.padding = "0";
+                wrapper.style.margin = "0";
+                wrapper.style.border = "none";
                 const computedBackground = getComputedStyle(targetInfo.base).backgroundColor;
-                wrapper.style.background = computedBackground || 'transparent';
+                wrapper.style.background = computedBackground || "transparent";
                 wrapper.style.width = cloneTarget.style.width;
                 wrapper.style.height = cloneTarget.style.height;
                 cloneTarget.replaceWith(wrapper);
@@ -91,10 +91,10 @@ export async function captureWithHtml2Canvas(targetInfo, quality) {
         if (timer) {
             clearTimeout(timer);
         }
-        console.info('[SweetLink] html2canvas capture finished');
+        console.info("[SweetLink] html2canvas capture finished");
     }
     if (!(canvasResult instanceof HTMLCanvasElement)) {
-        throw new TypeError('html2canvas did not return a canvas element');
+        throw new TypeError("html2canvas did not return a canvas element");
     }
     const canvas = canvasResult;
     const blob = await new Promise((resolve, reject) => {
@@ -103,28 +103,28 @@ export async function captureWithHtml2Canvas(targetInfo, quality) {
                 resolve(value);
             }
             else {
-                reject(new Error('Failed to encode screenshot to JPEG'));
+                reject(new Error("Failed to encode screenshot to JPEG"));
             }
-        }, 'image/jpeg', quality);
+        }, "image/jpeg", quality);
     }).catch((error) => {
-        recordScreenshotError('html2canvas', error);
+        recordScreenshotError("html2canvas", error);
         throw error;
     });
     const base64 = await blobToBase64(blob).catch((error) => {
-        recordScreenshotError('html2canvas', error);
+        recordScreenshotError("html2canvas", error);
         throw error;
     });
     return {
-        mimeType: 'image/jpeg',
+        mimeType: "image/jpeg",
         base64,
         width: canvas.width,
         height: canvas.height,
-        renderer: 'html2canvas',
+        renderer: "html2canvas",
     };
 }
 async function blobToBase64(blob) {
     const buffer = await blob.arrayBuffer();
-    let binary = '';
+    let binary = "";
     const bytes = new Uint8Array(buffer);
     const chunkSize = 32_768;
     for (let index = 0; index < bytes.length; index += chunkSize) {

@@ -1,15 +1,15 @@
-import { regex } from 'arkregex';
-import { type CommandExecutor, createCommandExecutor } from './commands/index.js';
-import { createHookRunner, createScreenshotHooks } from './screenshot/index.js';
-import { stripDataUrlPrefix } from './screenshot/renderers/dom-to-image.js';
-import { commandSelectorSummary } from './screenshot/targets.js';
-import { createSessionStorageAdapter } from './storage/session-storage.js';
+import { regex } from "arkregex";
+import { type CommandExecutor, createCommandExecutor } from "./commands/index.js";
+import { createHookRunner, createScreenshotHooks } from "./screenshot/index.js";
+import { stripDataUrlPrefix } from "./screenshot/renderers/dom-to-image.js";
+import { commandSelectorSummary } from "./screenshot/targets.js";
+import { createSessionStorageAdapter } from "./storage/session-storage.js";
 import type {
   SweetLinkLogger,
   SweetLinkScreenshotHooks,
   SweetLinkStatusAdapter,
   SweetLinkStorageAdapter,
-} from './types.js';
+} from "./types.js";
 import {
   type ActiveSweetLinkSession,
   DEFAULT_STATUS_SNAPSHOT,
@@ -21,14 +21,14 @@ import {
   type SweetLinkServerMessage,
   type SweetLinkSessionBootstrap,
   type SweetLinkStatusSnapshot,
-} from './types.js';
-import { getConsoleMethod, setConsoleMethod } from './utils/console.js';
-import { getBrowserWindow } from './utils/environment.js';
-import { describeUnknown, toError } from './utils/errors.js';
-import { sanitizeResult } from './utils/sanitize.js';
-import { normalizeExpiresAtMs } from './utils/time.js';
+} from "./types.js";
+import { getConsoleMethod, setConsoleMethod } from "./utils/console.js";
+import { getBrowserWindow } from "./utils/environment.js";
+import { describeUnknown, toError } from "./utils/errors.js";
+import { sanitizeResult } from "./utils/sanitize.js";
+import { normalizeExpiresAtMs } from "./utils/time.js";
 
-const UNAUTHORIZED_PATTERN = regex.as('401');
+const UNAUTHORIZED_PATTERN = regex.as("401");
 
 const defaultLogger: SweetLinkLogger = {
   info: (message, ...details) => {
@@ -107,11 +107,11 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     }
 
     if (this.currentSession) {
-      this.teardown('replaced', { scheduleReconnect: false });
+      this.teardown("replaced", { scheduleReconnect: false });
     }
 
     const expiresAtMs =
-      typeof bootstrap.expiresAtMs === 'number' && Number.isFinite(bootstrap.expiresAtMs)
+      typeof bootstrap.expiresAtMs === "number" && Number.isFinite(bootstrap.expiresAtMs)
         ? bootstrap.expiresAtMs
         : null;
 
@@ -148,16 +148,16 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     }
     this.reconnectAttempts = 0;
     this.lastReconnectLogAt = 0;
-    this.announceStatus('connecting');
+    this.announceStatus("connecting");
 
     this.screenshot.preloadLibraries().catch((error: unknown) => {
-      this.logger.warn('[SweetLink] Failed to preload screenshot libraries', error);
+      this.logger.warn("[SweetLink] Failed to preload screenshot libraries", error);
     });
 
     await this.openSocket();
   }
 
-  teardown(reason = 'manual', options: { scheduleReconnect?: boolean } = {}): void {
+  teardown(reason = "manual", options: { scheduleReconnect?: boolean } = {}): void {
     const { scheduleReconnect = true } = options;
     if (!this.currentSession) {
       return;
@@ -169,14 +169,16 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     if (this.currentSession.socket && this.currentSession.socket.readyState === WebSocket.OPEN) {
       this.currentSession.socket.close();
     }
-    this.logger.info('[SweetLink] session ended', reason);
-    this.announceStatus('idle', { reason });
+    this.logger.info("[SweetLink] session ended", reason);
+    this.announceStatus("idle", { reason });
     if (scheduleReconnect) {
       this.scheduleAutoReconnect(reason);
     }
     this.currentSession = null;
     if (this.windowRef) {
-      const clientWindow = this.windowRef as Window & { __sweetlink__?: ActiveSweetLinkSession | null };
+      const clientWindow = this.windowRef as Window & {
+        __sweetlink__?: ActiveSweetLinkSession | null;
+      };
       clientWindow.__sweetlink__ = null;
     }
   }
@@ -187,7 +189,7 @@ class SweetLinkBrowserClient implements SweetLinkClient {
 
   private async openSocket(): Promise<void> {
     if (!this.currentSession) {
-      throw new Error('SweetLink session not initialized');
+      throw new Error("SweetLink session not initialized");
     }
 
     const { socketUrl, sessionId, sessionToken } = this.currentSession;
@@ -196,10 +198,10 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       const socket = new WebSocket(socketUrl);
 
       const cleanup = () => {
-        socket.removeEventListener('open', handleOpen);
-        socket.removeEventListener('message', handleMessage);
-        socket.removeEventListener('error', handleError);
-        socket.removeEventListener('close', handleClose);
+        socket.removeEventListener("open", handleOpen);
+        socket.removeEventListener("message", handleMessage);
+        socket.removeEventListener("error", handleError);
+        socket.removeEventListener("close", handleClose);
       };
 
       const handleOpen = () => {
@@ -213,7 +215,7 @@ class SweetLinkBrowserClient implements SweetLinkClient {
           if (!this.currentSession || this.currentSession.sessionId !== sessionId) {
             resolve();
           } else {
-            reject(new Error('SweetLink session missing during open'));
+            reject(new Error("SweetLink session missing during open"));
           }
           return;
         }
@@ -221,60 +223,62 @@ class SweetLinkBrowserClient implements SweetLinkClient {
         this.sendRegisterMessage(socket, sessionId, sessionToken);
         this.startHeartbeat();
         this.patchConsole();
-        this.announceStatus('connected');
+        this.announceStatus("connected");
         resolve();
       };
 
       const handleMessage = (event: MessageEvent) => {
         try {
           const parsedPayload: unknown = JSON.parse(event.data as string);
-          if (!parsedPayload || typeof parsedPayload !== 'object') {
+          if (!parsedPayload || typeof parsedPayload !== "object") {
             return;
           }
           const payload = parsedPayload as SweetLinkServerMessage;
-          this.logger.info('[SweetLink] server message kind', (payload as { kind?: unknown }).kind);
-          if (payload.kind === 'command') {
+          this.logger.info("[SweetLink] server message kind", (payload as { kind?: unknown }).kind);
+          if (payload.kind === "command") {
             this.handleServerCommand(payload).catch((error: unknown) => {
-              this.logger.error('[SweetLink] command error', error);
+              this.logger.error("[SweetLink] command error", error);
             });
             return;
           }
-          if (payload.kind === 'metadata') {
+          if (payload.kind === "metadata") {
             this.handleMetadataMessage(payload);
             return;
           }
-          const disconnectDetails = payload.reason ? ` Reason: ${payload.reason}` : '';
+          const disconnectDetails = payload.reason ? ` Reason: ${payload.reason}` : "";
           this.logger.warn(`[SweetLink] server requested disconnect.${disconnectDetails}`);
           socket.close();
         } catch (error: unknown) {
-          this.logger.error('[SweetLink] failed to parse server message', error);
+          this.logger.error("[SweetLink] failed to parse server message", error);
         }
       };
 
       const handleError = (event: Event) => {
         cleanup();
-        const message = (event as ErrorEvent).message || 'unknown error';
-        this.announceStatus('error', { reason: message });
+        const message = (event as ErrorEvent).message || "unknown error";
+        this.announceStatus("error", { reason: message });
         reject(new Error(`SweetLink socket error: ${message}`));
       };
 
       const handleClose = (event: CloseEvent) => {
         cleanup();
         const closeInfo = { code: event.code, reason: event.reason, wasClean: event.wasClean };
-        this.logger.warn('[SweetLink] socket closed', closeInfo);
-        this.teardown(`socket closed (${closeInfo.code}${closeInfo.reason ? `: ${closeInfo.reason}` : ''})`);
+        this.logger.warn("[SweetLink] socket closed", closeInfo);
+        this.teardown(
+          `socket closed (${closeInfo.code}${closeInfo.reason ? `: ${closeInfo.reason}` : ""})`,
+        );
       };
 
-      socket.addEventListener('open', handleOpen, { once: true });
-      socket.addEventListener('message', handleMessage);
-      socket.addEventListener('error', handleError);
-      socket.addEventListener('close', handleClose);
+      socket.addEventListener("open", handleOpen, { once: true });
+      socket.addEventListener("message", handleMessage);
+      socket.addEventListener("error", handleError);
+      socket.addEventListener("close", handleClose);
     });
   }
 
   private sendRegisterMessage(socket: WebSocket, sessionId: string, sessionToken: string) {
     const clientWindow = this.windowRef ?? getBrowserWindow();
-    let topOrigin = clientWindow?.location.origin ?? '';
+    let topOrigin = clientWindow?.location.origin ?? "";
     try {
       if (clientWindow?.top?.location) {
         topOrigin = clientWindow.top.location.origin;
@@ -283,13 +287,13 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       /* ignore cross-origin access */
     }
     const payload = {
-      kind: 'register' as const,
+      kind: "register" as const,
       sessionId,
       token: sessionToken,
-      url: clientWindow?.location.href ?? '',
-      title: clientWindow?.document?.title ?? '',
+      url: clientWindow?.location.href ?? "",
+      title: clientWindow?.document?.title ?? "",
       topOrigin,
-      userAgent: clientWindow?.navigator?.userAgent ?? '',
+      userAgent: clientWindow?.navigator?.userAgent ?? "",
       width: clientWindow?.innerWidth ?? 0,
       height: clientWindow?.innerHeight ?? 0,
     };
@@ -303,18 +307,18 @@ class SweetLinkBrowserClient implements SweetLinkClient {
 
   private postCommandResult(sessionId: string, result: SweetLinkCommandResult) {
     if (!this.currentSession?.socket || this.currentSession.socket.readyState !== WebSocket.OPEN) {
-      this.logger.warn('[SweetLink] socket not ready for command response');
+      this.logger.warn("[SweetLink] socket not ready for command response");
       return;
     }
     const payload = {
-      kind: 'commandResult' as const,
+      kind: "commandResult" as const,
       sessionId,
       result,
     };
     this.currentSession.socket.send(JSON.stringify(payload));
   }
 
-  private handleMetadataMessage(payload: Extract<SweetLinkServerMessage, { kind: 'metadata' }>) {
+  private handleMetadataMessage(payload: Extract<SweetLinkServerMessage, { kind: "metadata" }>) {
     if (this.windowRef) {
       const debugWindow = this.windowRef as Window & {
         __sweetlinkMetadataEvents?: Array<{ at: number; payload: SweetLinkServerMessage }>;
@@ -327,16 +331,17 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       targetSession = this.currentSession;
     } else if (this.windowRef) {
       const windowSession =
-        (this.windowRef as Window & { __sweetlink__?: ActiveSweetLinkSession | null }).__sweetlink__ ?? null;
+        (this.windowRef as Window & { __sweetlink__?: ActiveSweetLinkSession | null })
+          .__sweetlink__ ?? null;
       if (windowSession && windowSession.sessionId === payload.sessionId) {
         targetSession = windowSession as MutableActiveSweetLinkSession;
       }
     }
     if (targetSession) {
-      const trimmedCodename = typeof payload.codename === 'string' ? payload.codename.trim() : '';
+      const trimmedCodename = typeof payload.codename === "string" ? payload.codename.trim() : "";
       const resolvedCodename = trimmedCodename.length > 0 ? trimmedCodename : null;
       targetSession.codename = resolvedCodename;
-      this.announceStatus('connected', { codename: resolvedCodename });
+      this.announceStatus("connected", { codename: resolvedCodename });
     }
   }
 
@@ -349,11 +354,14 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       clientWindow.clearInterval(this.currentSession.heartbeatTimer);
     }
     this.currentSession.heartbeatTimer = clientWindow.setInterval(() => {
-      if (!this.currentSession?.socket || this.currentSession.socket.readyState !== WebSocket.OPEN) {
+      if (
+        !this.currentSession?.socket ||
+        this.currentSession.socket.readyState !== WebSocket.OPEN
+      ) {
         return;
       }
       const payload = {
-        kind: 'heartbeat' as const,
+        kind: "heartbeat" as const,
         sessionId: this.currentSession.sessionId,
       };
       this.currentSession.socket.send(JSON.stringify(payload));
@@ -366,9 +374,9 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     }
     this.consolePatched = true;
     const consoleWithLevels = console;
-    for (const consoleLevel of ['log', 'info', 'warn', 'error'] as const) {
+    for (const consoleLevel of ["log", "info", "warn", "error"] as const) {
       const originalLevelFunction = getConsoleMethod(consoleWithLevels, consoleLevel);
-      if (typeof originalLevelFunction !== 'function') {
+      if (typeof originalLevelFunction !== "function") {
         continue;
       }
       const patchedLevel: Console[typeof consoleLevel] = ((...consoleArguments: unknown[]) => {
@@ -380,7 +388,10 @@ class SweetLinkBrowserClient implements SweetLinkClient {
             args: consoleArguments.map((item) => sanitizeResult(item)),
           });
           if (this.currentSession.consoleBuffer.length > 200) {
-            this.currentSession.consoleBuffer.splice(0, this.currentSession.consoleBuffer.length - 200);
+            this.currentSession.consoleBuffer.splice(
+              0,
+              this.currentSession.consoleBuffer.length - 200,
+            );
           }
           this.flushConsoleBuffer();
         }
@@ -405,7 +416,10 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     const clientWindow = this.windowRef;
     this.consoleFlushTimer = clientWindow.setTimeout(() => {
       this.consoleFlushTimer = null;
-      if (!this.currentSession?.socket || this.currentSession.socket.readyState !== WebSocket.OPEN) {
+      if (
+        !this.currentSession?.socket ||
+        this.currentSession.socket.readyState !== WebSocket.OPEN
+      ) {
         return;
       }
       if (this.currentSession.consoleBuffer.length === 0) {
@@ -413,7 +427,7 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       }
       const events = this.currentSession.consoleBuffer.splice(0);
       const payload = {
-        kind: 'console' as const,
+        kind: "console" as const,
         sessionId: this.currentSession.sessionId,
         events,
       };
@@ -436,14 +450,14 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     const now = Date.now();
     if (now - this.lastReconnectLogAt >= 5000 || this.reconnectAttempts === 0) {
       this.logger.info(
-        `[SweetLink] scheduling reconnect. Reason: ${reason}. Delay: ${delayMs}ms. Attempt: ${this.reconnectAttempts + 1}.`
+        `[SweetLink] scheduling reconnect. Reason: ${reason}. Delay: ${delayMs}ms. Attempt: ${this.reconnectAttempts + 1}.`,
       );
       this.lastReconnectLogAt = now;
     }
     this.reconnectTimer = clientWindow.setTimeout(() => {
       this.reconnectTimer = null;
       this.attemptAutoReconnect().catch((error: unknown) => {
-        this.logger.warn('[SweetLink] auto-reconnect failed', error);
+        this.logger.warn("[SweetLink] auto-reconnect failed", error);
       });
     }, delayMs);
   }
@@ -457,12 +471,12 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       return;
     }
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.announceStatus('error', { reason: 'Auto-reconnect failed: maximum retries reached' });
+      this.announceStatus("error", { reason: "Auto-reconnect failed: maximum retries reached" });
       clientWindow.__sweetlinkAutoReconnectEnabled = false;
       return;
     }
     this.reconnectAttempts += 1;
-    this.announceStatus('connecting');
+    this.announceStatus("connecting");
     try {
       const storedSession = this.storage.load();
       if (storedSession && (this.storage.isFresh?.(storedSession) ?? true)) {
@@ -476,12 +490,12 @@ class SweetLinkBrowserClient implements SweetLinkClient {
           });
           return;
         } catch (resumeError) {
-          this.logger.warn('[SweetLink] failed to resume stored session', resumeError);
+          this.logger.warn("[SweetLink] failed to resume stored session", resumeError);
           this.storage.clear();
         }
       }
       if (!this.autoReconnectHandshake) {
-        throw new Error('Auto-reconnect handshake is not configured');
+        throw new Error("Auto-reconnect handshake is not configured");
       }
       const handshakePayload = await this.autoReconnectHandshake();
       await this.startSession({
@@ -496,24 +510,28 @@ class SweetLinkBrowserClient implements SweetLinkClient {
       if (UNAUTHORIZED_PATTERN.test(message)) {
         clientWindow.__sweetlinkAutoReconnectEnabled = false;
         this.storage.clear();
-        this.announceStatus('error', { reason: 'SweetLink authentication required. Reopen the menu.' });
+        this.announceStatus("error", {
+          reason: "SweetLink authentication required. Reopen the menu.",
+        });
         return;
       }
-      this.announceStatus('error', { reason: `Auto-reconnect failed: ${message}` });
-      this.scheduleAutoReconnect('retry-after-error');
+      this.announceStatus("error", { reason: `Auto-reconnect failed: ${message}` });
+      this.scheduleAutoReconnect("retry-after-error");
     }
   }
 
   private announceStatus(
-    status: 'idle' | 'connecting' | 'connected' | 'error',
-    detail: { reason?: unknown; codename?: string | null } = {}
+    status: "idle" | "connecting" | "connected" | "error",
+    detail: { reason?: unknown; codename?: string | null } = {},
   ) {
-    const normalizedStatus = status === 'idle' ? 'idle' : status;
+    const normalizedStatus = status === "idle" ? "idle" : status;
     const reason =
-      normalizedStatus === 'error' && detail.reason != null ? describeUnknown(detail.reason).trim() || null : null;
+      normalizedStatus === "error" && detail.reason != null
+        ? describeUnknown(detail.reason).trim() || null
+        : null;
     let codename: string | null = null;
-    if (normalizedStatus === 'connected') {
-      if (typeof detail.codename === 'string') {
+    if (normalizedStatus === "connected") {
+      if (typeof detail.codename === "string") {
         const trimmed = detail.codename.trim();
         codename = trimmed.length > 0 ? trimmed : null;
       }
@@ -540,9 +558,9 @@ class SweetLinkBrowserClient implements SweetLinkClient {
     if (this.status.dispatchEvent && this.windowRef) {
       this.status.dispatchEvent(snapshot);
     } else if (this.windowRef) {
-      this.windowRef.dispatchEvent(new CustomEvent('sweetlink:status', { detail: snapshot }));
+      this.windowRef.dispatchEvent(new CustomEvent("sweetlink:status", { detail: snapshot }));
     }
-    if (normalizedStatus === 'connected' && codename) {
+    if (normalizedStatus === "connected" && codename) {
       this.storage.updateCodename?.(codename);
     }
   }

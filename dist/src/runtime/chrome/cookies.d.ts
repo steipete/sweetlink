@@ -1,6 +1,6 @@
-import { delay } from '../../util/time.js';
-import { buildCookieOrigins, collectChromeCookies } from '../cookies.js';
-import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from './puppeteer.js';
+import { delay } from "../../util/time.js";
+import { buildCookieOrigins, collectChromeCookies } from "../cookies.js";
+import { attemptPuppeteerReload, navigatePuppeteerPage, resolvePuppeteerPage, waitForPageReady } from "./puppeteer.js";
 type PrimeChromeCookiesDeps = {
     collectChromeCookies: typeof collectChromeCookies;
     resolvePuppeteerPage: typeof resolvePuppeteerPage;
@@ -14,7 +14,7 @@ export declare function primeControlledChromeCookies(options: {
     devtoolsUrl: string;
     targetUrl: string;
     reload: boolean;
-    context: 'new-window' | 'existing-tab' | 'new-tab';
+    context: "new-window" | "existing-tab" | "new-tab";
 }, deps?: Partial<PrimeChromeCookiesDeps>): Promise<void>;
 export {};
 //# sourceMappingURL=cookies.d.ts.map

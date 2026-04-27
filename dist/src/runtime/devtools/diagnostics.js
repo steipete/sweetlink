@@ -1,4 +1,4 @@
-import { BENIGN_CONSOLE_TYPES, IGNORABLE_DIAGNOSTIC_MESSAGES } from './constants.js';
+import { BENIGN_CONSOLE_TYPES, IGNORABLE_DIAGNOSTIC_MESSAGES } from "./constants.js";
 const createLineCollector = (maxLines = 100) => {
     const lines = [];
     let truncatedCount = 0;
@@ -25,36 +25,36 @@ const isAuthDiagnostic = (entry) => {
     if (!entry) {
         return false;
     }
-    const type = typeof entry.type === 'string' ? entry.type.toLowerCase() : '';
-    if (type === 'auth-fetch') {
+    const type = typeof entry.type === "string" ? entry.type.toLowerCase() : "";
+    if (type === "auth-fetch") {
         return true;
     }
-    const message = typeof entry.message === 'string' ? entry.message : '';
-    return message.includes('Authentication required');
+    const message = typeof entry.message === "string" ? entry.message : "";
+    return message.includes("Authentication required");
 };
 const appendAuthDiagnostics = (append, diagnostics) => {
     const authDiagnostics = diagnostics.filter((entry) => isAuthDiagnostic(entry));
     if (authDiagnostics.length === 0) {
         return;
     }
-    append(`Detected ${authDiagnostics.length} authentication failure${authDiagnostics.length === 1 ? '' : 's'} while loading the page.`);
+    append(`Detected ${authDiagnostics.length} authentication failure${authDiagnostics.length === 1 ? "" : "s"} while loading the page.`);
     for (const entry of authDiagnostics.slice(-5)) {
-        const statusLabel = entry?.status ? ` status=${entry.status}` : '';
-        const originLabel = entry?.source ? ` (${entry.source})` : '';
-        const message = typeof entry?.message === 'string' ? entry.message : 'Authentication required';
+        const statusLabel = entry?.status ? ` status=${entry.status}` : "";
+        const originLabel = entry?.source ? ` (${entry.source})` : "";
+        const message = typeof entry?.message === "string" ? entry.message : "Authentication required";
         append(`  auth${statusLabel}${originLabel}: ${message}`);
     }
-    append('  Hint: complete the real OAuth consent flow or issue a new session token before rerunning SweetLink.');
+    append("  Hint: complete the real OAuth consent flow or issue a new session token before rerunning SweetLink.");
 };
 const appendConsoleErrors = (append, label, diagnostics) => {
     for (const error of diagnostics) {
         if (isAuthDiagnostic(error)) {
             continue;
         }
-        const origin = error?.source ? ` (${error.source})` : '';
-        append(`${label} console ${error?.type ?? 'error'}${origin}: ${error?.message ?? 'unknown error'}`);
+        const origin = error?.source ? ` (${error.source})` : "";
+        append(`${label} console ${error?.type ?? "error"}${origin}: ${error?.message ?? "unknown error"}`);
         if (error?.stack) {
-            for (const stackLine of error.stack.split('\n')) {
+            for (const stackLine of error.stack.split("\n")) {
                 append(`  ${stackLine.trim()}`);
             }
         }
@@ -65,8 +65,8 @@ const appendOverlayDiagnostics = (append, label, overlayText) => {
         return;
     }
     append(`${label} Next.js overlay:`);
-    for (const overlayLine of overlayText.split('\n')) {
-        const normalized = overlayLine.replaceAll(/\s+/g, ' ').trim();
+    for (const overlayLine of overlayText.split("\n")) {
+        const normalized = overlayLine.replaceAll(/\s+/g, " ").trim();
         if (normalized.length === 0) {
             continue;
         }
@@ -77,13 +77,15 @@ const appendRouteError = (append, label, routeError) => {
     if (!routeError?.message) {
         return;
     }
-    const digestLabel = routeError.digest ? ` (digest ${routeError.digest})` : '';
+    const digestLabel = routeError.digest ? ` (digest ${routeError.digest})` : "";
     append(`${label} route error: ${routeError.message}${digestLabel}`);
 };
 export function logBootstrapDiagnostics(label, diagnostics) {
     const { append, flush } = createLineCollector();
-    append(`${label} document=${diagnostics.readyState ?? 'unknown'}, autoFlag=${diagnostics.autoFlag ? 'set' : 'unset'}, emits=${diagnostics.bootstrapEmits ?? 0}, sessionStorage=${diagnostics.sessionStorageAuto ?? 'null'}.`);
-    const errors = Array.isArray(diagnostics.errors) ? diagnostics.errors : [];
+    append(`${label} document=${diagnostics.readyState ?? "unknown"}, autoFlag=${diagnostics.autoFlag ? "set" : "unset"}, emits=${diagnostics.bootstrapEmits ?? 0}, sessionStorage=${diagnostics.sessionStorageAuto ?? "null"}.`);
+    const errors = Array.isArray(diagnostics.errors)
+        ? diagnostics.errors
+        : [];
     appendAuthDiagnostics(append, errors);
     appendConsoleErrors(append, label, errors);
     appendOverlayDiagnostics(append, label, diagnostics.overlayText);
@@ -99,11 +101,11 @@ export function logDevtoolsConsoleSummary(label, entries, limit = 20) {
     const interesting = sorted.filter((entry) => {
         if (!entry)
             return false;
-        const type = entry.type?.toLowerCase() ?? '';
+        const type = entry.type?.toLowerCase() ?? "";
         if (BENIGN_CONSOLE_TYPES.has(type)) {
             return false;
         }
-        const message = entry.text ?? '';
+        const message = entry.text ?? "";
         if (IGNORABLE_DIAGNOSTIC_MESSAGES.some((ignored) => message.includes(ignored))) {
             return false;
         }
@@ -111,22 +113,22 @@ export function logDevtoolsConsoleSummary(label, entries, limit = 20) {
     });
     const chosenSource = interesting.length > 0 ? interesting : sorted;
     const chosen = chosenSource.slice(-Math.min(limit, chosenSource.length));
-    const interestingLabel = interesting.length > 0 ? 'error/warn' : 'recent';
-    console.warn(`${label}: showing ${chosen.length} ${interestingLabel} console event${chosen.length === 1 ? '' : 's'}${interesting.length === 0 ? ' (no obvious errors detected)' : ''}.`);
+    const interestingLabel = interesting.length > 0 ? "error/warn" : "recent";
+    console.warn(`${label}: showing ${chosen.length} ${interestingLabel} console event${chosen.length === 1 ? "" : "s"}${interesting.length === 0 ? " (no obvious errors detected)" : ""}.`);
     const skipped = chosenSource.length - chosen.length;
     for (const entry of chosen) {
-        const timestamp = entry.ts ? new Date(entry.ts).toLocaleTimeString() : 'unknown';
+        const timestamp = entry.ts ? new Date(entry.ts).toLocaleTimeString() : "unknown";
         const location = entry.location?.url
-            ? ` (${entry.location.url}${typeof entry.location.lineNumber === 'number' ? `:${entry.location.lineNumber}` : ''})`
-            : '';
+            ? ` (${entry.location.url}${typeof entry.location.lineNumber === "number" ? `:${entry.location.lineNumber}` : ""})`
+            : "";
         const args = Array.isArray(entry.args) && entry.args.length > 0
-            ? entry.args.map((value) => formatConsoleArg(value)).join(' ')
-            : (entry.text ?? '');
-        const message = args || '(no message)';
-        console.warn(`  [${timestamp}] ${entry.type ?? 'log'}${location}: ${message}`);
+            ? entry.args.map((value) => formatConsoleArg(value)).join(" ")
+            : (entry.text ?? "");
+        const message = args || "(no message)";
+        console.warn(`  [${timestamp}] ${entry.type ?? "log"}${location}: ${message}`);
     }
     if (skipped > 0) {
-        console.warn(`  … ${skipped} additional event${skipped === 1 ? '' : 's'} not shown. Run "pnpm sweetlink devtools console --tail ${Math.min(200, chosenSource.length)}" for full output.`);
+        console.warn(`  … ${skipped} additional event${skipped === 1 ? "" : "s"} not shown. Run "pnpm sweetlink devtools console --tail ${Math.min(200, chosenSource.length)}" for full output.`);
     }
 }
 export function diagnosticsContainBlockingIssues(diagnostics) {
@@ -137,21 +139,21 @@ export function diagnosticsContainBlockingIssues(diagnostics) {
         return true;
     }
     const authFailure = diagnostics.errors?.find((entry) => {
-        const type = typeof entry?.type === 'string' ? entry.type.toLowerCase() : '';
-        if (type === 'auth-fetch') {
+        const type = typeof entry?.type === "string" ? entry.type.toLowerCase() : "";
+        if (type === "auth-fetch") {
             return true;
         }
-        const message = typeof entry?.message === 'string' ? entry.message : '';
-        return message.includes('Authentication required');
+        const message = typeof entry?.message === "string" ? entry.message : "";
+        return message.includes("Authentication required");
     });
     if (authFailure) {
         return true;
     }
     if (diagnostics.errors?.length) {
         const nonTrivialTypes = diagnostics.errors.filter((entry) => {
-            const type = (entry.type ?? 'error').toLowerCase();
-            if (type === 'error' || type === 'unhandledrejection' || type === 'warning') {
-                const message = typeof entry.message === 'string' ? entry.message : '';
+            const type = (entry.type ?? "error").toLowerCase();
+            if (type === "error" || type === "unhandledrejection" || type === "warning") {
+                const message = typeof entry.message === "string" ? entry.message : "";
                 if (message && IGNORABLE_DIAGNOSTIC_MESSAGES.some((needle) => message.includes(needle))) {
                     return false;
                 }
@@ -166,7 +168,7 @@ export function diagnosticsContainBlockingIssues(diagnostics) {
     return false;
 }
 export function formatConsoleArg(value) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         return value;
     }
     try {

@@ -1,5 +1,5 @@
-import { randomInt } from 'node:crypto';
-import { generateSlug } from 'random-word-slugs';
+import { randomInt } from "node:crypto";
+import { generateSlug } from "random-word-slugs";
 
 interface CodenameOptions {
   readonly slugFactory?: () => string;
@@ -10,7 +10,7 @@ interface CodenameOptions {
 const MAX_ATTEMPTS = 12;
 
 const ensureNonEmptyString = (value: unknown, label: string): string => {
-  if (typeof value !== 'string' || value.trim().length === 0) {
+  if (typeof value !== "string" || value.trim().length === 0) {
     throw new TypeError(`${label} must return a non-empty string`);
   }
   return value;
@@ -18,43 +18,46 @@ const ensureNonEmptyString = (value: unknown, label: string): string => {
 
 const defaultSlugFactory = (): string => {
   const slug = generateSlug(2, {
-    partsOfSpeech: ['adjective', 'noun'],
-    format: 'kebab',
+    partsOfSpeech: ["adjective", "noun"],
+    format: "kebab",
   });
-  return ensureNonEmptyString(slug, 'slugFactory');
+  return ensureNonEmptyString(slug, "slugFactory");
 };
 
 const defaultSaltFactory = () =>
   randomInt(36 ** 2)
     .toString(36)
-    .padStart(2, '0');
+    .padStart(2, "0");
 
 const defaultTimestampFactory = () => Date.now();
 
-export function generateSessionCodename(existing: Iterable<string>, options: CodenameOptions = {}): string {
+export function generateSessionCodename(
+  existing: Iterable<string>,
+  options: CodenameOptions = {},
+): string {
   const used = new Set(existing);
   const slugFactory = options.slugFactory ?? defaultSlugFactory;
   const saltFactory = options.saltFactory ?? defaultSaltFactory;
   const timestampFactory = options.timestampFactory ?? defaultTimestampFactory;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const candidate = ensureNonEmptyString(slugFactory(), 'slugFactory');
+    const candidate = ensureNonEmptyString(slugFactory(), "slugFactory");
     if (!used.has(candidate)) {
       return candidate;
     }
   }
 
-  const withSalt = `${ensureNonEmptyString(slugFactory(), 'slugFactory')}-${ensureNonEmptyString(
+  const withSalt = `${ensureNonEmptyString(slugFactory(), "slugFactory")}-${ensureNonEmptyString(
     saltFactory(),
-    'saltFactory'
+    "saltFactory",
   )}`;
   if (!used.has(withSalt)) {
     return withSalt;
   }
 
   const timestamp = timestampFactory();
-  if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
-    throw new TypeError('timestampFactory must return a numeric timestamp');
+  if (typeof timestamp !== "number" || Number.isNaN(timestamp)) {
+    throw new TypeError("timestampFactory must return a numeric timestamp");
   }
   return `${withSalt}-${Math.abs(timestamp).toString(36).slice(-2)}`;
 }

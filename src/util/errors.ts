@@ -1,4 +1,4 @@
-import { sweetLinkDebug } from '../env.js';
+import { sweetLinkDebug } from "../env.js";
 
 /** Extracts a readable message from unknown error-like values. */
 export function extractEventMessage(event: unknown, prefix?: string): string {
@@ -6,36 +6,40 @@ export function extractEventMessage(event: unknown, prefix?: string): string {
   if (prefix) {
     parts.push(prefix);
   }
-  if (typeof event === 'string') {
+  if (typeof event === "string") {
     parts.push(event);
   } else if (event instanceof Error) {
-    parts.push(event.message || event.name || 'Unknown error');
-  } else if (event && typeof event === 'object' && 'message' in event) {
+    parts.push(event.message || event.name || "Unknown error");
+  } else if (event && typeof event === "object" && "message" in event) {
     const message = (event as { message?: unknown }).message;
-    parts.push(typeof message === 'string' ? message : JSON.stringify(message));
+    parts.push(typeof message === "string" ? message : JSON.stringify(message));
   } else {
     parts.push(String(event));
   }
-  return parts.join(': ');
+  return parts.join(": ");
 }
 
 /** Type guard for Node errno exceptions. */
 export function isErrnoException(value: unknown): value is NodeJS.ErrnoException {
-  return typeof value === 'object' && value !== null && typeof (value as { code?: unknown }).code === 'string';
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { code?: unknown }).code === "string"
+  );
 }
 
 /** Formats unknown values for human-readable logging. */
-export function describeUnknown(value: unknown, fallback = 'unknown'): string {
+export function describeUnknown(value: unknown, fallback = "unknown"): string {
   if (value === null || value === undefined) {
     return fallback;
   }
   if (value instanceof Error) {
     return value.message || value.name || fallback;
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
-  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
     return String(value);
   }
   try {

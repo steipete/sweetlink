@@ -1,12 +1,12 @@
-import { logDebugError } from '../../util/errors.js';
-import { connectPuppeteerBrowser, resolvePuppeteerPage } from './puppeteer.js';
+import { logDebugError } from "../../util/errors.js";
+import { connectPuppeteerBrowser, resolvePuppeteerPage } from "./puppeteer.js";
 export async function focusControlledChromePage(devtoolsUrl, targetUrl) {
     let puppeteer;
     try {
-        ({ default: puppeteer } = await import('puppeteer'));
+        ({ default: puppeteer } = await import("puppeteer"));
     }
     catch (error) {
-        logDebugError('Unable to load Puppeteer while attempting to focus controlled Chrome', error);
+        logDebugError("Unable to load Puppeteer while attempting to focus controlled Chrome", error);
         return false;
     }
     const browser = await connectPuppeteerBrowser(puppeteer, devtoolsUrl, 3);
@@ -26,7 +26,7 @@ export async function focusControlledChromePage(devtoolsUrl, targetUrl) {
         return true;
     }
     catch (error) {
-        logDebugError('Failed to focus controlled Chrome page', error);
+        logDebugError("Failed to focus controlled Chrome page", error);
         return false;
     }
     finally {

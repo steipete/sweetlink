@@ -1,4 +1,4 @@
-import type { SweetLinkScreenshotHook } from '../shared/src/index.js';
+import type { SweetLinkScreenshotHook } from "../shared/src/index.js";
 
 export interface BuildScreenshotHooksOptions {
   readonly selector: string | null;
@@ -11,7 +11,9 @@ export interface BuildScreenshotHooksOptions {
   readonly beforeScript?: string;
 }
 
-export function buildScreenshotHooks(options: BuildScreenshotHooksOptions): SweetLinkScreenshotHook[] {
+export function buildScreenshotHooks(
+  options: BuildScreenshotHooksOptions,
+): SweetLinkScreenshotHook[] {
   const hooks: SweetLinkScreenshotHook[] = [];
   const selector = options.selector ?? undefined;
 
@@ -25,51 +27,51 @@ export function buildScreenshotHooks(options: BuildScreenshotHooksOptions): Swee
   if (selector) {
     const scrollTarget = options.scrollSelector ?? selector;
     addHook({
-      type: 'scrollIntoView',
+      type: "scrollIntoView",
       selector: scrollTarget,
-      block: 'center',
+      block: "center",
     });
 
     const waitSelector = options.waitSelector ?? selector;
-    const visibility: 'visible' | 'any' = options.waitVisible === false ? 'any' : 'visible';
+    const visibility: "visible" | "any" = options.waitVisible === false ? "any" : "visible";
     addHook({
-      type: 'waitForSelector',
+      type: "waitForSelector",
       selector: waitSelector,
       visibility,
       timeoutMs: options.waitTimeout ?? 12_000,
     });
 
-    addHook({ type: 'waitForIdle', frameCount: 2, timeoutMs: 4000 });
+    addHook({ type: "waitForIdle", frameCount: 2, timeoutMs: 4000 });
   }
 
   if (options.scrollIntoView || options.scrollSelector) {
     addHook({
-      type: 'scrollIntoView',
+      type: "scrollIntoView",
       selector: options.scrollSelector ?? selector,
-      block: 'center',
+      block: "center",
     });
   }
 
   if (options.waitSelector) {
     addHook({
-      type: 'waitForSelector',
+      type: "waitForSelector",
       selector: options.waitSelector,
-      visibility: options.waitVisible === false ? 'any' : 'visible',
+      visibility: options.waitVisible === false ? "any" : "visible",
       timeoutMs: options.waitTimeout ?? 12_000,
     });
   }
 
   if (options.delayMs && Number.isFinite(options.delayMs) && options.delayMs > 0) {
     addHook({
-      type: 'wait',
+      type: "wait",
       ms: Math.max(0, Math.floor(options.delayMs)),
     });
   } else if (!selector) {
-    addHook({ type: 'waitForIdle', frameCount: 1, timeoutMs: 2000 });
+    addHook({ type: "waitForIdle", frameCount: 1, timeoutMs: 2000 });
   }
 
   if (options.beforeScript) {
-    addHook({ type: 'script', code: options.beforeScript });
+    addHook({ type: "script", code: options.beforeScript });
   }
 
   return hooks;

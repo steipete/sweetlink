@@ -1,8 +1,8 @@
-import type { SweetLinkStorageAdapter, SweetLinkStoredSession } from '../types.js';
-import { getBrowserWindow } from '../utils/environment.js';
-import { isRecord } from '../utils/object.js';
+import type { SweetLinkStorageAdapter, SweetLinkStoredSession } from "../types.js";
+import { getBrowserWindow } from "../utils/environment.js";
+import { isRecord } from "../utils/object.js";
 
-const STORAGE_KEY = 'sweetlink:last-session';
+const STORAGE_KEY = "sweetlink:last-session";
 const EXPIRY_SAFETY_MARGIN_MS = 5000;
 
 const hasSessionStorage = (windowRef: Window | null): boolean => {
@@ -25,13 +25,15 @@ const parseStoredValue = (raw: string | null): SweetLinkStoredSession | null => 
     if (!isRecord(parsed)) {
       return null;
     }
-    const sessionId = typeof parsed.sessionId === 'string' ? parsed.sessionId : null;
-    const sessionToken = typeof parsed.sessionToken === 'string' ? parsed.sessionToken : null;
-    const socketUrl = typeof parsed.socketUrl === 'string' ? parsed.socketUrl : null;
+    const sessionId = typeof parsed.sessionId === "string" ? parsed.sessionId : null;
+    const sessionToken = typeof parsed.sessionToken === "string" ? parsed.sessionToken : null;
+    const socketUrl = typeof parsed.socketUrl === "string" ? parsed.socketUrl : null;
     const expiresAtMs =
-      typeof parsed.expiresAtMs === 'number' && Number.isFinite(parsed.expiresAtMs) ? parsed.expiresAtMs : null;
-    const codename = typeof parsed.codename === 'string' ? parsed.codename : null;
-    if (!((sessionId && sessionToken ) && socketUrl)) {
+      typeof parsed.expiresAtMs === "number" && Number.isFinite(parsed.expiresAtMs)
+        ? parsed.expiresAtMs
+        : null;
+    const codename = typeof parsed.codename === "string" ? parsed.codename : null;
+    if (!(sessionId && sessionToken && socketUrl)) {
       return null;
     }
     return {
@@ -78,7 +80,8 @@ const updateStoredSessionCodename = (codename: string | null, windowRef: Window 
   if (!current) {
     return;
   }
-  const normalizedCodename = typeof codename === 'string' && codename.trim().length > 0 ? codename.trim() : null;
+  const normalizedCodename =
+    typeof codename === "string" && codename.trim().length > 0 ? codename.trim() : null;
   if (current.codename === normalizedCodename) {
     return;
   }
@@ -87,7 +90,7 @@ const updateStoredSessionCodename = (codename: string | null, windowRef: Window 
       ...current,
       codename: normalizedCodename,
     },
-    windowRef
+    windowRef,
   );
 };
 
@@ -102,7 +105,10 @@ const clearStoredSession = (windowRef: Window | null): void => {
   }
 };
 
-export const isStoredSessionFresh = (session: SweetLinkStoredSession, now: number = Date.now()): boolean => {
+export const isStoredSessionFresh = (
+  session: SweetLinkStoredSession,
+  now: number = Date.now(),
+): boolean => {
   if (session.expiresAtMs == null) {
     return true;
   }
@@ -113,7 +119,9 @@ export interface SessionStorageAdapterOptions {
   readonly windowRef?: Window | null;
 }
 
-export function createSessionStorageAdapter(options: SessionStorageAdapterOptions = {}): SweetLinkStorageAdapter {
+export function createSessionStorageAdapter(
+  options: SessionStorageAdapterOptions = {},
+): SweetLinkStorageAdapter {
   const windowRef = options.windowRef ?? getBrowserWindow();
 
   return {

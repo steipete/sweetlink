@@ -1,4 +1,4 @@
-import type { SweetLinkScreenshotHook } from '../shared/src/index.js';
+import type { SweetLinkScreenshotHook } from "../shared/src/index.js";
 export interface BuildScreenshotHooksOptions {
     readonly selector: string | null;
     readonly scrollIntoView: boolean;

@@ -1,21 +1,23 @@
-import { fetchJson } from '../../http.js';
-import { logDebugError } from '../../util/errors.js';
-import { delay } from '../../util/time.js';
-import { saveDevToolsConfig } from '../devtools.js';
-import { urlsRoughlyMatch } from '../url.js';
-import { OPTIONAL_TRAILING_SLASH_PATTERN } from '../../util/regex.js';
+import { fetchJson } from "../../http.js";
+import { logDebugError } from "../../util/errors.js";
+import { delay } from "../../util/time.js";
+import { saveDevToolsConfig } from "../devtools.js";
+import { urlsRoughlyMatch } from "../url.js";
+import { OPTIONAL_TRAILING_SLASH_PATTERN } from "../../util/regex.js";
 export async function signalSweetLinkBootstrap(devtoolsUrl, targetUrl) {
     try {
         const payload = { devtoolsUrl, targetUrl };
-        await fetch(`${devtoolsUrl.replace(OPTIONAL_TRAILING_SLASH_PATTERN, '')}/json/version`, { method: 'GET' });
+        await fetch(`${devtoolsUrl.replace(OPTIONAL_TRAILING_SLASH_PATTERN, "")}/json/version`, {
+            method: "GET",
+        });
         await fetch(`${targetUrl}/sweetlink/bootstrap`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
     }
     catch (error) {
-        logDebugError('Failed to signal SweetLink bootstrap', error);
+        logDebugError("Failed to signal SweetLink bootstrap", error);
     }
 }
 export async function waitForSweetLinkSession(params) {

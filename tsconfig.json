@@ -6,37 +6,16 @@
     "declarationMap": true,
     "sourceMap": true,
     "noEmit": false,
-    "moduleResolution": "node",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@tests/*": [
-        "./tests/*"
-      ],
-      "@sweetlink/shared": [
-        "./shared/src/index.ts"
-      ],
-      "@sweetlink/shared/*": [
-        "./shared/src/*"
-      ],
-      "@sweetlink/shared/node": [
-        "./shared/src/node.ts"
-      ],
-      "@sweetlink-app": [
-        "./src/index.ts"
-      ],
-      "@sweetlink-app/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@tests/*": ["./tests/*"],
+      "@sweetlink/shared": ["./shared/src/index.ts"],
+      "@sweetlink/shared/*": ["./shared/src/*"],
+      "@sweetlink/shared/node": ["./shared/src/node.ts"],
+      "@sweetlink-app": ["./src/index.ts"],
+      "@sweetlink-app/*": ["./src/*"]
     }
   },
-  "include": [
-    "./src/**/*",
-    "./daemon/src/**/*"
-  ],
-  "exclude": [
-    "./src/**/*.test.ts",
-    "./daemon/src/**/*.test.ts"
-  ]
+  "include": ["./src/**/*", "./daemon/src/**/*"],
+  "exclude": ["./src/**/*.test.ts", "./daemon/src/**/*.test.ts"]
 }

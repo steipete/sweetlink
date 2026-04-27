@@ -1,34 +1,38 @@
-import type { SweetLinkScreenshotCommand } from '@sweetlink/shared';
-import { z } from 'zod';
-import { loadDefaultExportFromUrl } from '../module-loader.js';
-import type { ScreenshotTargetInfo } from '../types.js';
-import { getBrowserWindow } from '../utils/environment.js';
-import { clamp } from '../utils/number.js';
-import { isRecord, toTrimmedNonEmptyString } from '../utils/object.js';
+import type { SweetLinkScreenshotCommand } from "@sweetlink/shared";
+import { z } from "zod";
+import { loadDefaultExportFromUrl } from "../module-loader.js";
+import type { ScreenshotTargetInfo } from "../types.js";
+import { getBrowserWindow } from "../utils/environment.js";
+import { clamp } from "../utils/number.js";
+import { isRecord, toTrimmedNonEmptyString } from "../utils/object.js";
 
-type HookRunner = (clientWindow: Window, document_: Document, target: HTMLElement) => Promise<void> | void;
+type HookRunner = (
+  clientWindow: Window,
+  document_: Document,
+  target: HTMLElement,
+) => Promise<void> | void;
 
 const scrollIntoViewHookSchema = z
   .object({
-    type: z.literal('scrollIntoView'),
+    type: z.literal("scrollIntoView"),
     selector: z.union([z.string(), z.null()]).optional(),
-    behavior: z.enum(['auto', 'smooth', 'instant']).optional(),
-    block: z.enum(['start', 'center', 'end', 'nearest']).optional(),
+    behavior: z.enum(["auto", "smooth", "instant"]).optional(),
+    block: z.enum(["start", "center", "end", "nearest"]).optional(),
   })
   .passthrough();
 
 const waitForSelectorHookSchema = z
   .object({
-    type: z.literal('waitForSelector'),
+    type: z.literal("waitForSelector"),
     selector: z.string().min(1),
-    visibility: z.enum(['any', 'visible']).optional(),
+    visibility: z.enum(["any", "visible"]).optional(),
     timeoutMs: z.number().finite().optional(),
   })
   .passthrough();
 
 const waitForIdleHookSchema = z
   .object({
-    type: z.literal('waitForIdle'),
+    type: z.literal("waitForIdle"),
     timeoutMs: z.number().finite().optional(),
     frameCount: z.number().finite().optional(),
   })
@@ -36,19 +40,19 @@ const waitForIdleHookSchema = z
 
 const waitHookSchema = z
   .object({
-    type: z.literal('wait'),
+    type: z.literal("wait"),
     ms: z.number().finite(),
   })
   .passthrough();
 
 const scriptHookSchema = z
   .object({
-    type: z.literal('script'),
+    type: z.literal("script"),
     code: z.string().min(1),
   })
   .passthrough();
 
-export const screenshotHookSchema = z.discriminatedUnion('type', [
+export const screenshotHookSchema = z.discriminatedUnion("type", [
   scrollIntoViewHookSchema,
   waitForSelectorHookSchema,
   waitForIdleHookSchema,
@@ -59,9 +63,12 @@ export const screenshotHookSchema = z.discriminatedUnion('type', [
 export type ScreenshotHook = z.infer<typeof screenshotHookSchema>;
 
 export const createHookRunner = (source: string): HookRunner => {
-  const blob = new Blob(['"use strict"; export default async (window, document, target) => {\n', source, '\n};'], {
-    type: 'text/javascript',
-  });
+  const blob = new Blob(
+    ['"use strict"; export default async (window, document, target) => {\n', source, "\n};"],
+    {
+      type: "text/javascript",
+    },
+  );
 
   const blobUrl = URL.createObjectURL(blob);
   let compiledRunnerPromise: Promise<HookRunner> | null = null;
@@ -89,12 +96,12 @@ const isPromiseLike = (value: unknown): value is PromiseLike<unknown> => {
   if (!isRecord<{ then?: unknown }>(value)) {
     return false;
   }
-  return typeof value.then === 'function';
+  return typeof value.then === "function";
 };
 
 export async function applyScreenshotPreHooks(
   command: SweetLinkScreenshotCommand,
-  initialTarget: ScreenshotTargetInfo
+  initialTarget: ScreenshotTargetInfo,
 ): Promise<void> {
   const hooks = parseScreenshotHooks(command.hooks);
   if (hooks.length === 0) {
@@ -103,34 +110,34 @@ export async function applyScreenshotPreHooks(
 
   const runHook = async (hook: ScreenshotHook): Promise<void> => {
     switch (hook.type) {
-      case 'scrollIntoView': {
+      case "scrollIntoView": {
         const target = resolveHookTarget(hook.selector, command.selector, initialTarget.target);
         target.scrollIntoView({
-          behavior: hook.behavior ?? 'auto',
-          block: hook.block ?? 'center',
+          behavior: hook.behavior ?? "auto",
+          block: hook.block ?? "center",
         });
         await waitForIdle({ frameCount: 1, timeoutMs: 2000 });
         return;
       }
-      case 'waitForSelector': {
+      case "waitForSelector": {
         await waitForSelectorHook(hook.selector, {
-          visibility: hook.visibility ?? 'any',
+          visibility: hook.visibility ?? "any",
           timeoutMs: hook.timeoutMs ?? 10_000,
         });
         return;
       }
-      case 'waitForIdle': {
+      case "waitForIdle": {
         await waitForIdle({
           frameCount: hook.frameCount ?? 1,
           timeoutMs: hook.timeoutMs ?? 3000,
         });
         return;
       }
-      case 'wait': {
+      case "wait": {
         await delay(Math.max(0, hook.ms));
         return;
       }
-      case 'script': {
+      case "script": {
         await runHookScript(hook.code, initialTarget.target);
         return;
       }
@@ -166,7 +173,7 @@ function parseScreenshotHooks(candidate: unknown): ScreenshotHook[] {
 function resolveHookTarget(
   hookSelector: string | null | undefined,
   commandSelector: string | null | undefined,
-  fallback: HTMLElement
+  fallback: HTMLElement,
 ): HTMLElement {
   const selector = hookSelector ?? commandSelector ?? null;
   if (!selector) {
@@ -177,24 +184,31 @@ function resolveHookTarget(
     throw new Error(`Pre-capture hook target not found for selector "${selector}"`);
   }
   if (!(element instanceof HTMLElement)) {
-    throw new TypeError(`Pre-capture hook selector "${selector}" did not resolve to an HTMLElement`);
+    throw new TypeError(
+      `Pre-capture hook selector "${selector}" did not resolve to an HTMLElement`,
+    );
   }
   return element;
 }
 
 function waitForSelectorHook(
   selector: string,
-  options: { visibility: 'any' | 'visible'; timeoutMs: number }
+  options: { visibility: "any" | "visible"; timeoutMs: number },
 ): Promise<HTMLElement> {
   const deadline = performance.now() + options.timeoutMs;
 
   const poll = async (): Promise<HTMLElement> => {
     const match = document.querySelector(selector);
     if (match instanceof HTMLElement) {
-      if (options.visibility === 'visible') {
+      if (options.visibility === "visible") {
         const rect = match.getBoundingClientRect();
         const style = getComputedStyle(match);
-        if (rect.width > 1 && rect.height > 1 && style.visibility !== 'hidden' && style.display !== 'none') {
+        if (
+          rect.width > 1 &&
+          rect.height > 1 &&
+          style.visibility !== "hidden" &&
+          style.display !== "none"
+        ) {
           return match;
         }
       } else {
@@ -222,7 +236,7 @@ async function waitForIdle(options: { frameCount: number; timeoutMs: number }): 
     await waitForAnimationFrame();
     if (performance.now() > deadline) {
       console.warn(
-        '[SweetLink] waitForIdle timed out before reaching the requested frame count; proceeding with current frame.'
+        "[SweetLink] waitForIdle timed out before reaching the requested frame count; proceeding with current frame.",
       );
       return;
     }
@@ -235,7 +249,7 @@ async function waitForIdle(options: { frameCount: number; timeoutMs: number }): 
 function waitForAnimationFrame(): Promise<void> {
   return new Promise((resolve) => {
     const browserWindow = getBrowserWindow();
-    if (!browserWindow || typeof browserWindow.requestAnimationFrame !== 'function') {
+    if (!browserWindow || typeof browserWindow.requestAnimationFrame !== "function") {
       setTimeout(() => {
         resolve();
       }, 16);
@@ -247,7 +261,8 @@ function waitForAnimationFrame(): Promise<void> {
   });
 }
 
-export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, clamp(ms, 0, Number.POSITIVE_INFINITY)));
+export const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, clamp(ms, 0, Number.POSITIVE_INFINITY)));
 
 async function runHookScript(code: string, target: HTMLElement): Promise<void> {
   const normalizedCode = toTrimmedNonEmptyString(code);

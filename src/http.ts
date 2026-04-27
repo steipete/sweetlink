@@ -1,4 +1,4 @@
-import { inspect } from 'node:util';
+import { inspect } from "node:util";
 
 const formatCause = (cause: unknown): string | null => {
   if (cause === null || cause === undefined) {
@@ -7,10 +7,10 @@ const formatCause = (cause: unknown): string | null => {
   if (cause instanceof Error) {
     return cause.message || cause.name;
   }
-  if (typeof cause === 'string') {
+  if (typeof cause === "string") {
     return cause;
   }
-  if (typeof cause === 'number' || typeof cause === 'boolean') {
+  if (typeof cause === "number" || typeof cause === "boolean") {
     return String(cause);
   }
   try {
@@ -32,10 +32,11 @@ export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T
   } catch (error) {
     if (error instanceof Error) {
       const formattedCause = formatCause(error.cause);
-      const causeSuffix = formattedCause ? ` (cause: ${formattedCause})` : '';
+      const causeSuffix = formattedCause ? ` (cause: ${formattedCause})` : "";
       let message = `Request failed: ${error.message}${causeSuffix}`;
-      if (message.includes('Session not found or offline')) {
-        message += '\nHint: run `pnpm sweetlink sessions` to list active sessions and retry with a fresh id.';
+      if (message.includes("Session not found or offline")) {
+        message +=
+          "\nHint: run `pnpm sweetlink sessions` to list active sessions and retry with a fresh id.";
       }
       error.message = message;
     }

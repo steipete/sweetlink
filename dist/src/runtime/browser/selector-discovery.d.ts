@@ -1,4 +1,4 @@
-import type { SweetLinkSelectorCandidate } from '@sweetlink/shared';
+import type { SweetLinkSelectorCandidate } from "@sweetlink/shared";
 interface DiscoveryOptions {
     readonly scopeSelector?: string | null;
     readonly limit?: number;

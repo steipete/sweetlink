@@ -12,7 +12,7 @@ export interface DevBootstrapConfig {
     readonly loginPath: string | null;
     readonly redirectParam: string | null;
 }
-export type CachedCliTokenSource = 'secret' | 'api';
+export type CachedCliTokenSource = "secret" | "api";
 export interface ServerConfig {
     readonly env: string;
     readonly start: string[] | null;

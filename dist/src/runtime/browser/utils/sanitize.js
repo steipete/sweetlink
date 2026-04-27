@@ -6,10 +6,10 @@ export function sanitizeResult(value) {
             stack: value.stack,
         };
     }
-    if (typeof value === 'bigint') {
+    if (typeof value === "bigint") {
         return value.toString();
     }
-    if (typeof value === 'function') {
+    if (typeof value === "function") {
         return value.toString();
     }
     try {

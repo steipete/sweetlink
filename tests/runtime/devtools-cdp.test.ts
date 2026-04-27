@@ -1,5 +1,5 @@
-import { regex } from 'arkregex';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { regex } from "arkregex";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchMock = vi.fn();
 
@@ -13,14 +13,14 @@ afterAll(() => {
   (globalThis as { fetch?: typeof fetch }).fetch = undefined;
 });
 
-vi.mock('../../src/util/time', () => ({
+vi.mock("../../src/util/time", () => ({
   delay: vi.fn().mockResolvedValue(undefined),
 }));
 
-import type { ConsoleMessage, JSHandle, Page } from 'playwright-core';
+import type { ConsoleMessage, JSHandle, Page } from "playwright-core";
 
-const UNEXPECTED_RESPONSE_PATTERN = regex.as('unexpected');
-const MISSING_DEBUGGER_PATTERN = regex.as('does not expose');
+const UNEXPECTED_RESPONSE_PATTERN = regex.as("unexpected");
+const MISSING_DEBUGGER_PATTERN = regex.as("does not expose");
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -30,14 +30,14 @@ class MockWebSocket {
   constructor(url: string) {
     this.url = url;
     MockWebSocket.instances.push(this);
-    queueMicrotask(() => this.emit('open'));
+    queueMicrotask(() => this.emit("open"));
   }
   addEventListener(type: string, handler: (payload?: unknown) => void) {
     if (!this.listeners[type]) {
       this.listeners[type] = [];
     }
     this.listeners[type]?.push(handler);
-    if (type === 'open') {
+    if (type === "open") {
       queueMicrotask(() => handler());
     }
   }
@@ -46,18 +46,18 @@ class MockWebSocket {
     const messageId = parsed.id ?? 0;
     const respond = (result: unknown) => {
       const payload = JSON.stringify({ id: messageId, result });
-      this.emit('message', { data: payload });
+      this.emit("message", { data: payload });
     };
-    if (parsed.method === 'Runtime.evaluate') {
+    if (parsed.method === "Runtime.evaluate") {
       const expression = parsed.params?.expression;
-      const value = expression === 'document.readyState' ? 'complete' : 'ok';
+      const value = expression === "document.readyState" ? "complete" : "ok";
       respond({ result: { value } });
     } else {
       respond({});
     }
   }
   close() {
-    queueMicrotask(() => this.emit('close'));
+    queueMicrotask(() => this.emit("close"));
   }
   private emit(type: string, payload?: unknown) {
     for (const handler of this.listeners[type] ?? []) {
@@ -66,11 +66,11 @@ class MockWebSocket {
   }
 }
 
-vi.mock('undici', () => ({
+vi.mock("undici", () => ({
   WebSocket: MockWebSocket,
 }));
 
-const devtoolsModule = await import('../../src/runtime/devtools/cdp');
+const devtoolsModule = await import("../../src/runtime/devtools/cdp");
 const {
   discoverDevToolsEndpoints,
   fetchDevToolsTabs,
@@ -82,138 +82,140 @@ const {
   trimBuffer,
 } = devtoolsModule;
 
-describe('discoverDevToolsEndpoints', () => {
+describe("discoverDevToolsEndpoints", () => {
   beforeEach(() => {
     fetchMock.mockReset();
   });
 
-  it('returns ports that respond to /json/version', async () => {
+  it("returns ports that respond to /json/version", async () => {
     fetchMock
       .mockResolvedValueOnce({ ok: true })
       .mockResolvedValueOnce({ ok: false })
-      .mockRejectedValueOnce(new Error('offline'));
+      .mockRejectedValueOnce(new Error("offline"));
 
     const endpoints = await discoverDevToolsEndpoints();
 
-    expect(endpoints).toEqual(['http://127.0.0.1:9222']);
+    expect(endpoints).toEqual(["http://127.0.0.1:9222"]);
   });
 });
 
-describe('fetchDevToolsTabs', () => {
+describe("fetchDevToolsTabs", () => {
   beforeEach(() => {
     fetchMock.mockReset();
   });
 
-  it('returns sanitized tab entries', async () => {
+  it("returns sanitized tab entries", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: () =>
         Promise.resolve([
           {
-            id: '1',
-            title: 'Timeline',
-            url: 'https://example.dev/timeline',
-            type: 'page',
-            webSocketDebuggerUrl: 'ws://socket',
+            id: "1",
+            title: "Timeline",
+            url: "https://example.dev/timeline",
+            type: "page",
+            webSocketDebuggerUrl: "ws://socket",
           },
-          { id: null, url: 'missing' },
+          { id: null, url: "missing" },
         ]),
     });
 
-    const tabs = await fetchDevToolsTabs('http://localhost:9222');
+    const tabs = await fetchDevToolsTabs("http://localhost:9222");
 
     expect(tabs).toEqual([
       {
-        id: '1',
-        title: 'Timeline',
-        url: 'https://example.dev/timeline',
-        type: 'page',
-        webSocketDebuggerUrl: 'ws://socket',
+        id: "1",
+        title: "Timeline",
+        url: "https://example.dev/timeline",
+        type: "page",
+        webSocketDebuggerUrl: "ws://socket",
       },
     ]);
   });
 
-  it('throws when payload is malformed', async () => {
+  it("throws when payload is malformed", async () => {
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
 
-    await expect(fetchDevToolsTabs('http://localhost:9222')).rejects.toThrow(UNEXPECTED_RESPONSE_PATTERN);
+    await expect(fetchDevToolsTabs("http://localhost:9222")).rejects.toThrow(
+      UNEXPECTED_RESPONSE_PATTERN,
+    );
   });
 });
 
-describe('fetchDevToolsTabsWithRetry', () => {
+describe("fetchDevToolsTabsWithRetry", () => {
   beforeEach(() => {
     fetchMock.mockReset();
   });
 
-  it('retries on ECONNREFUSED and returns empty list', async () => {
+  it("retries on ECONNREFUSED and returns empty list", async () => {
     fetchMock
-      .mockRejectedValueOnce(new Error('ECONNREFUSED 127.0.0.1'))
+      .mockRejectedValueOnce(new Error("ECONNREFUSED 127.0.0.1"))
       .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
 
-    const tabs = await fetchDevToolsTabsWithRetry('http://localhost:9222', 2);
+    const tabs = await fetchDevToolsTabsWithRetry("http://localhost:9222", 2);
 
     expect(tabs).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 
-describe('resolveDevToolsPage', () => {
-  it('finds a page that matches the configured target', () => {
-    const pageMatch = { url: () => 'https://example.dev/dashboard' } as Page;
-    const pageFallback = { url: () => 'https://example.dev/home' } as Page;
+describe("resolveDevToolsPage", () => {
+  it("finds a page that matches the configured target", () => {
+    const pageMatch = { url: () => "https://example.dev/dashboard" } as Page;
+    const pageFallback = { url: () => "https://example.dev/home" } as Page;
     const browser = {
       contexts: () => [
         {
           pages: () => [pageFallback, pageMatch],
         },
       ],
-    } as unknown as import('playwright-core').Browser;
+    } as unknown as import("playwright-core").Browser;
 
     const match = resolveDevToolsPage(browser, {
-      devtoolsUrl: 'http://127.0.0.1:9222',
-      targetUrl: 'https://example.dev/dashboard',
+      devtoolsUrl: "http://127.0.0.1:9222",
+      targetUrl: "https://example.dev/dashboard",
     });
 
     expect(match).toBe(pageMatch);
   });
 
-  it('falls back to the first available page when no match exists', () => {
-    const pageFallback = { url: () => 'https://example.dev/home' } as Page;
+  it("falls back to the first available page when no match exists", () => {
+    const pageFallback = { url: () => "https://example.dev/home" } as Page;
     const browser = {
       contexts: () => [{ pages: () => [pageFallback] }],
-    } as unknown as import('playwright-core').Browser;
+    } as unknown as import("playwright-core").Browser;
 
-    const match = resolveDevToolsPage(browser, { devtoolsUrl: 'http://127.0.0.1:9222' });
+    const match = resolveDevToolsPage(browser, { devtoolsUrl: "http://127.0.0.1:9222" });
 
     expect(match).toBe(pageFallback);
   });
 });
 
-describe('serializeConsoleMessage', () => {
-  it('formats console payloads even when jsonValue fails', async () => {
+describe("serializeConsoleMessage", () => {
+  it("formats console payloads even when jsonValue fails", async () => {
     const handle: JSHandle<unknown> = {
-      jsonValue: vi.fn().mockRejectedValue(new Error('nope')),
+      jsonValue: vi.fn().mockRejectedValue(new Error("nope")),
       evaluate: vi.fn().mockResolvedValue('"fallback"'),
     } as unknown as JSHandle<unknown>;
     const message: ConsoleMessage = {
       args: () => [handle],
-      type: () => 'error',
-      text: () => 'Boom',
-      location: () => ({ url: '/app', lineNumber: 10, columnNumber: 2 }),
+      type: () => "error",
+      text: () => "Boom",
+      location: () => ({ url: "/app", lineNumber: 10, columnNumber: 2 }),
     } as unknown as ConsoleMessage;
 
     const entry = await serializeConsoleMessage(message);
 
-    expect(entry.type).toBe('error');
+    expect(entry.type).toBe("error");
     expect(entry.args).toEqual(['"fallback"']);
     expect(handle.evaluate).toHaveBeenCalled();
   });
 });
 
-describe('state helpers', () => {
-  it('creates empty state snapshots and trims buffers', () => {
-    const state = createEmptyDevToolsState('http://localhost:9222');
-    expect(state.endpoint).toBe('http://localhost:9222');
+describe("state helpers", () => {
+  it("creates empty state snapshots and trims buffers", () => {
+    const state = createEmptyDevToolsState("http://localhost:9222");
+    expect(state.endpoint).toBe("http://localhost:9222");
     expect(state.console).toEqual([]);
 
     const buffer = [1, 2, 3, 4];
@@ -222,29 +224,35 @@ describe('state helpers', () => {
   });
 });
 
-describe('evaluateInDevToolsTab', () => {
-  it('evaluates expressions in matching DevTools tabs', async () => {
+describe("evaluateInDevToolsTab", () => {
+  it("evaluates expressions in matching DevTools tabs", async () => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => [{ id: '1', url: 'https://app.example.dev', webSocketDebuggerUrl: 'ws://devtools' }],
+      json: async () => [
+        { id: "1", url: "https://app.example.dev", webSocketDebuggerUrl: "ws://devtools" },
+      ],
     });
 
-    const result = await evaluateInDevToolsTab('http://localhost:9222', 'https://app.example.dev', '40 + 2');
+    const result = await evaluateInDevToolsTab(
+      "http://localhost:9222",
+      "https://app.example.dev",
+      "40 + 2",
+    );
 
-    expect(result).toBe('ok');
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:9222/json/list', expect.any(Object));
+    expect(result).toBe("ok");
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:9222/json/list", expect.any(Object));
   });
 
-  it('throws when no debugger URL is available', async () => {
+  it("throws when no debugger URL is available", async () => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => [{ id: '1', url: 'https://other.dev', webSocketDebuggerUrl: undefined }],
+      json: async () => [{ id: "1", url: "https://other.dev", webSocketDebuggerUrl: undefined }],
     });
 
-    await expect(evaluateInDevToolsTab('http://localhost:9222', 'https://missing.dev', '1+1')).rejects.toThrow(
-      MISSING_DEBUGGER_PATTERN
-    );
+    await expect(
+      evaluateInDevToolsTab("http://localhost:9222", "https://missing.dev", "1+1"),
+    ).rejects.toThrow(MISSING_DEBUGGER_PATTERN);
   });
 });
