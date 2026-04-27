@@ -7,14 +7,14 @@ export declare const screenshotHookSchema: z.ZodDiscriminatedUnion<[z.ZodObject<
     selector: z.ZodOptional<z.ZodUnion<readonly [z.ZodString, z.ZodNull]>>;
     behavior: z.ZodOptional<z.ZodEnum<{
         auto: "auto";
-        smooth: "smooth";
         instant: "instant";
+        smooth: "smooth";
     }>>;
     block: z.ZodOptional<z.ZodEnum<{
-        start: "start";
         center: "center";
         end: "end";
         nearest: "nearest";
+        start: "start";
     }>>;
 }, z.core.$loose>, z.ZodObject<{
     type: z.ZodLiteral<"waitForSelector">;

@@ -11,9 +11,9 @@
 - `docs/` – Reference docs (`config.md`, `backend.md`, `testing.md`); update when behavior shifts.
 
 ## Build, Test, and Development Commands
-- `pnpm install` – Dependencies (Node 22+, Corepack pnpm).
+- `pnpm install` – Dependencies (Node 24+, Corepack pnpm).
 - `pnpm dev` – CLI via `tsx` for local debugging.
-- `pnpm build` – `tsc --project tsconfig.build.json` to emit `dist/`.
+- `pnpm build` – `tsgo --project tsconfig.build.json` to emit `dist/`.
 - `pnpm test` – Vitest suites in `tests/`.
 - `pnpm lint` – Biome over `src`, `shared/src`, `daemon/src`, `tests`.
 Run lint → test → build before sending changes.

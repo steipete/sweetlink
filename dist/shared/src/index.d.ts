@@ -20,13 +20,13 @@ export interface SignTokenOptions {
     readonly ttlSeconds: number;
     readonly sessionId?: string;
 }
-export declare function signSweetLinkToken({ secret, scope, subject, ttlSeconds, sessionId, }: SignTokenOptions): string;
+export declare function signSweetLinkToken({ secret, scope, subject, ttlSeconds, sessionId }: SignTokenOptions): string;
 export interface VerifyTokenOptions {
     readonly secret: string;
     readonly token: string;
     readonly expectedScope?: SweetLinkTokenScope;
 }
-export declare function verifySweetLinkToken({ secret, token, expectedScope, }: VerifyTokenOptions): SweetLinkTokenPayload;
+export declare function verifySweetLinkToken({ secret, token, expectedScope }: VerifyTokenOptions): SweetLinkTokenPayload;
 export declare function createSweetLinkSessionId(): string;
 export declare function createSweetLinkCommandId(): string;
 export type SweetLinkCommand = SweetLinkRunScriptCommand | SweetLinkGetDomCommand | SweetLinkNavigateCommand | SweetLinkPingCommand | SweetLinkScreenshotCommand | SweetLinkSelectorDiscoveryCommand;

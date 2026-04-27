@@ -4,6 +4,6 @@ interface AttemptOauthAutomationParameters {
     sessionUrl: string;
     scriptPath: string | null;
 }
-export declare function attemptTwitterOauthAutoAccept({ devtoolsUrl, sessionUrl, scriptPath, }: AttemptOauthAutomationParameters): Promise<TwitterOauthAutoAcceptResult>;
+export declare function attemptTwitterOauthAutoAccept({ devtoolsUrl, sessionUrl, scriptPath }: AttemptOauthAutomationParameters): Promise<TwitterOauthAutoAcceptResult>;
 export {};
 //# sourceMappingURL=oauth.d.ts.map

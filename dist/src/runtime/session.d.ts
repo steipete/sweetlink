@@ -56,7 +56,7 @@ export declare function resolvePromptOption(options: {
     question?: string;
 }): string | undefined;
 /** Builds a DOM click script scoped to the provided selector. */
-export declare function buildClickScript({ selector, scrollIntoView, bubbles, }: BuildClickScriptOptions): string;
+export declare function buildClickScript({ selector, scrollIntoView, bubbles }: BuildClickScriptOptions): string;
 /** Shared guard ensuring candidates from selector discovery are valid. */
 export declare const isSweetLinkSelectorCandidate: (value: unknown) => value is SweetLinkSelectorCandidate;
 /** Wrapper guards selector discovery responses. */
