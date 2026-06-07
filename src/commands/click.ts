@@ -31,8 +31,8 @@ export function registerClickCommand(program: Command): void {
     .command("click <sessionId>")
     .description("Dispatch a click event on a selector inside a SweetLink session")
     .requiredOption("-s, --selector <selector>", "CSS selector to click")
-    .option("--no-scroll", "Skip scrolling the element into view before clicking", false)
-    .option("--no-bubbles", "Dispatch the click event without bubbling", false)
+    .option("--no-scroll", "Skip scrolling the element into view before clicking")
+    .option("--no-bubbles", "Dispatch the click event without bubbling")
     .option(
       "-t, --timeout <ms>",
       "Command timeout in milliseconds (default 15_000)",
