@@ -2,7 +2,7 @@
 
 ## 0.2.1 — Unreleased
 
-- _No changes yet._
+- **Click defaults restored**: `sweetlink click` now scrolls targets into view and dispatches bubbling clicks by default again, with explicit `--no-scroll` and `--no-bubbles` opt-outs. Thanks @devYRPauli.
 
 ## 0.2.0 — 2025-12-26
 
