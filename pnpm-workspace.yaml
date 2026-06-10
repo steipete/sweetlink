@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - esbuild
+  - puppeteer
+  - tldjs
+
+overrides:
+  node-gyp: 12.1.0
