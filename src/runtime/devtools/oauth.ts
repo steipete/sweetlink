@@ -59,7 +59,7 @@ export async function attemptTwitterOauthAutoAccept({
     urlsRoughlyMatch,
     connectPuppeteer: async (attempts = 3) => {
       try {
-        const puppeteerModule: typeof import("puppeteer") = await import("puppeteer");
+        const puppeteerModule: typeof import("puppeteer-core") = await import("puppeteer-core");
         return await connectPuppeteerBrowser(puppeteerModule.default, devtoolsUrl, attempts);
       } catch (error) {
         logDebugError("Unable to load Puppeteer for OAuth automation", error);

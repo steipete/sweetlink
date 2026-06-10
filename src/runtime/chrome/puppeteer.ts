@@ -1,4 +1,4 @@
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer-core";
 import { logDebugError } from "../../util/errors.js";
 import { delay } from "../../util/time.js";
 import { urlsRoughlyMatch } from "../url.js";
@@ -10,7 +10,7 @@ import {
 } from "./constants.js";
 
 export async function connectPuppeteerBrowser(
-  puppeteer: typeof import("puppeteer").default,
+  puppeteer: typeof import("puppeteer-core").default,
   browserURL: string,
   attempts: number,
 ): Promise<PuppeteerBrowser | null> {

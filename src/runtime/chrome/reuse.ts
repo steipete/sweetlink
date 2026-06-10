@@ -1,6 +1,6 @@
 import { regex } from "arkregex";
 import net from "node:net";
-import type { Page as PuppeteerPage } from "puppeteer";
+import type { Page as PuppeteerPage } from "puppeteer-core";
 import { cliEnv } from "../../env.js";
 import { logDebugError } from "../../util/errors.js";
 import { loadDevToolsConfig, saveDevToolsConfig } from "../devtools.js";
@@ -41,9 +41,9 @@ export async function reuseExistingControlledChrome(
   }
 
   const seen = new Set<string>();
-  let puppeteer: typeof import("puppeteer").default | null = null;
+  let puppeteer: typeof import("puppeteer-core").default | null = null;
   try {
-    const puppeteerModule = await import("puppeteer");
+    const puppeteerModule = await import("puppeteer-core");
     puppeteer = puppeteerModule.default;
   } catch (error) {
     console.warn("Unable to load Puppeteer while reusing DevTools chrome:", error);

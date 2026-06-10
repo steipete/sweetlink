@@ -31,7 +31,7 @@ describe("connectPuppeteerBrowser", () => {
   it("attaches on the first attempt", async () => {
     const puppeteer = {
       connect: vi.fn().mockResolvedValue({ id: "browser" }),
-    } as unknown as typeof import("puppeteer").default;
+    } as unknown as typeof import("puppeteer-core").default;
 
     const browser = await connectPuppeteerBrowser(puppeteer, "http://localhost:9222", 1);
 
@@ -43,7 +43,7 @@ describe("connectPuppeteerBrowser", () => {
   it("retries before giving up and logs when no browser is available", async () => {
     const puppeteer = {
       connect: vi.fn().mockRejectedValue(new Error("offline")),
-    } as unknown as typeof import("puppeteer").default;
+    } as unknown as typeof import("puppeteer-core").default;
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(noop);
 
     const browser = await connectPuppeteerBrowser(puppeteer, "http://localhost:9222", 3);
@@ -73,7 +73,7 @@ describe("resolvePuppeteerPage", () => {
         .mockResolvedValueOnce([firstPage])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([targetPage]),
-    } as unknown as import("puppeteer").Browser;
+    } as unknown as import("puppeteer-core").Browser;
 
     const resolved = await resolvePuppeteerPage(browser, "https://example.dev/settings");
 
@@ -86,7 +86,7 @@ describe("navigatePuppeteerPage", () => {
   it("returns true when navigation succeeds", async () => {
     const page = {
       goto: vi.fn().mockResolvedValue(undefined),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
 
     await expect(navigatePuppeteerPage(page, "https://example.dev", 1)).resolves.toBe(true);
     expect(page.goto).toHaveBeenCalledWith(
@@ -98,7 +98,7 @@ describe("navigatePuppeteerPage", () => {
   it("logs debug output after repeated failures", async () => {
     const page = {
       goto: vi.fn().mockRejectedValue(new Error("timeout")),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
 
     const result = await navigatePuppeteerPage(page, "https://example.dev", 2);
 
@@ -117,7 +117,7 @@ describe("waitForPageReady", () => {
         .fn()
         .mockRejectedValueOnce(new Error("slow"))
         .mockResolvedValueOnce(undefined),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
 
     await waitForPageReady(page);
 
@@ -129,7 +129,7 @@ describe("attemptPuppeteerReload", () => {
   it("reports reload failures via debug logs", async () => {
     const page = {
       reload: vi.fn().mockRejectedValue(new Error("crash")),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
 
     await attemptPuppeteerReload(page);
 

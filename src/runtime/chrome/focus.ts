@@ -5,9 +5,9 @@ export async function focusControlledChromePage(
   devtoolsUrl: string,
   targetUrl: string,
 ): Promise<boolean> {
-  let puppeteer: typeof import("puppeteer").default;
+  let puppeteer: typeof import("puppeteer-core").default;
   try {
-    ({ default: puppeteer } = await import("puppeteer"));
+    ({ default: puppeteer } = await import("puppeteer-core"));
   } catch (error) {
     logDebugError("Unable to load Puppeteer while attempting to focus controlled Chrome", error);
     return false;

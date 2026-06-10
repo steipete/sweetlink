@@ -26,7 +26,7 @@ vi.mock("../../src/runtime/chrome/puppeteer", () => ({
   waitForPageReady: mocks.waitForPageReady,
 }));
 
-vi.mock("puppeteer", () => ({
+vi.mock("puppeteer-core", () => ({
   default: {},
 }));
 

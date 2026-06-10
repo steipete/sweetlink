@@ -205,9 +205,9 @@ export async function attemptDevToolsCapture(
     return null;
   }
 
-  let puppeteer: typeof import("puppeteer").default;
+  let puppeteer: typeof import("puppeteer-core").default;
   try {
-    ({ default: puppeteer } = await import("puppeteer"));
+    ({ default: puppeteer } = await import("puppeteer-core"));
   } catch (error) {
     console.warn("Puppeteer is unavailable:", error);
     return null;

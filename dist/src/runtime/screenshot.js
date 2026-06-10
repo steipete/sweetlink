@@ -104,7 +104,7 @@ export async function attemptDevToolsCapture(options) {
     }
     let puppeteer;
     try {
-        ({ default: puppeteer } = await import("puppeteer"));
+        ({ default: puppeteer } = await import("puppeteer-core"));
     }
     catch (error) {
         console.warn("Puppeteer is unavailable:", error);

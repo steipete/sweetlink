@@ -12,7 +12,7 @@ const delayMock = vi.fn().mockResolvedValue(undefined);
 
 const connectMock = vi.fn();
 
-vi.mock("puppeteer", () => ({
+vi.mock("puppeteer-core", () => ({
   default: { connect: connectMock },
 }));
 
@@ -51,7 +51,7 @@ const createPage = () => {
     url: () => "https://example.dev/app",
     setCookie: vi.fn().mockResolvedValue(undefined),
     cookies: cookiesMock,
-  } as unknown as import("puppeteer").Page;
+  } as unknown as import("puppeteer-core").Page;
 };
 
 describe("primeControlledChromeCookies", () => {

@@ -3,7 +3,7 @@ import { connectPuppeteerBrowser, resolvePuppeteerPage, waitForPageReady } from 
 export async function collectPuppeteerDiagnostics(devtoolsUrl, targetUrl) {
     let puppeteer;
     try {
-        ({ default: puppeteer } = await import("puppeteer"));
+        ({ default: puppeteer } = await import("puppeteer-core"));
     }
     catch (error) {
         console.warn("Unable to load Puppeteer while collecting diagnostics:", error);

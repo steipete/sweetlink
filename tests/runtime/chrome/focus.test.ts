@@ -8,7 +8,7 @@ vi.mock("@sweetlink-app/runtime/chrome/puppeteer", () => ({
   resolvePuppeteerPage: resolveMock,
 }));
 
-vi.mock("puppeteer", () => ({
+vi.mock("puppeteer-core", () => ({
   default: {},
 }));
 

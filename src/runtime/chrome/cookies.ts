@@ -1,6 +1,6 @@
 import { regex } from "arkregex";
 import { uniq } from "es-toolkit";
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer-core";
 import { sweetLinkDebug } from "../../env.js";
 import { delay } from "../../util/time.js";
 import { buildCookieOrigins, collectChromeCookies, type PuppeteerCookieParam } from "../cookies.js";
@@ -51,9 +51,9 @@ export async function primeControlledChromeCookies(
     return;
   }
 
-  let puppeteer: typeof import("puppeteer").default | null = null;
+  let puppeteer: typeof import("puppeteer-core").default | null = null;
   try {
-    ({ default: puppeteer } = await import("puppeteer"));
+    ({ default: puppeteer } = await import("puppeteer-core"));
   } catch (error) {
     console.warn("Unable to load Puppeteer while priming cookies:", error);
     return;

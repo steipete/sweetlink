@@ -22,7 +22,7 @@ export async function ensureDeepLinkAuthFlow(params) {
     }
     let puppeteerModule = null;
     try {
-        puppeteerModule = await import("puppeteer");
+        puppeteerModule = await import("puppeteer-core");
     }
     catch (error) {
         logDebugError("Unable to load Puppeteer for deep-link auth flow", error);

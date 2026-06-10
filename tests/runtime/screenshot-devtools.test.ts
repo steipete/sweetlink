@@ -35,7 +35,7 @@ const browserMock = {
 
 connectMock.mockResolvedValue(browserMock);
 
-vi.mock("puppeteer", () => ({
+vi.mock("puppeteer-core", () => ({
   default: {
     connect: connectMock,
   },

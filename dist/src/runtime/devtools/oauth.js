@@ -30,7 +30,7 @@ export async function attemptTwitterOauthAutoAccept({ devtoolsUrl, sessionUrl, s
         urlsRoughlyMatch,
         connectPuppeteer: async (attempts = 3) => {
             try {
-                const puppeteerModule = await import("puppeteer");
+                const puppeteerModule = await import("puppeteer-core");
                 return await connectPuppeteerBrowser(puppeteerModule.default, devtoolsUrl, attempts);
             }
             catch (error) {

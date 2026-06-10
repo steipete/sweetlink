@@ -29,7 +29,7 @@ export async function reuseExistingControlledChrome(target, options) {
     const seen = new Set();
     let puppeteer = null;
     try {
-        const puppeteerModule = await import("puppeteer");
+        const puppeteerModule = await import("puppeteer-core");
         puppeteer = puppeteerModule.default;
     }
     catch (error) {

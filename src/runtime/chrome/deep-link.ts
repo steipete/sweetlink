@@ -1,4 +1,8 @@
-import type { Browser as PuppeteerBrowser, ElementHandle, Page as PuppeteerPage } from "puppeteer";
+import type {
+  Browser as PuppeteerBrowser,
+  ElementHandle,
+  Page as PuppeteerPage,
+} from "puppeteer-core";
 import { buildDevBootstrapLoginUrl } from "../../core/dev-bootstrap.js";
 import { logDebugError } from "../../util/errors.js";
 import { delay } from "../../util/time.js";
@@ -41,9 +45,9 @@ export async function ensureDeepLinkAuthFlow(params: {
     return { signInClicked: false, navigatedToTarget: false, finalUrl: null };
   }
 
-  let puppeteerModule: typeof import("puppeteer") | null = null;
+  let puppeteerModule: typeof import("puppeteer-core") | null = null;
   try {
-    puppeteerModule = await import("puppeteer");
+    puppeteerModule = await import("puppeteer-core");
   } catch (error) {
     logDebugError("Unable to load Puppeteer for deep-link auth flow", error);
     return { signInClicked: false, navigatedToTarget: false, finalUrl: null };

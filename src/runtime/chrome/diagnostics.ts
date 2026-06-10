@@ -9,9 +9,9 @@ export async function collectPuppeteerDiagnostics(
   bodyText?: string | null;
   title?: string | null;
 } | null> {
-  let puppeteer: typeof import("puppeteer").default;
+  let puppeteer: typeof import("puppeteer-core").default;
   try {
-    ({ default: puppeteer } = await import("puppeteer"));
+    ({ default: puppeteer } = await import("puppeteer-core"));
   } catch (error) {
     console.warn("Unable to load Puppeteer while collecting diagnostics:", error);
     return null;

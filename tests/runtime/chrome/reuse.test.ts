@@ -35,7 +35,7 @@ vi.mock("../../../src/runtime/chrome/puppeteer", () => ({
   navigatePuppeteerPage: navigatePuppeteerPageMock,
 }));
 
-vi.mock("puppeteer", () => ({
+vi.mock("puppeteer-core", () => ({
   default: {},
 }));
 
@@ -187,7 +187,7 @@ describe("reuseExistingControlledChrome", () => {
       url: () => "https://app.example.dev/home",
       reload: vi.fn().mockResolvedValue(undefined),
       bringToFront: vi.fn().mockResolvedValue(undefined),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
     const browser = {
       pages: vi.fn().mockResolvedValue([page]),
       newPage: vi.fn(),
@@ -231,7 +231,7 @@ describe("reuseExistingControlledChrome", () => {
       url: () => "about:blank",
       bringToFront: vi.fn(),
       close: vi.fn().mockResolvedValue(undefined),
-    } as unknown as import("puppeteer").Page;
+    } as unknown as import("puppeteer-core").Page;
     const browser = {
       pages: vi.fn().mockResolvedValue([]),
       newPage: vi.fn().mockResolvedValue(newPage),

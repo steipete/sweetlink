@@ -3,7 +3,7 @@ import { connectPuppeteerBrowser, resolvePuppeteerPage } from "./puppeteer.js";
 export async function focusControlledChromePage(devtoolsUrl, targetUrl) {
     let puppeteer;
     try {
-        ({ default: puppeteer } = await import("puppeteer"));
+        ({ default: puppeteer } = await import("puppeteer-core"));
     }
     catch (error) {
         logDebugError("Unable to load Puppeteer while attempting to focus controlled Chrome", error);

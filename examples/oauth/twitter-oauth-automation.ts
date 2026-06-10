@@ -1,4 +1,4 @@
-import type { Page as PuppeteerPage } from 'puppeteer';
+import type { Page as PuppeteerPage } from 'puppeteer-core';
 import type {
   SweetLinkOauthAuthorizeContext,
   SweetLinkOauthAutomation,

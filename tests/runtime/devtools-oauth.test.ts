@@ -34,7 +34,7 @@ vi.mock("../../src/util/errors", () => ({
   logDebugError: mocks.logDebugError,
 }));
 
-vi.mock("puppeteer", () => {
+vi.mock("puppeteer-core", () => {
   if (mocks.state.throwPuppeteerImport) {
     throw new Error("Missing Puppeteer");
   }

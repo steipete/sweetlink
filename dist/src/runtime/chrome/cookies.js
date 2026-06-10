@@ -15,7 +15,7 @@ export async function primeControlledChromeCookies(options, deps = {}) {
     }
     let puppeteer = null;
     try {
-        ({ default: puppeteer } = await import("puppeteer"));
+        ({ default: puppeteer } = await import("puppeteer-core"));
     }
     catch (error) {
         console.warn("Unable to load Puppeteer while priming cookies:", error);

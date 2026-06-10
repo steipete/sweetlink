@@ -1,5 +1,5 @@
 import type { Browser, Page } from "playwright-core";
-import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer";
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from "puppeteer-core";
 export interface SweetLinkBootstrapDiagnostics {
     readyState?: string;
     autoFlag?: boolean;
