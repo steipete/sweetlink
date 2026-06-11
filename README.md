@@ -23,7 +23,7 @@ SweetLink is the agent-ready way to "connect your agent to your web app. Like Pl
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 24+
 - `pnpm` (managed via Corepack)
 - TLS requirements: `brew install mkcert nss`
 - SweetLink daemon running locally (`pnpm exec sweetlink daemon` or `pnpm exec sweetlinkd`)
@@ -150,11 +150,11 @@ Place the config file in your project root (or any parent directory). With the f
 - `oauthScript` – Absolute or relative path to an OAuth automation script (ESM module). When set, SweetLink loads the module at runtime and calls its `authorize(context)` export to approve third-party consent dialogs.
 
 SweetLink reads the config once at start-up. When you edit `sweetlink.json` rerun the CLI command to pick up the new defaults. Multiple projects on the same machine can keep their own config files; SweetLink stops at the first file it finds while walking up the directory tree, so place project-specific configs as close to the repo root as possible.
-See `apps/sweetlink/docs/config.md` for a full configuration reference (including environment overrides).
+See `docs/config.md` for a full configuration reference (including environment overrides).
 
 ### OAuth automation scripts
 
-Out of the box SweetLink no longer ships opinionated OAuth heuristics. Instead you can point `oauthScript` at a small ESM module that exports an `authorize(context)` function. The helper receives a `SweetLinkOauthAuthorizeContext` with DevTools and Puppeteer helpers, so you can fully control how SweetLink approves third-party consent prompts. A ready-to-use implementation for Twitter/X lives at `apps/sweetlink/examples/oauth/twitter-oauth-automation.ts`; copy it into your project (or tweak it) and set `oauthScript` to that path to re-enable the previous behaviour. If the script is omitted, SweetLink will log that auto-authorization is disabled and leave the prompt untouched.
+Out of the box SweetLink no longer ships opinionated OAuth heuristics. Instead you can point `oauthScript` at a small ESM module that exports an `authorize(context)` function. The helper receives a `SweetLinkOauthAuthorizeContext` with DevTools and Puppeteer helpers, so you can fully control how SweetLink approves third-party consent prompts. A ready-to-use implementation for Twitter/X lives at `examples/oauth/twitter-oauth-automation.ts`; copy it into your project (or tweak it) and set `oauthScript` to that path to re-enable the previous behaviour. If the script is omitted, SweetLink will log that auto-authorization is disabled and leave the prompt untouched.
 
 You can also specify the script through runtime inputs:
 
@@ -204,11 +204,11 @@ export const sweetLinkClient = createSweetLinkClient({
 
 The runtime mirrors everything we ship in production: websocket lifecycle, console buffering, screenshot hooks/renderers, selector discovery, and auto-reconnect with stored-session resume. Tests can import `sweetLinkBrowserTestHelpers` to reuse `createHookRunner`, `stripDataUrlPrefix`, and `commandSelectorSummary` without reaching into private modules.
 
-👉 See [`apps/sweetlink/browser.md`](./browser.md) for a step-by-step integration guide (handshake endpoint, custom storage adapters, DOM events) plus a reference implementation you can copy into other apps.
+👉 See [`browser.md`](./browser.md) for a step-by-step integration guide (handshake endpoint, custom storage adapters, DOM events) plus a reference implementation you can copy into other apps.
 
 ## Example App
 
-Looking for a minimal integration? Launch the demo web app under `apps/sweetlink/examples/basic-web`:
+Looking for a minimal integration? Launch the demo web app under `examples/basic-web`:
 
 ```bash
 cd examples/basic-web
@@ -239,7 +239,7 @@ pnpm test
 
 ## License
 
-SweetLink (CLI, daemon, and shared packages) is licensed under the MIT License. See `apps/sweetlink/LICENSE` for the full text.
+SweetLink (CLI, daemon, and shared packages) is licensed under the MIT License. See `LICENSE` for the full text.
 
 ## TLS Onboarding
 

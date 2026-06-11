@@ -106,7 +106,7 @@ This path points at an ESM module that exports `authorize(context)`. SweetLink l
 - `fetchTabs`, `evaluateInDevToolsTab` – Helpers for DevTools automation
 - `connectPuppeteer`, `resolvePuppeteerPage`, `waitForPageReady` – Puppeteer helpers
 
-See `apps/sweetlink/examples/oauth/twitter-oauth-automation.ts` for a full example.
+See `examples/oauth/twitter-oauth-automation.ts` for a full example.
 
 ## Environment Variables
 
@@ -127,7 +127,7 @@ For example, `--oauth-script ./custom.ts` beats `sweetlink.json`’s `oauthScrip
 
 ## Related Docs
 
-- `apps/sweetlink/README.md` – End-user CLI guide, including smoke tests and examples.
+- `README.md` – End-user CLI guide, including smoke tests and examples.
 - `docs/cli/sweetlink.md` – Pointer to the canonical README.
-- `apps/sweetlink/examples/oauth/twitter-oauth-automation.ts` – OAuth automation script template.
+- `examples/oauth/twitter-oauth-automation.ts` – OAuth automation script template.
 - `redirects` — Optional object mapping source paths to their expected destination paths. SweetLink applies these rules when verifying smoke-test routes and DevTools navigations, so if your app immediately redirects `/` to `/timeline`, add `{ "/": "/timeline" }` to avoid false failures. Paths are normalized (leading slash, trailing slash trimmed) before comparison, and query parameters aren’t part of the rule.

@@ -15,7 +15,7 @@
 - `pnpm dev` – CLI via `tsx` for local debugging.
 - `pnpm build` – `tsgo --project tsconfig.build.json` to emit `dist/`.
 - `pnpm test` – Vitest suites in `tests/`.
-- `pnpm lint` – Biome over `src`, `shared/src`, `daemon/src`, `tests`.
+- `pnpm lint` – Oxfmt and Oxlint over `src`, `shared/src`, `daemon/src`, `tests`.
 Run lint → test → build before sending changes.
 
 ## Coding Style & Naming Conventions

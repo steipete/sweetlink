@@ -1,6 +1,6 @@
 {
   "name": "sweetlink",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "description": "Controlled-browser automation CLI for SweetLink sessions.",
   "keywords": [
@@ -17,8 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/steipete/sweetlink.git",
-    "directory": "apps/sweetlink"
+    "url": "https://github.com/steipete/sweetlink.git"
   },
   "bin": {
     "sweetlink": "./dist/src/index.js",
@@ -54,8 +53,8 @@
     "build": "tsgo --project tsconfig.build.json",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsgo --project tsconfig.json --noEmit",
-    "format": "oxfmt --write ./src ./shared/src ./daemon/src ./tests package.json tsconfig.json tsconfig.build.json tsconfig.base.json vitest.config.ts",
-    "format:check": "oxfmt --check ./src ./shared/src ./daemon/src ./tests package.json tsconfig.json tsconfig.build.json tsconfig.base.json vitest.config.ts",
+    "format": "node scripts/format.mjs --write",
+    "format:check": "node scripts/format.mjs",
     "lint": "pnpm format:check && oxlint --deny-warnings ./src ./shared/src ./daemon/src ./tests",
     "lint:fix": "pnpm format && oxlint --fix ./src ./shared/src ./daemon/src ./tests",
     "standalone:post-sync": "tsx scripts/post-sync.ts",

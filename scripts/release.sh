@@ -20,8 +20,9 @@ with_runner() {
 }
 
 phase_gates() {
-  banner "Gates (lint/test/build)"
+  banner "Gates (lint/typecheck/test/build)"
   with_runner pnpm run lint
+  with_runner pnpm run typecheck
   with_runner pnpm test
   with_runner pnpm run build
 }
@@ -39,8 +40,8 @@ phase_artifacts() {
     exit 1
   fi
 
-  run shasum "$tgz" > "${tgz}.sha1"
-  run shasum -a 256 "$tgz" > "${tgz}.sha256"
+  shasum "$tgz" > "${tgz}.sha1"
+  shasum -a 256 "$tgz" > "${tgz}.sha256"
 }
 
 phase_publish() {
@@ -68,7 +69,7 @@ usage() {
 Usage: scripts/release.sh [phase]
 
 Phases (run individually or all):
-  gates      pnpm lint, test, build
+  gates      pnpm lint, typecheck, test, build
   artifacts  npm pack + sha1/sha256
   publish    pnpm publish --tag latest --access public, verify npm view
   smoke      empty-dir npx sweetlink@<version> --version

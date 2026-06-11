@@ -1,8 +1,12 @@
 # Changelog
 
-## 0.2.1 — Unreleased
+## 0.2.1 — 2026-06-11
 
 - **Click defaults restored**: `sweetlink click` now scrolls targets into view and dispatches bubbling clicks by default again, with explicit `--no-scroll` and `--no-bubbles` opt-outs. Thanks @devYRPauli.
+- **Cookie collection modernized**: Chrome cookie sync now uses `@steipete/sweet-cookie`, preserves the `~/.oracle` inline fallback, and drops the old native SQLite/keytar dependency path.
+- **Smoke route corrected**: the built-in `main` preset now targets `/timeline` and no longer treats the removed `/timeline/home` route as equivalent.
+- **Node 24 baseline**: package metadata, CI, TypeScript builds, linting, and runtime dependencies now target Node.js 24 or newer.
+- **Runtime maintenance**: updated Commander, Puppeteer Core, Playwright Core, WebSocket, Vite, and supporting dependencies.
 
 ## 0.2.0 — 2025-12-26
 

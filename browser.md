@@ -4,7 +4,7 @@ summary: 'How to embed the SweetLink browser runtime into your web app using the
 
 # SweetLink Browser Runtime
 
-SweetLink now ships a browser-ready runtime so any app can bootstrap the in-tab client without copying the Sweetistics monorepo glue. The runtime lives under `@sweetlink-app/runtime/browser` (exposed by `apps/sweetlink` once you build/publish the package) and provides the exact session features used in production.
+SweetLink now ships a browser-ready runtime so any app can bootstrap the in-tab client without copying the Sweetistics monorepo glue. The runtime lives under `sweetlink/runtime/browser` and provides the exact session features used in production.
 
 ## Installation
 
@@ -113,4 +113,4 @@ These match the helpers that previously lived under `__sweetlinkTestApi`, so exi
 - Shipping SweetLink integration in extensions/desktop shells that lean on shared React code.
 - Writing automated demos where the CLI starts a session and your web app lazily connects.
 
-When you need lower-level access (custom renderers, alternative screenshot transports) you can still import the submodules directly from `@sweetlink-app/runtime/browser/*`.
+When you need lower-level access (custom renderers, alternative screenshot transports), use the public `sweetlink/runtime/browser` export rather than private submodules.

@@ -107,7 +107,7 @@ The runtime handles:
 - Console buffering and throttled flushes
 - Auto-reconnect with exponential backoff and stored-session resume
 
-See [`apps/sweetlink/examples/basic-web`](../examples/basic-web/README.md) for a complete working example that uses this runtime and the status probe above.
+See [`examples/basic-web`](../examples/basic-web/README.md) for a complete working example that uses this runtime and the status probe above.
 
 ## Security Checklist
 

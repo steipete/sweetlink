@@ -18,6 +18,7 @@
 
 4. **Validation**
    - [ ] `pnpm run lint`
+   - [ ] `pnpm run typecheck`
    - [ ] `pnpm test`
    - [ ] `pnpm run build`
 
