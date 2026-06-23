@@ -40,8 +40,8 @@
   },
   "dependencies": {
     "@sweetlink/shared": "file:../shared",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "random-word-slugs": "^0.1.7",
-    "ws": "^8.18.3"
+    "ws": "^8.21.0"
   }
 }

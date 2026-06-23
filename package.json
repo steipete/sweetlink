@@ -61,36 +61,36 @@
     "prepublishOnly": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@steipete/sweet-cookie": "0.3.0",
-    "arkregex": "^0.0.5",
+    "@steipete/sweet-cookie": "0.4.0",
+    "arkregex": "^0.0.6",
     "commander": "^15.0.0",
     "dotenv": "^17.4.2",
-    "es-toolkit": "^1.47.0",
+    "es-toolkit": "^1.48.1",
     "html2canvas": "^1.4.1",
-    "playwright-core": "^1.60.0",
-    "puppeteer-core": "^25.1.0",
+    "playwright-core": "^1.61.0",
+    "puppeteer-core": "^25.2.0",
     "random-word-slugs": "^0.1.7",
     "tldjs": "^2.3.2",
-    "undici": "^8.4.1",
+    "undici": "^8.5.0",
     "ws": "^8.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^25.9.2",
+    "@types/node": "^26.0.0",
     "@types/ws": "^8.18.1",
-    "@typescript/native-preview": "7.0.0-dev.20260609.1",
+    "@typescript/native-preview": "7.0.0-dev.20260622.1",
     "jsdom": "^29.1.1",
-    "oxfmt": "^0.54.0",
-    "oxlint": "^1.69.0",
+    "oxfmt": "^0.56.0",
+    "oxlint": "^1.71.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "ultracite": "^7.8.2",
+    "ultracite": "^7.8.3",
     "vite": "^8.0.16",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=24.0.0",
-    "pnpm": ">=10.16.0"
+    "pnpm": ">=11.9.0"
   },
-  "packageManager": "pnpm@10.33.2"
+  "packageManager": "pnpm@11.9.0"
 }
