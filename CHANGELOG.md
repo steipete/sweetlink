@@ -2,7 +2,7 @@
 
 ## 0.2.2 — Unreleased
 
-- _No changes yet._
+- **Standalone daemon help fixed**: `sweetlinkd --help` now prints usage and exits instead of starting the daemon.
 
 ## 0.2.1 — 2026-06-11
 

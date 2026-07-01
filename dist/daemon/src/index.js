@@ -11,6 +11,7 @@ import { readSweetLinkEnv } from "../../shared/src/env.js";
 import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from "../../shared/src/node.js";
 import WebSocket, { WebSocketServer } from "ws";
 import { z } from "zod";
+import { formatDaemonHelp, isDaemonHelpRequest } from "./cli.js";
 import { generateSessionCodename } from "./codename.js";
 const SHUTDOWN_GRACE_MS = 1000;
 const unrefTimer = (handle) => {
@@ -673,12 +674,17 @@ function loadCertificates() {
 function log(message) {
     console.log(`[SweetLink] ${message}`);
 }
-try {
-    await main();
+if (isDaemonHelpRequest(process.argv.slice(2))) {
+    console.log(formatDaemonHelp());
 }
-catch (error) {
-    const message = getErrorMessage(error);
-    console.error(`[SweetLink] Daemon failed: ${message}`);
-    process.exit(1);
+else {
+    try {
+        await main();
+    }
+    catch (error) {
+        const message = getErrorMessage(error);
+        console.error(`[SweetLink] Daemon failed: ${message}`);
+        process.exit(1);
+    }
 }
 //# sourceMappingURL=index.js.map
