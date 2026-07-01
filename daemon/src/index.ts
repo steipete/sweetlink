@@ -27,6 +27,7 @@ import {
 } from "../../shared/src/node.js";
 import WebSocket, { WebSocketServer } from "ws";
 import { z } from "zod";
+import { formatDaemonHelp, isDaemonHelpRequest } from "./cli.js";
 import { generateSessionCodename } from "./codename.js";
 
 const SHUTDOWN_GRACE_MS = 1000;
@@ -863,10 +864,14 @@ function log(message: string) {
   console.log(`[SweetLink] ${message}`);
 }
 
-try {
-  await main();
-} catch (error) {
-  const message = getErrorMessage(error);
-  console.error(`[SweetLink] Daemon failed: ${message}`);
-  process.exit(1);
+if (isDaemonHelpRequest(process.argv.slice(2))) {
+  console.log(formatDaemonHelp());
+} else {
+  try {
+    await main();
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error(`[SweetLink] Daemon failed: ${message}`);
+    process.exit(1);
+  }
 }
