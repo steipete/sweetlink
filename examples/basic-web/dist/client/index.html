@@ -16,12 +16,37 @@
         color: #f3f7ff;
       }
       main {
-        max-width: 720px;
+        max-width: 960px;
         margin: 0 auto;
         background: rgba(10, 24, 43, 0.85);
         border-radius: 16px;
         padding: 2.5rem;
         box-shadow: 0 18px 45px rgba(3, 12, 24, 0.45);
+      }
+      .intro {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+      }
+      .intro h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.6rem);
+      }
+      .intro p {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.85);
+        line-height: 1.6;
+      }
+      .intro-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      }
+      .intro-hint {
+        font-size: 0.9rem;
+        color: rgba(148, 163, 184, 0.75);
       }
       button {
         background: linear-gradient(135deg, #7dd3fc, #6366f1);
@@ -33,6 +58,14 @@
         font-weight: 600;
         padding: 0.9rem 1.8rem;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      button.secondary-btn {
+        background: rgba(59, 130, 246, 0.18);
+        color: #bfdbfe;
+        border: 1px solid rgba(59, 130, 246, 0.45);
+      }
+      button.secondary-btn:hover {
+        box-shadow: 0 10px 24px rgba(59, 130, 246, 0.25);
       }
       button:hover {
         transform: translateY(-1px);
@@ -76,6 +109,109 @@
       #tls-status button:hover {
         box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
       }
+      .readme-section {
+        margin-top: 3rem;
+      }
+      .readme-section h2 {
+        margin-bottom: 1rem;
+      }
+      pre {
+        background: rgba(4, 13, 27, 0.9);
+        border-radius: 12px;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      code {
+        font-family: 'SFMono-Regular', Consolas, Menlo, Monaco, 'Liberation Mono', 'Courier New', monospace;
+        color: #7dd3fc;
+      }
+      .copy-grid {
+        display: grid;
+        gap: 1.2rem;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+      .copy-card {
+        background: rgba(15, 32, 54, 0.92);
+        border-radius: 14px;
+        padding: 1.2rem 1.4rem;
+        box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.18);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        position: relative;
+      }
+      .copy-card header {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .copy-card p {
+        margin: 0;
+        color: rgba(226, 232, 240, 0.78);
+      }
+      .copy-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .copy-row code {
+        flex: 1;
+        min-width: 180px;
+      }
+      .copy-btn {
+        align-self: flex-start;
+        padding: 0.55rem 1.25rem;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.16);
+        color: #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        font-size: 0.9rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      .copy-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(148, 163, 184, 0.2);
+      }
+      .copy-btn.copied {
+        background: rgba(74, 222, 128, 0.18);
+        border-color: rgba(74, 222, 128, 0.35);
+        color: #bbf7d0;
+      }
+      .copy-icon-btn {
+        width: 2.4rem;
+        height: 2.4rem;
+        padding: 0;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+      }
+      .copy-icon-btn span {
+        pointer-events: none;
+      }
+      .prompt-grid {
+        display: grid;
+        gap: 1.2rem;
+      }
+      .prompt-card {
+        background: rgba(10, 24, 43, 0.92);
+        border-radius: 14px;
+        padding: 1.4rem;
+        box-shadow: inset 0 0 0 1px rgba(94, 234, 212, 0.12);
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+      .prompt-card pre {
+        max-height: 220px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      .prompt-card header h3 {
+        margin: 0;
+      }
       .session-chip {
         margin-top: 1.5rem;
         display: flex;
@@ -115,16 +251,6 @@
       .session-chip[data-state='active'] .indicator-dot {
         background: #34d399;
       }
-      pre {
-        background: rgba(4, 13, 27, 0.9);
-        border-radius: 12px;
-        padding: 1rem;
-        overflow-x: auto;
-      }
-      code {
-        font-family: 'SFMono-Regular', Consolas, Menlo, Monaco, 'Liberation Mono', 'Courier New', monospace;
-        color: #7dd3fc;
-      }
       #demo-panels {
         display: grid;
         gap: 1.5rem;
@@ -138,6 +264,9 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+      }
+      .demo-card p {
+        margin: 0;
       }
       .demo-card header {
         display: flex;
@@ -249,21 +378,36 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-DNk3ZTIb.js"></script>
+    <script type="module" crossorigin src="/assets/index-1dmhLDX0.js"></script>
   </head>
   <body>
     <main>
-      <h1>SweetLink Browser Demo</h1>
-      <p>
-        Click the button to request a SweetLink session. The demo calls
-        <code>/api/sweetlink/handshake</code>, registers with the local daemon, and forwards console/command traffic so
-        the CLI can attach. Once connected, try running the example commands below from the SweetLink CLI.
-      </p>
-      <p>
-        Make sure the SweetLink daemon is running (<code>pnpm sweetlink:daemon</code>) and that the mkcert certificate
-        is trusted locally.
-      </p>
-      <button id="enable-btn">Enable SweetLink</button>
+      <section class="intro">
+        <h1>SweetLink Session Playground</h1>
+        <p>
+          You are connected to the SweetLink demo surface. Once the CLI attaches, the widgets below mirror the actions you
+          can trigger remotely—perfect for showcasing what happens after a successful handshake.
+        </p>
+        <p class="intro-note">
+          Need to repeat the handshake? Use the button or the setup reference at the end. Otherwise, dive straight into the
+          post-connect commands.
+        </p>
+        <div class="intro-actions">
+          <button id="enable-btn">Re-run handshake</button>
+          <button
+            type="button"
+            class="secondary-btn copy-btn copy-icon-btn"
+            data-copy-source="cmd-sessions"
+            data-copy-label="Sessions command"
+            data-copy-icon="📋"
+            data-copy-success-icon="✓"
+            aria-label="Copy sessions command"
+          >
+            <span aria-hidden="true">📋</span>
+          </button>
+          <span class="intro-hint">Session codename appears below after the CLI connects.</span>
+        </div>
+      </section>
       <div id="tls-status" data-state="checking" aria-live="polite">
         <p id="tls-status-message">Checking daemon TLS status…</p>
         <div class="tls-action-row">
@@ -277,64 +421,281 @@
         <strong id="session-name">—</strong>
       </div>
 
-      <section id="demo-panels">
-        <article class="demo-card" id="kpi-card">
-          <header>
-            <h2>Realtime KPI</h2>
-            <span id="kpi-value">42%</span>
-          </header>
-          <p>
-            Swap this percentage via
-            <code>pnpm sweetlink run-js demo --code "demo.updateKpi(87)"</code>
-          </p>
-          <button data-demo="pulse" class="action-btn">Pulse Animation</button>
-        </article>
+      <section class="readme-section" id="post-connect">
+        <h2>Post-connect quick actions</h2>
+        <p>Select a command to run now that the browser is linked. Replace <code>&lt;sessionId&gt;</code> with the codename above.</p>
+        <div class="copy-grid">
+          <article class="copy-card">
+            <header>
+              <h3>Update the KPI tile</h3>
+              <p>Great first sanity check—confirms run-js commands flow end-to-end.</p>
+            </header>
+            <div class="copy-row">
+              <code id="cmd-run-js">pnpm sweetlink run-js &lt;sessionId&gt; --code "demo.updateKpi(87)"</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="cmd-run-js"
+                data-copy-label="Run-JS command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy run-js command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="copy-card">
+            <header>
+              <h3>Capture the screenshot card</h3>
+              <p>Validates scroll handling, animation settling, and file persistence.</p>
+            </header>
+            <div class="copy-row">
+              <code id="cmd-screenshot">pnpm sweetlink screenshot &lt;sessionId&gt; --selector "#screenshot-card"</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="cmd-screenshot"
+                data-copy-label="Screenshot command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy screenshot command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="copy-card">
+            <header>
+              <h3>Tail console telemetry</h3>
+              <p>Perfect when debugging runtime errors captured by the DevTools listener.</p>
+            </header>
+            <div class="copy-row">
+              <code id="cmd-devtools-console">pnpm sweetlink devtools console --tail 50</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="cmd-devtools-console"
+                data-copy-label="DevTools console command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy devtools console command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="copy-card">
+            <header>
+              <h3>Snapshot the DOM via MCP</h3>
+              <p>Pairs the SweetLink session with the chrome-devtools MCP for accessibility tree dumps.</p>
+            </header>
+            <div class="copy-row">
+              <code id="cmd-devtools-snapshot">pnpm mcp:call chrome-devtools.take_snapshot</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="cmd-devtools-snapshot"
+                data-copy-label="DevTools snapshot command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy devtools snapshot command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
 
-        <article class="demo-card" id="feature-card">
-          <header>
-            <h2>Feature Flags</h2>
-            <span class="badge" id="badge-status" data-state="beta">beta</span>
-          </header>
-          <p>
-            Toggle the badge with
-            <code>pnpm sweetlink run-js demo --code "demo.toggleBadge()"</code>
-          </p>
-          <div class="flag-grid">
-            <label><input type="checkbox" id="flag-ai" checked /> AI summaries</label>
-            <label><input type="checkbox" id="flag-archive" /> Archive sync</label>
-            <label><input type="checkbox" id="flag-search" checked /> Search v2</label>
-          </div>
-        </article>
+      <section class="readme-section" id="live-widgets">
+        <h2>Live demo widgets</h2>
+        <p>Run any of the commands above (or use the copy buttons) to see SweetLink steer these components in real time.</p>
+        <div id="demo-panels">
+          <article class="demo-card" id="kpi-card">
+            <header>
+              <h3>Realtime KPI</h3>
+              <span id="kpi-value">42%</span>
+            </header>
+            <p>CLI command: <code>pnpm sweetlink run-js &lt;sessionId&gt; --code "demo.updateKpi(87)"</code></p>
+            <button data-demo="pulse" class="action-btn">Pulse Animation</button>
+          </article>
 
-        <article class="demo-card" id="screenshot-card">
-          <header>
-            <h2>Screenshot Target</h2>
-          </header>
-          <p>
-            Use <code>pnpm sweetlink screenshot demo --selector "#screenshot-card"</code> to capture this card. The CLI
-            scrolls the element into view and waits for ongoing animations.
-          </p>
-          <div class="mock-chart" id="mock-chart">
-            <div class="bar bar-a"></div>
-            <div class="bar bar-b"></div>
-            <div class="bar bar-c"></div>
-          </div>
-        </article>
+          <article class="demo-card" id="feature-card">
+            <header>
+              <h3>Feature Flags</h3>
+              <span class="badge" id="badge-status" data-state="beta">beta</span>
+            </header>
+            <p>CLI command: <code>pnpm sweetlink run-js &lt;sessionId&gt; --code "demo.toggleBadge()"</code></p>
+            <div class="flag-grid">
+              <label><input type="checkbox" id="flag-ai" checked /> AI summaries</label>
+              <label><input type="checkbox" id="flag-archive" /> Archive sync</label>
+              <label><input type="checkbox" id="flag-search" checked /> Search v2</label>
+            </div>
+          </article>
+
+          <article class="demo-card" id="screenshot-card">
+            <header>
+              <h3>Screenshot Target</h3>
+            </header>
+            <p>CLI command: <code>pnpm sweetlink screenshot &lt;sessionId&gt; --selector "#screenshot-card"</code></p>
+            <div class="mock-chart" id="mock-chart">
+              <div class="bar bar-a"></div>
+              <div class="bar bar-b"></div>
+              <div class="bar bar-c"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="readme-section" id="prompt-library">
+        <h2>Automation prompt library</h2>
+        <p>Drop these prompts into Codex, Claude, or Cursor to drive the SweetLink CLI without typing everything yourself.</p>
+        <div class="prompt-grid">
+          <article class="prompt-card">
+            <header>
+              <h3>End-to-end smoke prompt</h3>
+            </header>
+            <pre id="prompt-smoke">You are operating the SweetLink CLI on my machine.
+Goals:
+1. Ensure the SweetLink daemon is running locally.
+2. Launch the SweetLink browser demo on http://localhost:4000.
+3. Open a controlled Chrome window pointed at the demo and wait for the handshake to complete.
+4. Capture a screenshot of the "Screenshot Target" card.
+
+Checklist (run sequentially):
+- pnpm sweetlink:daemon
+- pnpm --filter @sweetlink/example-basic-web dev
+- pnpm sweetlink open --controlled --env dev --url http://localhost:4000 --timeout 45
+- pnpm sweetlink sessions
+- pnpm sweetlink screenshot &lt;sessionId&gt; --selector "#screenshot-card"
+
+Report back with the screenshot path and any console errors logged by SweetLink.</pre>
+            <div class="copy-row">
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="prompt-smoke"
+                data-copy-label="Smoke prompt"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy smoke prompt"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="prompt-card">
+            <header>
+              <h3>DevTools triage prompt</h3>
+            </header>
+            <pre id="prompt-devtools">You have access to the SweetLink CLI and the chrome-devtools MCP.
+Investigate runtime issues in the SweetLink browser demo and summarize findings.
+
+Steps to run:
+- pnpm sweetlink sessions
+- pnpm sweetlink devtools console --tail 50
+- pnpm mcp:call chrome-devtools.take_snapshot
+- pnpm mcp:call chrome-devtools.list_console_messages
+
+If the console contains errors, capture the failing selectors and propose fixes. Otherwise, confirm the demo is healthy.</pre>
+            <div class="copy-row">
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="prompt-devtools"
+                data-copy-label="DevTools prompt"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy devtools prompt"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="readme-section" id="setup-reference">
+        <h2>Setup reference</h2>
+        <p>If you need to bootstrap from scratch, keep these commands handy.</p>
+        <div class="copy-grid">
+          <article class="copy-card">
+            <header>
+              <h3>Daemon (one-time per machine)</h3>
+              <p>Launches the tmux-managed process SweetLink uses for DevTools and automation.</p>
+            </header>
+            <div class="copy-row">
+              <code id="ref-daemon">pnpm sweetlink:daemon</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="ref-daemon"
+                data-copy-label="Daemon command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy daemon command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="copy-card">
+            <header>
+              <h3>Demo web server</h3>
+              <p>Serves this page on <code>http://localhost:4000</code>.</p>
+            </header>
+            <div class="copy-row">
+              <code id="ref-demo">pnpm --filter @sweetlink/example-basic-web dev</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="ref-demo"
+                data-copy-label="Demo dev server command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy demo dev command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+          <article class="copy-card">
+            <header>
+              <h3>Controlled Chrome launch</h3>
+              <p>Use when you want the CLI to boot a fresh DevTools-enabled window.</p>
+            </header>
+            <div class="copy-row">
+              <code id="cmd-open-dev">pnpm sweetlink open --controlled --env dev --url http://localhost:4000 --timeout 45</code>
+              <button
+                type="button"
+                class="copy-btn copy-icon-btn"
+                data-copy-source="cmd-open-dev"
+                data-copy-label="Controlled open command"
+                data-copy-icon="📋"
+                data-copy-success-icon="✓"
+                aria-label="Copy controlled open command"
+              >
+                <span aria-hidden="true">📋</span>
+              </button>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section>
         <h2>Status</h2>
-        <pre id="status-log">Ready.</pre>
+        <pre id="status-log">Session ready. Waiting for CLI commands…</pre>
       </section>
 
       <section>
-        <h2>Try It</h2>
+        <h2>Manual walkthrough</h2>
         <ol>
-          <li>Start the daemon: <code>pnpm sweetlink:daemon</code></li>
-          <li>Run the demo in another terminal: <code>pnpm --filter @sweetlink/example-basic-web dev</code></li>
-          <li>Open this page and click “Enable SweetLink”</li>
-          <li>Attach the CLI: <code>pnpm sweetlink console demo</code></li>
-          <li>Run the sample commands above (run-js, screenshot, clicks)</li>
+          <li>Confirm the daemon and demo server are running (see setup reference if needed).</li>
+          <li>Click <strong>Re-run handshake</strong> or run the controlled open command to refresh the session.</li>
+          <li>Use <code>pnpm sweetlink sessions</code> to copy the codename (for example <code>narrow-xylophone</code>).</li>
+          <li>Execute the post-connect commands to manipulate the widgets or capture screenshots.</li>
+          <li>Inspect telemetry with <code>pnpm sweetlink devtools console --tail 50</code> when debugging.</li>
         </ol>
       </section>
     </main>
