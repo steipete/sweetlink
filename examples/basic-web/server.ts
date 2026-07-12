@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import https from 'node:https';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildContentSecurityPolicy } from './server/csp.js';
 import { issueSweetLinkHandshake, resolveDaemonUrl } from './server/handshake.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -135,7 +136,7 @@ async function serveFile(
     res.statusCode = status;
     res.setHeader('Content-Type', mimeType);
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+    res.setHeader('Content-Security-Policy', buildContentSecurityPolicy(resolveDaemonUrl()));
     if (headOnly) {
       res.end();
     } else {

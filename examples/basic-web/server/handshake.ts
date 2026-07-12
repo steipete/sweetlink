@@ -27,6 +27,21 @@ export function resolveDaemonUrl(): string {
   return `https://localhost:${safePort}`;
 }
 
+export function resolveSocketUrl(daemonUrl: string): string {
+  const socketUrl = new URL(daemonUrl);
+  if (socketUrl.protocol === 'https:') {
+    socketUrl.protocol = 'wss:';
+  } else if (socketUrl.protocol === 'http:') {
+    socketUrl.protocol = 'ws:';
+  } else if (socketUrl.protocol !== 'ws:' && socketUrl.protocol !== 'wss:') {
+    throw new Error(`Unsupported SweetLink daemon protocol: ${socketUrl.protocol}`);
+  }
+  socketUrl.pathname = SWEETLINK_WS_PATH;
+  socketUrl.search = '';
+  socketUrl.hash = '';
+  return socketUrl.toString();
+}
+
 function signSweetLinkToken(options: { secret: string; subject: string; sessionId: string; ttlSeconds: number }) {
   const issuedAt = Math.floor(Date.now() / 1000);
   const payload = {
@@ -54,7 +69,7 @@ export async function issueSweetLinkHandshake(): Promise<SweetLinkHandshakePaylo
   });
 
   const expiresAt = Math.floor(Date.now() / 1000) + SWEETLINK_SESSION_EXP_SECONDS;
-  const socketUrl = `${resolveDaemonUrl()}${SWEETLINK_WS_PATH}`;
+  const socketUrl = resolveSocketUrl(resolveDaemonUrl());
 
   return {
     sessionId,
