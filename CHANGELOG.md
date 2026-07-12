@@ -3,6 +3,7 @@
 ## 0.2.2 — Unreleased
 
 - **Standalone daemon help fixed**: `sweetlinkd --help` now prints usage and exits instead of starting the daemon.
+- **Example handshake fixed**: the basic web example now converts HTTP daemon origins to browser-compatible WebSocket URLs and permits the configured socket origin plus SweetLink command modules through its content security policy.
 
 ## 0.2.1 — 2026-06-11
 
