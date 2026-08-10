@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.2.3 — Unreleased
+
 ## 0.2.2 — 2026-08-10
 
 **Highlight:** `sweetlinkd --help` no longer starts the daemon, and this
