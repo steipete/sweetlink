@@ -1,9 +1,19 @@
 # Changelog
 
-## 0.2.2 — Unreleased
+## 0.2.2 — 2026-08-10
+
+**Highlight:** `sweetlinkd --help` no longer starts the daemon, and this
+release clears seven security advisories — the vulnerable undici 7.28.0 leaves
+the dependency graph entirely.
+
+### Fixes
 
 - **Standalone daemon help fixed**: `sweetlinkd --help` now prints usage and exits instead of starting the daemon.
 - **Example handshake fixed**: the basic web example now converts HTTP daemon origins to browser-compatible WebSocket URLs and permits the configured socket origin plus SweetLink command modules through its content security policy.
+
+### Security and maintenance
+
+- Refresh the dependency graph, clearing seven advisories: vulnerable `undici` 7.28.0 is removed entirely, and playwright-core, puppeteer-core, jsdom 30, ws, and the oxc toolchain move to current releases.
 
 ## 0.2.1 — 2026-06-11
 
