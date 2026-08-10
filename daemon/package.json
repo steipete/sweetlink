@@ -42,6 +42,6 @@
     "@sweetlink/shared": "file:../shared",
     "dotenv": "^17.4.2",
     "random-word-slugs": "^0.1.7",
-    "ws": "^8.21.0"
+    "ws": "^8.21.3"
   }
 }
