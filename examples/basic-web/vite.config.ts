@@ -140,7 +140,7 @@ export default defineConfig({
     alias: [
       {
         find: 'sweetlink/runtime/browser',
-        replacement: path.resolve(__dirname, '../../src/runtime/browser/index.ts'),
+        replacement: path.resolve(import.meta.dirname, '../../src/runtime/browser/index.ts'),
       },
     ],
   },
