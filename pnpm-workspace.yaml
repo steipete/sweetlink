@@ -28,4 +28,4 @@ minimumReleaseAgeExclude:
   - typescript@7.0.2
 
 overrides:
-  node-gyp: 13.0.1
+  node-gyp: 13.0.2

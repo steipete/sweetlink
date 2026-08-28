@@ -1,13 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchCliToken, resetCliTokenCache } from "../src/token";
 import type { CliConfig } from "../src/types";
 
 const ORIGINAL_FETCH = globalThis.fetch;
+let fetchCliToken: typeof import("../src/token").fetchCliToken;
+let resetCliTokenCache: typeof import("../src/token").resetCliTokenCache;
 
 describe("fetchCliToken caching", () => {
-  beforeEach(() => {
-    vi.stubEnv("SWEETLINK_SECRET", "test-secret-for-cli");
+  beforeEach(async () => {
+    vi.stubEnv("SWEETLINK_SECRET", "test-secret-for-cli-token-cache-32-chars");
     vi.resetModules();
+    // The shared environment captures the secret when the module is imported.
+    ({ fetchCliToken, resetCliTokenCache } = await import("../src/token"));
     resetCliTokenCache();
   });
 

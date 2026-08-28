@@ -65,10 +65,10 @@
     "arkregex": "^0.0.8",
     "commander": "^15.0.0",
     "dotenv": "^17.4.2",
-    "es-toolkit": "^1.50.0",
+    "es-toolkit": "^1.51.0",
     "html2canvas": "^1.4.1",
     "playwright-core": "^1.62.1",
-    "puppeteer-core": "^25.6.0",
+    "puppeteer-core": "^25.9.0",
     "random-word-slugs": "^0.1.7",
     "tldjs": "^2.3.2",
     "undici": "^8.10.0",
@@ -76,21 +76,21 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "@types/ws": "^8.18.1",
     "@typescript/native": "npm:typescript@^7.0.2",
     "jsdom": "^30.0.1",
-    "oxfmt": "^0.63.0",
-    "oxlint": "^1.78.0",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "tsx": "^4.23.12",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "ultracite": "^7.10.3",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "ultracite": "^7.10.6",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=24.0.0",
     "pnpm": ">=11.11.0"
   },
-  "packageManager": "pnpm@11.21.0"
+  "packageManager": "pnpm@11.24.0"
 }

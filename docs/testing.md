@@ -4,6 +4,12 @@ summary: Running log of SweetLink test coverage improvements and pending work.
 
 # Testing Progress Log
 
+## Local gates
+
+Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` from the repository root. The root Vitest suite includes `daemon/tests`, and token-cache tests provide their own secret fixture before importing the shared environment.
+
+`pnpm --dir daemon test` runs only the daemon tests through that same Vitest configuration. `pnpm --dir daemon build` uses the root build, which owns the published daemon entrypoint at `dist/daemon/src/index.js`. The shared package and demo also have build checks: `pnpm --dir shared build` and `pnpm --dir examples/basic-web build`.
+
 ## Coverage Snapshot (Nov 8, 2025)
 - Statements: 80.2 % (2 150 / 2 682) per `pnpm --filter sweetlink exec vitest run --coverage`.
 - Branches: 66.5 % (1 339 / 2 014) with the remaining gaps concentrated in the cookie collector + DevTools registry helpers.
