@@ -2,6 +2,8 @@
 
 ## 0.2.3 — Unreleased
 
+- Refresh runtime and development dependencies, pnpm, and GitHub Actions; include daemon tests in the root suite and make local package gates independent of CI-only environment setup.
+
 ## 0.2.2 — 2026-08-10
 
 **Highlight:** `sweetlinkd --help` no longer starts the daemon, and this

@@ -21,7 +21,7 @@ const sweetLinkAliasPlugin = {
 
 export default defineConfig({
   test: {
-    include: ["tests/**/*.{test,spec}.{ts,tsx,js}"],
+    include: ["tests/**/*.{test,spec}.{ts,tsx,js}", "daemon/tests/**/*.test.ts"],
     environment: "node",
     root: rootDirectory,
     globals: true,
