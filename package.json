@@ -61,11 +61,11 @@
     "prepublishOnly": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   },
   "dependencies": {
-    "@steipete/sweet-cookie": "0.4.1",
+    "@steipete/sweet-cookie": "0.4.2",
     "arkregex": "^0.0.8",
     "commander": "^15.0.0",
     "dotenv": "^17.4.2",
-    "es-toolkit": "^1.51.0",
+    "es-toolkit": "^1.52.0",
     "html2canvas": "^1.4.1",
     "playwright-core": "^1.62.1",
     "puppeteer-core": "^25.9.0",
@@ -73,7 +73,7 @@
     "tldjs": "^2.3.2",
     "undici": "^8.10.0",
     "ws": "^8.21.3",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
@@ -82,9 +82,9 @@
     "jsdom": "^30.0.1",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.13",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "ultracite": "^7.10.6",
+    "ultracite": "^7.10.7",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
   },
