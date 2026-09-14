@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.3 — Unreleased
+## 0.2.3 — 2026-09-13
 
 - Update undici to 8.10.1 and refresh Node.js types, formatting/lint tooling, and pnpm within their current release lines.
 - Refresh runtime and development dependencies, pnpm, and GitHub Actions; include daemon tests in the root suite and make local package gates independent of CI-only environment setup.
