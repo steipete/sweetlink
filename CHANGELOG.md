@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.2.4 — Unreleased
+
 ## 0.2.3 — 2026-09-13
 
 - Update undici to 8.10.1 and refresh Node.js types, formatting/lint tooling, and pnpm within their current release lines.
