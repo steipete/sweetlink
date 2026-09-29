@@ -43,7 +43,7 @@ importers:
         version: 2.3.2
       undici:
         specifier: ^8.10.1
-        version: 8.10.1
+        version: 8.10.2
       ws:
         specifier: ^8.21.3
         version: 8.21.3
@@ -1505,8 +1505,8 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
-  undici@8.10.1:
-    resolution: {integrity: sha512-YQ3WlbqjYMmNpdvDH64jAgLjxuAR9+649calDWhbshYaeQGO2bR4nI94ORJmwI3J9YhoKQnpyGOK+0zlWS5N5Q==}
+  undici@8.10.2:
+    resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
     engines: {node: '>=22.19.0'}
 
   unicorn-magic@0.3.0:
@@ -2404,7 +2404,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.2
-      undici: 8.10.1
+      undici: 8.10.2
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -2800,7 +2800,7 @@ snapshots:
 
   undici-types@8.3.0: {}
 
-  undici@8.10.1: {}
+  undici@8.10.2: {}
 
   unicorn-magic@0.3.0: {}
 
