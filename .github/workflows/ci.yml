@@ -32,5 +32,19 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Typecheck
+        run: pnpm typecheck
+
       - name: Test
         run: pnpm test
+
+      - name: Build packages and example
+        run: |
+          pnpm build
+          pnpm --dir shared build
+          pnpm --dir examples/basic-web build
+
+      - name: Check built entrypoints
+        run: |
+          node dist/src/index.js --help
+          node dist/daemon/src/index.js --help

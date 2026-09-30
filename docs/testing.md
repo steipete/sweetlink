@@ -6,6 +6,8 @@ summary: Running log of SweetLink test coverage improvements and pending work.
 
 ## Local gates
 
+Run `pnpm install` at the repository root to install the CLI, daemon, shared package, and basic web example as one workspace. CI uses a frozen lockfile and checks their builds plus the built CLI and daemon help entrypoints, so missing workspace dependencies fail before merge.
+
 Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` from the repository root. The root Vitest suite includes `daemon/tests`, and token-cache tests provide their own secret fixture before importing the shared environment.
 
 `pnpm --dir daemon test` runs only the daemon tests through that same Vitest configuration. `pnpm --dir daemon build` uses the root build, which owns the published daemon entrypoint at `dist/daemon/src/index.js`. The shared package and demo also have build checks: `pnpm --dir shared build` and `pnpm --dir examples/basic-web build`.

@@ -13,7 +13,7 @@
 ## Build, Test, and Development Commands
 - `pnpm install` – Dependencies (Node 24+, Corepack pnpm).
 - `pnpm dev` – CLI via `tsx` for local debugging.
-- `pnpm build` – `tsgo --project tsconfig.build.json` to emit `dist/`.
+- `pnpm build` – `tsc --project tsconfig.build.json` to emit `dist/`.
 - `pnpm test` – Vitest suites in `tests/`.
 - `pnpm lint` – Oxfmt and Oxlint over `src`, `shared/src`, `daemon/src`, `tests`.
 Run lint → test → build before sending changes.
@@ -21,7 +21,7 @@ Run lint → test → build before sending changes.
 ## Coding Style & Naming Conventions
 - ESM + TypeScript; strict typing, avoid `any`. Prefer helpers in `shared/` and `runtime/`.
 - Refactor in place; don’t add `*V2` paths.
-- Biome defaults (2-space indent, single quotes). Use `pnpm lint --fix` for format fixes.
+- Oxfmt defaults (2-space indent, double quotes). Use `pnpm lint:fix` for format and lint fixes.
 - `src/commands/` uses Commander; mirror existing option names and help text.
 
 ## Testing Guidelines

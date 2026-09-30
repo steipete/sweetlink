@@ -2,6 +2,9 @@
 
 ## 0.2.4 — Unreleased
 
+- Refresh browser automation, cookie handling, HTTP/WebSocket dependencies, and development tooling; update undici to 8.11.2, incorporating the security fixes proposed in #19. Thanks @dependabot[bot].
+- Register the daemon, shared package, and demo as pnpm workspace members so a root install supports their documented build commands; add CI coverage for typechecking, package/demo builds, and built entrypoints.
+
 ## 0.2.3 — 2026-09-13
 
 - Update undici to 8.10.1 and refresh Node.js types, formatting/lint tooling, and pnpm within their current release lines.
