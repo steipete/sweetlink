@@ -1,9 +1,14 @@
 # Changelog
 
-## 0.2.4 — Unreleased
+## 0.2.5 — Unreleased
+
+## 0.2.4 — 2026-10-01
+
+**Highlights:** Updated browser and HTTP dependencies, including undici security fixes, plus reliable workspace builds.
 
 - Refresh browser automation, cookie handling, HTTP/WebSocket dependencies, and development tooling; update undici to 8.11.2, incorporating the security fixes proposed in #19. Thanks @dependabot[bot].
 - Register the daemon, shared package, and demo as pnpm workspace members so a root install supports their documented build commands; add CI coverage for typechecking, package/demo builds, and built entrypoints.
+- Refresh WebSocket type definitions and Ultracite within their current release lines.
 
 ## 0.2.3 — 2026-09-13
 
