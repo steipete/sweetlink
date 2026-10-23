@@ -2,6 +2,8 @@
 
 ## 0.2.6 — Unreleased
 
+- Keep replacement browser sessions registered when old sockets close, reject interrupted commands promptly, and preserve commands during repeated registration on the same socket. Ignore session messages from unregistered or replaced sockets. Thanks @SebTardif.
+
 ## 0.2.5 — 2026-10-16
 
 **Highlights:** Fix malicious source-map denial of service and remove a vulnerable unused dependency, alongside routine dependency updates.

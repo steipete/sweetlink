@@ -18,6 +18,7 @@ Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` from the reposi
 - Current exclusions: CLI entrypoint `src/index.ts` and all example scaffolding under `examples/**` (configured in `vitest.config.ts`) so we report only unit-testable product code.
 
 ## Recent Additions
+- **Session ownership** – `daemon/tests/session-socket.test.ts` covers socket replacement, heartbeat expiry, repeated registration, and ignoring results from unregistered or replaced sockets.
 - **Chrome diagnostics & HTTP plumbing** – `tests/runtime/chrome/diagnostics.test.ts` now covers cookie origin fallbacks and readiness paths, while `tests/http.test.ts` exercises the safe JSON fallback + cause serialization so fetch errors stay actionable.
 - **OAuth automation seams** – `tests/runtime/devtools-oauth.test.ts` covers function/default exports, invalid handler results, and connect-Puppeteer failure logging; new fixtures live under `tests/fixtures/*-oauth-handler.*`.
 - **DevTools surface area** – Expanded `tests/devtools-diagnostics.test.ts` + `tests/runtime/devtools-cdp.test.ts` to cover tab discovery/retry, CDP fetch sanitizers, and console/network serialization. `tests/runtime/devtools-background.test.ts` now asserts child-process warnings, PID cleanup, and ENOENT/EACCES handling.
