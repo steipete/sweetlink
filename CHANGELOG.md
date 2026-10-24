@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.2.6 — Unreleased
+## Unreleased
+
+## 0.2.6 — 2026-10-23
+
+**Highlights:** Keep replacement browser sessions connected and reject interrupted commands promptly.
 
 - Keep replacement browser sessions registered when old sockets close, reject interrupted commands promptly, and preserve commands during repeated registration on the same socket. Ignore session messages from unregistered or replaced sockets. Thanks @SebTardif.
 
