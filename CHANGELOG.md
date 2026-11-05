@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Patch Undici and Vitest security vulnerabilities and refresh compatible browser, WebSocket, and development dependencies across the workspace. Thanks @dependabot. (#30)
 ## 0.2.6 — 2026-10-23
 
 **Highlights:** Keep replacement browser sessions connected and reject interrupted commands promptly.
