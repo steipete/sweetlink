@@ -450,6 +450,9 @@ export class SweetLinkState {
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.warn(`SweetLink socket error: ${errorMessage}`);
+        if (!sessionId) {
+          socket.close();
+        }
       }
     });
 
