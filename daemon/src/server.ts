@@ -836,6 +836,13 @@ function ensureObject(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+export function mkcertMissingFromProbe(probe: {
+  status: number | null;
+  error?: { code?: string } | null;
+}): boolean {
+  return probe.error?.code === "ENOENT" || probe.status !== 0;
+}
+
 function ensureCertificates() {
   if (existsSync(CERT_PATH) && existsSync(KEY_PATH)) {
     return;
@@ -844,11 +851,11 @@ function ensureCertificates() {
   log("Generating SweetLink TLS certificates via mkcert...");
   mkdirSync(CERT_DIR, { recursive: true });
 
-  const mkcertLookup = spawnSync("which", ["mkcert"], { stdio: "pipe" });
-  if (mkcertLookup.status !== 0) {
+  const mkcertLookup = spawnSync("mkcert", ["-version"], { stdio: "pipe" });
+  if (mkcertMissingFromProbe(mkcertLookup)) {
     const secretPath = getDefaultSweetLinkSecretPath();
     throw new Error(
-      'mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink. ' +
+      "mkcert is required but was not found on PATH. Install mkcert, then rerun pnpm sweetlink. " +
         `Generated SweetLink secret saved at ${secretPath}.`,
     );
   }
