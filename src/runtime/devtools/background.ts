@@ -106,17 +106,21 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
+export function devToolsListenerArgs(entrypoint: string, sessionArgs: string[]): string[] {
+  const args = [entrypoint, "devtools", "listen", "--background", ...sessionArgs];
+  if (entrypoint.endsWith(".ts") || entrypoint.endsWith(".tsx")) {
+    return ["--loader", "tsx", ...args];
+  }
+  return args;
+}
+
 function spawnBackgroundListener(sessionArgs: string[]) {
   const env = cloneProcessEnv();
   env.SWEETLINK_DEVTOOLS_BACKGROUND = "1";
   const entrypoint = process.argv[1] ?? DEFAULT_CLI_ENTRYPOINT;
-  return spawn(
-    process.execPath,
-    ["--loader", "tsx", entrypoint, "devtools", "listen", "--background", ...sessionArgs],
-    {
-      detached: true,
-      stdio: "ignore",
-      env,
-    },
-  );
+  return spawn(process.execPath, devToolsListenerArgs(entrypoint, sessionArgs), {
+    detached: true,
+    stdio: "ignore",
+    env,
+  });
 }
