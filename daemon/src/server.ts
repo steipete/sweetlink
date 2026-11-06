@@ -325,7 +325,10 @@ export async function runDaemon() {
       return;
     }
 
-    const rawSecretResolution = await resolveSweetLinkSecret({ autoCreate: true });
+    const rawSecretResolution = await resolveSweetLinkSecret({
+      autoCreate: true,
+      secretPath: readSweetLinkEnv().secretPath,
+    });
     const { secret, source, path: secretPath } = assertSecretResolution(rawSecretResolution);
     log(`SweetLink secret source: ${source}${secretPath ? ` (${secretPath})` : ""}`);
 
