@@ -1,3 +1,4 @@
+import { readSweetLinkEnv } from "../shared/src/env.js";
 import { SWEETLINK_CLI_EXP_SECONDS, signSweetLinkToken } from "../shared/src/index.js";
 import { resolveSweetLinkSecret, type SweetLinkSecretResolution } from "../shared/src/node.js";
 import { loadDevBootstrap } from "./core/dev-bootstrap.js";
@@ -56,7 +57,9 @@ export async function fetchCliToken(config: CliConfig): Promise<string> {
   }
 
   try {
-    const secretResolution: SweetLinkSecretResolution = await resolveSweetLinkSecret();
+    const secretResolution: SweetLinkSecretResolution = await resolveSweetLinkSecret({
+      secretPath: readSweetLinkEnv().secretPath,
+    });
     const token = signSweetLinkToken({
       secret: secretResolution.secret,
       scope: "cli",

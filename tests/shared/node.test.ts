@@ -17,10 +17,11 @@ vi.mock("node:os", () => ({
   homedir: () => "/tmp",
 }));
 
-const sweetLinkEnvMock = { secret: "" };
+const sweetLinkEnvMock = { secret: "", secretPath: "/tmp/.sweetlink/secret.key" };
 
 vi.mock("../../shared/src/env", () => ({
   sweetLinkEnv: sweetLinkEnvMock,
+  readSweetLinkEnv: () => sweetLinkEnvMock,
 }));
 
 vi.mock("node:crypto", () => ({
@@ -42,6 +43,7 @@ describe("resolveSweetLinkSecret", () => {
 
   it("reads secrets from disk when present", async () => {
     sweetLinkEnvMock.secret = "";
+    sweetLinkEnvMock.secretPath = getDefaultSweetLinkSecretPath();
     accessMock.mockResolvedValueOnce(undefined);
     readFileMock.mockResolvedValueOnce("file-secret-value-should-be-long-enough-12345\n");
 
@@ -53,6 +55,21 @@ describe("resolveSweetLinkSecret", () => {
       path: getDefaultSweetLinkSecretPath(),
     });
     expect(accessMock).toHaveBeenCalled();
+  });
+
+  it("reads the file named by SWEETLINK_SECRET_PATH when no path is passed", async () => {
+    sweetLinkEnvMock.secret = "";
+    sweetLinkEnvMock.secretPath = "/tmp/from-env.key";
+    accessMock.mockResolvedValueOnce(undefined);
+    readFileMock.mockResolvedValueOnce("file-secret-value-should-be-long-enough-12345\n");
+
+    const secret = await resolveSweetLinkSecret();
+
+    expect(secret).toEqual({
+      secret: "file-secret-value-should-be-long-enough-12345",
+      source: "file",
+      path: "/tmp/from-env.key",
+    });
   });
 
   it("auto-creates secrets when allowed", async () => {
