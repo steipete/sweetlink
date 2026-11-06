@@ -838,9 +838,11 @@ function ensureObject(value: unknown): Record<string, unknown> {
 
 export function mkcertMissingFromProbe(probe: {
   status: number | null;
-  error?: { code?: string } | null;
+  error?: { code?: string } | Error | null;
 }): boolean {
-  return probe.error?.code === "ENOENT" || probe.status !== 0;
+  const code =
+    probe.error && "code" in probe.error ? (probe.error as { code?: string }).code : undefined;
+  return code === "ENOENT" || probe.status !== 0;
 }
 
 function ensureCertificates() {
