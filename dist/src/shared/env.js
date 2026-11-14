@@ -20,6 +20,7 @@ export function readSweetLinkEnv() {
         daemonUrl: SWEETLINK_DAEMON_URL ?? `https://localhost:${SWEETLINK_DEFAULT_PORT}`,
         port: parsePort(SWEETLINK_PORT),
         secret: SWEETLINK_SECRET ?? null,
+        secretPath: envVariables.SWEETLINK_SECRET_PATH ?? path.join(os.homedir(), ".sweetlink", "secret.key"),
         isProduction: NODE_ENV === "production",
         localAdminApiKey: SWEETLINK_LOCAL_ADMIN_API_KEY ?? SWEETISTICS_LOCALHOST_API_KEY ?? null,
         adminApiKey: SWEETLINK_ADMIN_API_KEY ?? SWEETISTICS_API_KEY ?? null,

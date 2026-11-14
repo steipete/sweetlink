@@ -7,7 +7,7 @@ import path from "node:path";
 import { URL } from "node:url";
 import { createSweetLinkCommandId, SWEETLINK_DEFAULT_PORT, SWEETLINK_HEARTBEAT_INTERVAL_MS, SWEETLINK_HEARTBEAT_TOLERANCE_MS, SWEETLINK_WS_PATH, verifySweetLinkToken, } from "../../shared/src/index.js";
 import { readSweetLinkEnv } from "../../shared/src/env.js";
-import { getDefaultSweetLinkSecretPath, resolveSweetLinkSecret, } from "../../shared/src/node.js";
+import { resolveSweetLinkSecret } from "../../shared/src/node.js";
 import WebSocket, { WebSocketServer } from "ws";
 import { z } from "zod";
 import { generateSessionCodename } from "./codename.js";
@@ -324,6 +324,9 @@ export class SweetLinkState {
             catch (error) {
                 const errorMessage = getErrorMessage(error);
                 console.warn(`SweetLink socket error: ${errorMessage}`);
+                if (!sessionId) {
+                    socket.close();
+                }
             }
         });
         socket.once("close", (code, reasonBuffer) => {
@@ -665,9 +668,7 @@ function ensureCertificates() {
     mkdirSync(CERT_DIR, { recursive: true });
     const mkcertLookup = spawnSync("which", ["mkcert"], { stdio: "pipe" });
     if (mkcertLookup.status !== 0) {
-        const secretPath = getDefaultSweetLinkSecretPath();
-        throw new Error('mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink. ' +
-            `Generated SweetLink secret saved at ${secretPath}.`);
+        throw new Error('mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink.');
     }
     const install = spawnSync("mkcert", ["-install"], { stdio: "inherit" });
     if (install.status !== 0) {

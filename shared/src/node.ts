@@ -3,7 +3,7 @@ import { constants as fsConstants } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { debuglog } from "node:util";
-import { sweetLinkEnv } from "./env.js";
+import { readSweetLinkEnv, sweetLinkEnv } from "./env.js";
 
 const DEFAULT_SECRET_PATH = path.join(os.homedir(), ".sweetlink", "secret.key");
 
@@ -61,7 +61,7 @@ export async function resolveSweetLinkSecret(
     return { secret: envSecret, source: "env" };
   }
 
-  const secretPath = options.secretPath ?? DEFAULT_SECRET_PATH;
+  const secretPath = options.secretPath ?? readSweetLinkEnv().secretPath;
   try {
     const fsModule = await loadFsModule();
     const readSecretFile = async () => {

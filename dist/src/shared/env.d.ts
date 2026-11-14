@@ -5,6 +5,7 @@ export interface SweetLinkSharedEnv {
     readonly daemonUrl: string;
     readonly port: number;
     readonly secret: string | null;
+    readonly secretPath: string;
     readonly isProduction: boolean;
     readonly localAdminApiKey: string | null;
     readonly adminApiKey: string | null;
