@@ -59,6 +59,7 @@ export async function POST() {
 - The browser never stores your admin key. Instead it supplies the short-lived `sessionToken` in the websocket `register` message.
 - `expiresAt` is optional but helps the client decide whether a cached session is still valid. SweetLink automatically subtracts a small safety margin before trying to resume.
 - Scope the `subject` so you can distinguish browser vs. CLI tokens in your daemon logs/security tooling.
+- The daemon closes an unregistered connection when its initial registration is malformed or its token is invalid or mismatched. The browser leaves its connected state; reconnect with a valid session token signed by the daemon's current secret.
 
 ## Secret Management
 
@@ -71,6 +72,8 @@ The daemon and your handshake route must agree on a shared secret used to sign s
 | Hosted daemon per team | Store secrets in your vault (AWS Secrets Manager, Doppler, 1Password) and read them in both the daemon process and the handshake route. |
 
 If you run multiple daemons (e.g., different environments), prefer scoped secrets per daemon so leaked tokens cannot be replayed elsewhere.
+
+`SWEETLINK_SECRET_PATH` selects the shared signing file for the daemon, CLI, and handshake helpers. An explicit resolver `secretPath` still takes precedence, and `SWEETLINK_SECRET` overrides file-based resolution. Without either override, existing `~/.sweetlink/secret.key` installations retain their current key. Restart the daemon after replacing a configured signing file; tokens signed by its previous key will be rejected.
 
 ## Daemon Reachability & TLS
 

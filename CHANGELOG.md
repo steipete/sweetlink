@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Prevent recursive CSS property reads during screenshot preparation, keeping page styles usable afterward.
+- Close rejected initial browser registrations, honor the configured signing-key file throughout the daemon/CLI, and launch compiled DevTools listeners without the development-only tsx loader. Thanks @SebTardif (#31, #33, #35).
+- Refresh compatible browser automation, HTTP, WebSocket, and development dependencies while preserving Node 24 and the one-day dependency cooldown.
+
 ## 0.2.7 — 2026-11-05
 
 **Highlights:** Patch Undici runtime security vulnerabilities and refresh browser automation dependencies.

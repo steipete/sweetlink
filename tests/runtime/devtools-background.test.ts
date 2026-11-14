@@ -75,6 +75,28 @@ afterEach(() => {
 });
 
 describe("ensureBackgroundDevtoolsListener", () => {
+  it.each([
+    ["/app/dist/src/index.js", []],
+    ["/app/src/index.ts", ["--import", "tsx"]],
+    ["/app/src/index.tsx", ["--import", "tsx"]],
+  ])("launches the %s entry with its required runtime", async (entrypoint, prefix) => {
+    const originalArgv = process.argv;
+    process.argv = [process.execPath, entrypoint];
+    try {
+      readLocalEnvStringMock.mockReturnValue("0");
+      readFileMock.mockRejectedValue(createErrno("ENOENT"));
+      spawnMock.mockReturnValue(createChildProcess(4321));
+      await ensureBackgroundDevtoolsListener({ sessionId: "session-123", quiet: true });
+      expect(spawnMock).toHaveBeenCalledWith(
+        process.execPath,
+        [...prefix, entrypoint, "devtools", "listen", "--background", "--session", "session-123"],
+        expect.objectContaining({ detached: true, stdio: "ignore" }),
+      );
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
   it("skips spawning when SWEETLINK_DISABLE_AUTO_DEVTOOLS is set", async () => {
     readLocalEnvStringMock.mockReturnValue("1");
 

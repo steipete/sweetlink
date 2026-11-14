@@ -10,6 +10,7 @@ import { SweetLinkState } from "../src/server.js";
 class FakeSocket {
   readyState = 1;
   terminated = false;
+  closed = false;
   sent: Array<{ kind: string; command?: { id: string } }> = [];
   private messageHandler: ((data: string) => void) | null = null;
   private closeHandler: ((code: number, reason: Buffer) => void) | null = null;
@@ -30,6 +31,11 @@ class FakeSocket {
     this.terminated = true;
     this.readyState = 3;
     queueMicrotask(() => this.closeHandler?.(1000, Buffer.from("")));
+  }
+
+  close(): void {
+    this.closed = true;
+    this.readyState = 3;
   }
 
   message(payload: Record<string, unknown>): void {
@@ -75,6 +81,22 @@ describe("session sockets", () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
+  });
+
+  it("closes the socket when register is rejected", () => {
+    const state = new SweetLinkState(secret);
+    const socket = attach(state);
+    socket.message({
+      kind: "register",
+      token: "not-a-token",
+      sessionId: "session-x",
+      url: "https://example.test",
+      title: "Example",
+      userAgent: "test",
+      topOrigin: "https://example.test",
+    });
+    expect(socket.closed).toBe(true);
+    expect(state.listSessions()).toHaveLength(0);
   });
 
   it("keeps the new socket when the replaced socket closes", async () => {

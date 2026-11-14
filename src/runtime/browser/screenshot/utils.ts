@@ -149,10 +149,9 @@ function ensureCssGetPropertyValuePatched(contextWindow: Window): void {
 
   // Computed styles can still expose OKLAB values even after inline overrides. Monkey-patch
   // getPropertyValue so every lookup feeds through the same normalisation pipeline.
-  const callOriginalGetPropertyValue = (style: CSSStyleDeclaration, property: string): string =>
-    proto.getPropertyValue.call(style, property);
+  const originalGetPropertyValue = proto.getPropertyValue;
   proto.getPropertyValue = function patchedGetPropertyValue(property: string): string {
-    const value = callOriginalGetPropertyValue(this, property);
+    const value = originalGetPropertyValue.call(this, property);
     const normalised = replaceOkColorFunctions(value);
     return normalised ?? value;
   };

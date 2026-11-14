@@ -18,11 +18,7 @@ import {
   verifySweetLinkToken,
 } from "../../shared/src/index.js";
 import { readSweetLinkEnv } from "../../shared/src/env.js";
-import {
-  getDefaultSweetLinkSecretPath,
-  resolveSweetLinkSecret,
-  type SweetLinkSecretResolution,
-} from "../../shared/src/node.js";
+import { resolveSweetLinkSecret, type SweetLinkSecretResolution } from "../../shared/src/node.js";
 import WebSocket, { WebSocketServer } from "ws";
 import { z } from "zod";
 import { generateSessionCodename } from "./codename.js";
@@ -450,6 +446,9 @@ export class SweetLinkState {
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.warn(`SweetLink socket error: ${errorMessage}`);
+        if (!sessionId) {
+          socket.close();
+        }
       }
     });
 
@@ -846,10 +845,8 @@ function ensureCertificates() {
 
   const mkcertLookup = spawnSync("which", ["mkcert"], { stdio: "pipe" });
   if (mkcertLookup.status !== 0) {
-    const secretPath = getDefaultSweetLinkSecretPath();
     throw new Error(
-      'mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink. ' +
-        `Generated SweetLink secret saved at ${secretPath}.`,
+      'mkcert is required but not found. Install via "brew install mkcert nss" and rerun pnpm sweetlink.',
     );
   }
 
