@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.8 — 2026-11-15
+
+**Highlights:** Keep screenshot styles intact and fix browser registration, signing-key paths, and packaged DevTools listeners.
+
 - Prevent recursive CSS property reads during screenshot preparation, keeping page styles usable afterward.
 - Close rejected initial browser registrations, honor the configured signing-key file throughout the daemon/CLI, and launch compiled DevTools listeners without the development-only tsx loader. Thanks @SebTardif (#31, #33, #35).
 - Refresh compatible browser automation, HTTP, WebSocket, and development dependencies while preserving Node 24 and the one-day dependency cooldown.
