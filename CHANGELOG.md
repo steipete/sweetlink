@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refresh browser automation, cookie handling, lint tooling, and compatible transitive dependencies while preserving Node 24 and the one-day dependency cooldown.
+
 ## 0.2.8 — 2026-11-15
 
 **Highlights:** Keep screenshot styles intact and fix browser registration, signing-key paths, and packaged DevTools listeners.
